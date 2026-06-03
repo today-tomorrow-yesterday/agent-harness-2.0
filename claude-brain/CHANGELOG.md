@@ -1,0 +1,143 @@
+# CHANGELOG
+
+All notable changes to claude-brain.
+
+---
+
+## [2026-05-25] — Retrieval quality lift
+
+- **Embedding model swap**: `all-MiniLM-L6-v2` (384-dim) → `BAAI/bge-base-en-v1.5` (768-dim). All 35,486 transcripts re-embedded. Top-similarity scores on representative queries lift from ~0.5–0.67 to ~0.6–0.85 (relevance bands shift meaningfully).
+- **Hybrid search**: `search_transcripts` now defaults to `mode="hybrid"` — runs FTS5 + semantic in parallel, fuses via **Reciprocal Rank Fusion** (RRF, `k=60`), then re-ranks top-30 with a **cross-encoder** (`ms-marco-MiniLM-L-6-v2`, ~80 MB, ~10ms/pair on CPU). Pass `mode="fts"` or `mode="semantic"` to bypass.
+- **Vectorized cosine** in `search_semantic` — replaced per-row Python cosine loop with single numpy matmul over a cached normalized embedding matrix. ~100× faster: 23ms vs ~2.3s at 35k vectors.
+- **Embedding cache** in `mcp/server.py`: module-level normalized matrix cached by count; rebuilt only when new embeddings appear.
+- **`raw_json` column pruned**: ~700 MB of redundant JSONL storage NULLed and VACUUMed. `content` column carries the parsed text; raw is rebuildable from JSONL files on disk if ever needed.
+- **Defaults updated**: `mcp/server.py`, `scripts/write_exchange.py`, `scripts/brain-setup.py`, `scripts/brain_query.py`, `scripts/brain_search.py`, `config.yaml.example` — all now default to `BAAI/bge-base-en-v1.5`.
+
+---
+
+## [2026-05-24] — Forked in place by Tre Hill
+
+- Detached from upstream `mikeadolan/claude-brain` (`.git` archived to `.git.upstream-archive/`). No remote is configured.
+- Vocabulary rebuilt for Tre's domains: `agent-os`, `clone`, `cinematic-content`, `mosaic`, `ses`, `claude-code`, `neurodivergence`, `meta-learning`, `ownership` (was: memoir editing, family, health, etc.).
+- Cross-platform fixes: cwd encoding handles Windows paths; multi-profile JSONL discovery (`.claude` + `.claude-udig`); detached subprocess uses Windows `DETACHED_PROCESS` instead of POSIX `start_new_session`.
+- Bug fixes: FTS recency weighting was inverted (older results ranked higher); `ingest_jsonl` now UPSERTs `sys_sessions` so `ended_at` and `message_count` populate on re-ingest; `write_exchange` uses `cursor.lastrowid` for `transcript_embeddings`.
+- Identity: removed mikeadolan-specific keywords (Johnny, Harlem, etc.); "Mike" hardcoded in `user-prompt-submit`'s frustration messages → "Tre".
+- Shared library: extracted `TAG_KEYWORDS` to `lib/vocab.py`, path/session-id helpers to `lib/paths.py`.
+- License: dual MIT copyright (Tre 2026 + Mike Dolan 2026 original).
+
+---
+
+# Pre-fork history (mikeadolan/claude-brain)
+
+The entries below were authored under the upstream project at `mikeadolan/claude-brain` and predate the 2026-05-24 fork.
+
+---
+
+## [0.2.1] - 2026-04-06
+
+### Improved
+- **user-prompt-submit hook** - fuzzy correction runs before FTS5 search (catches typos before they miss results), result content bumped from 200 to 400 characters, results increased from 3 to 5, recency weighting added (recent messages rank higher), hyphenated terms preserved as single keywords instead of being split.
+- **stop hook** - auto-backup trigger checks backup age on every Claude response, runs `brain_sync.py` if the last backup is older than 12 hours. Prevents long-running sessions from going days without a backup.
+
+### Fixed
+- **FTS5 stale vocab cache** - MCP server vocabulary cache never refreshed, causing real words like "headless" to be autocorrected to "handles". Fix: 60-second cache TTL with live DB fallback before correcting. (Already on main in 0.2.0, listed here for completeness.)
+
+---
+
+## [0.2.0] - 2026-03-12
+
+### Added - Feature 3: Email Digests (the brain reaches OUT to you)
+- **3 email templates** via `scripts/brain_digest.py`:
+  - **Daily standup** (`--daily`) - BLUF "Pick Up Here" per project, RAG health badges, blockers, in-progress, 7-day rolling average, quiet day handling. 150-250 words.
+  - **Weekly digest** (default) - executive summary, week-over-week trend table, RAG portfolio with project context, top accomplishments, amber dormant alerts, forward nudge. 300-500 words.
+  - **Project deep dive** (`--project mb`) - RAG header, executive summary, health metrics, in-progress, recent sessions, risks & blockers, next steps, decisions, architecture. 500-800 words.
+- **Dark mode** (`--dark` flag or `email.dark_mode: true` in config) - full dark palette.
+- **Email setup wizard** - Phase 7 in `brain-setup.py`: Gmail App Password, SMTP test, auto cron install.
+- **`scripts/write_project_summary.py`** - update project summaries from CLI (end-session protocol).
+- **10 email use cases** in README.md - Morning Kickoff, Stakeholder Update, Sprint Retro, etc.
+- **Email design spec** - `email-digest-design-spec.md` (839 lines, BLUF methodology, HTML constraints).
+
+### Added - Feature 1: Fuzzy Search (completed earlier, not in prior changelog)
+- **`scripts/fuzzy_search.py`** - typo correction before FTS query using frequency-ratio approach.
+- **`scripts/clean_transcripts.py`** - recurring maintenance tool, fixes typos at the source.
+- Integrated into MCP server, brain_search.py, brain_query.py.
+
+### Added - Infrastructure
+- **Rule #2 GO check hook** - `user-prompt-submit.py` detects "thoughts?" without GO, injects STOP reminder.
+- **Rule #1 expanded** - brain search + Exa web search before all work.
+- **End-session verified checklist** - table with solid lines, every row must show DONE.
+- **`CLAUDE.md.example`** - generic version for new users (brain-first rule included).
+- **Token monitor** - `cc-updated.sh` with desktop notifications at 25/50/70/80/90% thresholds.
+- **Office skills** - docx, xlsx, pdf, pptx skills installed from tfriedel/claude-office-skills.
+- **Exa MCP** - web search registered for Claude Code.
+
+### Changed - Phase 8: Architecture Merge (CLOSED)
+- `sys_session_summaries` table eliminated. Single source: `sys_sessions.notes`.
+- `project_registry` gained 4 columns: `summary`, `summary_updated_at`, `status`, `health`.
+- All 113 session notes rewritten by Opus. All 7 project summaries regenerated.
+- Tag: `post-architecture-merge` (15/15 tests pass).
+
+### Changed - HTML Email Foundation
+- All email styles inline (Gmail web strips `<style>` blocks).
+- Safe HTML skeleton: DOCTYPE, xmlns, MSO conditional comments, color-scheme meta.
+- Preheader text for inbox preview. #1a1a1a text (not #000000) for dark mode safety.
+
+### Fixed
+- **All 9 bugs closed** - B1-B7 FIXED, B8-B9 WONTFIX (upstream CC bug #5506).
+- **Project summary staleness** - end-session protocol now requires summary update with verified checklist.
+
+---
+
+## [0.1.1] - 2026-03-10
+
+### Fixed
+- **SessionEnd hook timeout (Bug 1)** - Root cause: `generate_summary.py` made 30s OpenRouter API call, exceeding hook timeout. Fix: deleted `generate_summary.py` entirely. `session-end.py` now only runs `brain_sync.py` (detached).
+- **MCP server unclean shutdown (Bug 2)** - Root cause: `sys.exit(0)` in signal handler raises `SystemExit` through asyncio event loop. Fix: changed to `os._exit(0)` for clean OS-level exit.
+- **UTC timestamps** - All 4 scripts with logging now use `time.gmtime` converter so "Z" suffix is accurate (was using local time).
+
+### Removed
+- **`scripts/generate_summary.py`** - Deleted. Claude writes session notes directly. No LLM summary generation. No OpenRouter dependency.
+- **`summary_llm` config section** - Removed from `config.yaml`, `config.yaml.example`, and `brain-setup.py` setup wizard.
+- **`repair_missing_summaries()`** - Removed from `startup_check.py` (called deleted generate_summary.py).
+- **generate_summary call in `import_claude_ai.py`** - Removed dead subprocess call block.
+
+### Changed
+- `hooks/session-end.py` - Complete rewrite. Only runs `brain_sync.py` (detached via `Popen`).
+- `mcp/server.py` - Signal handler uses `os._exit(0)` instead of `sys.exit(0)`.
+- Documentation updated: ARCHITECTURE.md, FOLDER_SCHEMA.md, SCRIPT_CONTRACTS.md, TEST_SPECIFICATIONS.md, POST_MVP_ROADMAP.md, PROJECT_TRACKER.md, CHANGELOG.md.
+- Added CODE CHANGE CHECKLIST to CLAUDE.md and MEMORY.md.
+
+---
+
+## [0.1.0] - 2026-03-09
+
+### Added
+- **Bash-to-Python migration complete** - all hooks and scripts are now pure Python. No bash dependencies. Cross-platform ready (Linux, macOS; Windows via WSL).
+- **Batch embedding backfill** - `scripts/batch_embed.py` backfills semantic search vectors for all existing transcripts.
+- **requirements.txt** - standard Python dependency file for pip install.
+- **Email digest framework** - architecture supports scheduled email summaries (daily recaps, weekly progress, dormant project alerts).
+
+### Changed
+- All 4 hooks rewritten from bash to Python (`hooks/*.py`).
+- All support scripts rewritten from bash to Python (`scripts/brain_sync.py`, `scripts/startup_check.py`).
+- Documentation rewritten for public release (README.md, CLAUDE_BRAIN_HOW_TO.md).
+- Project prefix standard set to 2-3 characters (was 2-4).
+- Brain health check now achieves 9/9 PASS (embedding coverage at 100%).
+
+### Removed
+- All `.sh` shell scripts (replaced by `.py` equivalents).
+- Internal/personal references from public-facing documentation.
+
+---
+
+## [0.0.1] - 2026-02-01
+
+### Added
+- Initial implementation - SQLite database, 4 lifecycle hooks (bash), MCP server with 11 tools.
+- 11 slash commands (`/brain-question`, `/brain-search`, `/brain-history`, `/brain-recap`, `/brain-decide`, `/brain-health`, `/brain-status`, `/brain-import`, `/brain-questionnaire`, `/brain-setup`, `/brain-export`).
+- Dual search: FTS5 keyword search + semantic search (sentence-transformers + numpy).
+- Session quality scoring and tagging.
+- Claude.ai conversation import via Chrome extension export.
+- Interactive setup wizard (`brain-setup.py`).
+- Multi-machine support via Dropbox/cloud sync.
+- ~~LLM-powered session summaries via direct API call (OpenRouter/Anthropic).~~ (Removed in 0.1.1 - generate_summary.py deleted, Claude writes notes directly.)

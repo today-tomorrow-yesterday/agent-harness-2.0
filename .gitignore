@@ -1,0 +1,33 @@
+# Database and transcripts — personal operational history
+claude-brain/claude-brain.db
+claude-brain/db-backup/
+claude-brain/logs/
+
+# Forge operational logs — personal history, forward-only
+forge/skill-usage.jsonl
+forge/evolution.jsonl
+forge/report-latest.md
+
+# Secrets
+bin/secrets/*.txt
+bin/secrets/*.json
+!bin/secrets/README.md
+
+# State files — per-machine, not portable
+bin/*-state.json
+bin/research-agent-state.json
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Personal scheduled task configs
+scheduled-tasks.md

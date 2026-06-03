@@ -1,0 +1,48 @@
+# claude-brain
+
+Personal memory system for Claude Code. Local SQLite + MCP + hooks.
+
+> **This file is a TEMPLATE.** Copy to your own project's `CLAUDE.md` and edit
+> to taste. The rules below are starting points — keep what fits, replace what
+> doesn't. The original upstream version of this template prescribed a strict
+> "GO" workflow and a mandatory git-commit-and-push end-session checklist.
+> Both have been removed because they conflict with common workflows (notably
+> "never commit without explicit permission," which is the safer default).
+
+## Use the brain before guessing
+
+You have persistent transcript memory across every session. Use it.
+
+- Before proposing a plan: search the brain for prior decisions on the same topic
+- Before debugging: search the brain for error messages or symptoms
+- Tools: `search_transcripts`, `search_semantic`, `get_recent_summaries`,
+  `lookup_decision`, `lookup_fact`, `get_profile`, `get_project_state`
+- Not using available tools is the same as not having them
+
+## Version-control caution
+
+The default in this template is **don't commit code without explicit
+permission**. Read-only git (status / log / diff / fetch / branch / checkout)
+is fine. Mutations (commit / push / add / reset / force-push) require an
+explicit ask. Override if your workflow needs auto-commit, but be deliberate.
+
+## End-of-session, when meaningful
+
+If the session produced load-bearing decisions or notes worth keeping, write
+them to the brain:
+
+```bash
+python3 scripts/write_session_notes.py --notes "<text>" --tags "<tag1,tag2>"
+```
+
+The `session-end.py` hook will also auto-suggest tags from transcript content
+if you don't supply them. Both paths are fine — explicit beats implicit when
+the session mattered.
+
+## Replace this section with your own rules
+
+Examples to consider:
+- Project-specific conventions (test command, lint command, build command)
+- Forbidden patterns (don't touch the legacy auth flow, don't write to prod)
+- Tools you prefer (Edit over Write, Grep over `grep` subprocess, etc.)
+- Identity-level notes ("call me by my preferred name," etc.)
