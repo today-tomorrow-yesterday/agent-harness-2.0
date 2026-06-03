@@ -1,8 +1,8 @@
----
+﻿---
 title: Skill-Forge — self-improving skills closed loop
-status: design (awaiting Tre review)
+status: design (awaiting you review)
 date: 2026-05-29
-author: Sol + Tre (brainstorming session)
+author: [NAME] + you (brainstorming session)
 related:
   - ideas/self_improving_skills.md
   - projects/agent_os.md   ("Hermes comparison & capability roadmap")
@@ -21,15 +21,15 @@ related:
 Close agent-os's self-improvement loop at the **skill layer**. Today agent-os
 self-improves at the *memory* layer (claude-brain + `session-reflect`), but
 skills are still authored manually except for the `session-reflect` skill-
-candidate step. Skill-Forge makes Sol **mine its own recurring work into new
+candidate step. Skill-Forge makes [NAME] **mine its own recurring work into new
 skills, and measure + maintain the skills it already has** — the one capability
 the 2026-05-28 Hermes comparison flagged as genuinely missing, and the one that
 *compounds* (every encoded workflow makes the next execution cheaper — the
 `ai_does_95_percent_of_production` trajectory).
 
 Against `frame.md`'s load-bearing question — *"does this relax a constraint on
-Sol's functional analog of partnership-capable agency?"* — yes: it relaxes the
-constraint that Sol's capability set only grows when Tre hand-authors it.
+[NAME]'s functional analog of partnership-capable agency?"* — yes: it relaxes the
+constraint that [NAME]'s capability set only grows when you hand-authors it.
 
 ## 2. Scope
 
@@ -65,7 +65,7 @@ Two net-new components, both reading the brain; two existing systems extended.
                   ▼                               • healthy → leave
             forge-review                        ─ writes ► skill-forge.log + forge/report-latest.md
    report-latest.md → Slack (notify_slack.py)               │
-   + weekly brief; Tre approves installs,                   ▼
+   + weekly brief; you approves installs,                   ▼
    can --revert any auto-action            install path (extends session-reflect):
                                            approved candidate → scaffold skills/
                                            + both-profile install + AgentShield scan
@@ -125,7 +125,7 @@ non-negotiable: only act once enough trials accumulate for the noise to average
 out. It is also why Phase 0 (read-only signal validation) must run long enough
 to measure our own classifier's precision before any autonomy is enabled.
 
-**Judge-bias mitigation:** Sol scoring skills Sol authored is a textbook
+**Judge-bias mitigation:** [NAME] scoring skills [NAME] authored is a textbook
 self-preference-bias risk (NeurIPS 2024; RAND 2026 — *no judge is uniformly
 reliable*). Mitigations: score against a **structured rubric** (not free-form),
 and prefer a *different* model snapshot as judge than the one that drafted the
@@ -140,7 +140,7 @@ real brain DB and found ~0 invocations for heavily-used custom skills (e.g.
   slash commands** — overwhelmingly built-ins (`/theme`, `/model`); a custom skill
   appears this way only on the rare occasion it's typed as `/skill` (e.g. exactly
   one `/session-reflect` hit in all history).
-- The **dominant invocation path** — Tre asks in natural language → Sol calls the
+- The **dominant invocation path** — you asks in natural language → [NAME] calls the
   **Skill tool** — is **not stored in `transcripts.content` in any of the four
   detection forms.** The brain captures *discussion of* skills, not *structured
   invocations of* them.
@@ -168,13 +168,13 @@ and even then has a known blind spot:
   known to be farmer-driven must be flagged so it is never scored as low-use
   (feeds the §6 maturity gate, condition (c)).
 
-**Alignment with how Tre actually works (2026-05-30):** Tre interacts by
-describing intent in natural language, never via slash commands — so Sol invokes
+**Alignment with how you actually works (2026-05-30):** you interacts by
+describing intent in natural language, never via slash commands — so [NAME] invokes
 skills through the **Skill tool**. That makes the hook (Skill-tool capture) the
 *primary, correctly-aligned* frequency source, and the brain `<command-name>`
 union a minor backstop. The deeper end-state this points to: **intention-driven
 routing** — NL intent → the system auto-selects/fires skills via pre/post hooks,
-needing no manual trigger from Tre. Skill-Forge is the self-learning organ of
+needing no manual trigger from you. Skill-Forge is the self-learning organ of
 that larger system. See [[complementary_division_of_labor]].
 
 ## 6. Autonomy & safety model
@@ -224,7 +224,7 @@ Piggybacks the existing Sunday cadence (Weekly-Planner is 09:00).
    `skill-forge.log` + `forge/report-latest.md`.
 3. **forge-review**: `report-latest.md` (new proposals **+** autonomous actions
    taken) posts to Slack via `notify_slack.py` and feeds the weekly brief.
-4. **Install path**: Tre approves a queued candidate → scaffold into `skills/` +
+4. **Install path**: you approves a queued candidate → scaffold into `skills/` +
    both profiles (`parallel_subscriptions`) + AgentShield scan.
 
 ## 8. Phased build order
@@ -242,7 +242,7 @@ progress").
 
 ## 9. Constraints honored
 
-- **subscription-first** — all `claude -p` calls run on Tre's subscription; no API key.
+- **subscription-first** — all `claude -p` calls run on your subscription; no API key.
 - **local-first** — brain (SQLite) + filesystem + Windows Scheduled Tasks; no cloud.
 - **parallel_subscriptions** — installs/quarantines apply to both profiles.
 - **no_github_remote_for_agent_os** — reversibility is filesystem, not remote git.
@@ -257,7 +257,7 @@ progress").
 - **Active-cap value** — start C at 25 or 50? Begins binding only once the Forge
   has minted that many skills, so it's not urgent for Phase 0–1.
 - **Classifier precision target** — what `helped/hurt` precision must Phase 0
-  demonstrate (measured against a hand-labeled sample of Sol's own transcripts)
+  demonstrate (measured against a hand-labeled sample of [NAME]'s own transcripts)
   before Phase 2 autonomy is unlocked? Proposed gate: ≥80% on the `hurt` class.
 - Whether Miner parallel-readers use the Workflow tool or plain `claude -p`
   fan-out. (Note: the Workflow harness failed on this machine on 2026-05-30 with

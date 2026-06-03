@@ -1,7 +1,7 @@
-"""LLM-as-judge: classify whether a skill invocation helped or hurt.
+﻿"""LLM-as-judge: classify whether a skill invocation helped or hurt.
 
 Bias note (NeurIPS 2024 self-preference; RAND 2026): the judge scores skills
-Sol may have authored. Mitigation is a STRUCTURED RUBRIC with a fixed verdict
+[NAME] may have authored. Mitigation is a STRUCTURED RUBRIC with a fixed verdict
 vocabulary (no free-form scoring), and — where the caller chooses — a different
 judge model than the author. Unknown/garbled output defaults to 'inapplicable'
 so a parse failure can never be mistaken for a 'hurt' signal.

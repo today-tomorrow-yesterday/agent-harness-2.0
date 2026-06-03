@@ -1,30 +1,30 @@
----
+﻿---
 name: session-reflect
-description: Self-noticing reflection — scans the current session's transcript for moments of correction, surprise, confirmed approaches, or novel standing guidance, drafts candidate memory entries (feedback rules, project facts, identity notes, ideas, anti-patterns), and asks Tre to approve each one before writing into Z:\agent-os\memory\. The capture layer of the meta-learning loop. Use when Tre says "what did we learn today", "reflect on this session", "save what's important", "/session-reflect", or whenever you notice corrections piling up unsaved during a conversation.
+description: Self-noticing reflection — scans the current session's transcript for moments of correction, surprise, confirmed approaches, or novel standing guidance, drafts candidate memory entries (feedback rules, project facts, identity notes, ideas, anti-patterns), and asks you to approve each one before writing into Z:\agent-os\memory\. The capture layer of the meta-learning loop. Use when you say "what did we learn today", "reflect on this session", "save what's important", "/session-reflect", or whenever you notice corrections piling up unsaved during a conversation.
 ---
 
 # session-reflect — capture layer for the meta-learning loop
 
-This skill turns the conversation we just had into memory candidates. Claude drafts each candidate; Tre approves them individually; approved ones get written into `Z:\agent-os\memory\` with the right frontmatter, type, folder placement, and cross-references.
+This skill turns the conversation we just had into memory candidates. Claude drafts each candidate; you approve them individually; approved ones get written into `Z:\agent-os\memory\` with the right frontmatter, type, folder placement, and cross-references.
 
 ## Why this exists
 
-Memory writes today only happen when Tre explicitly types "save this." That means corrections, surprises, and confirmed-good approaches evaporate at the end of each session. This skill is **Layer 2 (capture)** of the meta-learning loop documented in [[projects/agent_os]]:
+Memory writes today only happen when you explicitly types "save this." That means corrections, surprises, and confirmed-good approaches evaporate at the end of each session. This skill is **Layer 2 (capture)** of the meta-learning loop documented in [[projects/agent_os]]:
 
 | Layer | What it does | Status before this skill |
 |---|---|---|
 | 1. Observation | See ourselves working | Partial — brain DB has transcripts |
-| **2. Capture** | **Mark "this just happened, worth keeping"** | **None — depended on Tre typing it** |
+| **2. Capture** | **Mark "this just happened, worth keeping"** | **None — depended on you typing it** |
 | 3. Pattern recognition | Aggregate captures over time | None |
 | 4. Hypothesis | Propose new rules / skills | Rules: yes (this skill). **Skills: now proposed here too** (see "Skill candidate" below) |
 | 5. Apply + measure | Test the rule, see if it changed behavior | None |
 | 6. Codify | Make proven things standing | Strong — memory, skills, feedback |
 
-Claude drafts; Tre approves; the loop accumulates signal it can later compute on.
+Claude drafts; you approve; the loop accumulates signal it can later compute on.
 
 ## When to invoke
 
-- Tre says: *"what did we learn today"*, *"reflect on this session"*, *"save what's important from this"*, *"what should I capture"*, *"/session-reflect"*
+- you say: *"what did we learn today"*, *"reflect on this session"*, *"save what's important from this"*, *"what should I capture"*, *"/session-reflect"*
 - Claude proactively offers when 2+ corrections or confirmed-good approaches have accumulated in the current session without being saved
 - After a conversation that introduced standing rules, project decisions, or new identity facts
 - End of any conversation where the topic had load-bearing implications
@@ -35,14 +35,14 @@ Claude drafts; Tre approves; the loop accumulates signal it can later compute on
 
 | Category | Target | Trigger pattern |
 |---|---|---|
-| **Behavioral correction** | `feedback/<rule>.md` (new) | Tre says "no don't do that", "stop doing X", "you're misinterpreting" |
-| **Confirmed approach** | `feedback/<rule>.md` (new) | Tre accepts an unusual choice without pushback, or says "yes that was the right call" |
+| **Behavioral correction** | `feedback/<rule>.md` (new) | you say "no don't do that", "stop doing X", "you're misinterpreting" |
+| **Confirmed approach** | `feedback/<rule>.md` (new) | you accepts an unusual choice without pushback, or says "yes that was the right call" |
 | **Project state change** | `projects/<project>.md` (append section) or new file | New deadline, scope decision, status shift |
-| **Identity fact about Tre** | `user.md` (append section) | New background, preference, goal, motivation surfaced |
-| **Pre-project idea** | `ideas/<slug>.md` (new) + `ideas/_index.md` entry | Tre mentions a concept worth catalog-capturing |
-| **Presentation anti-pattern** | `feedback/anti_patterns.md` (append section) | Tre rejects a format, style, or layout |
+| **Identity fact about you** | `user.md` (append section) | New background, preference, goal, motivation surfaced |
+| **Pre-project idea** | `ideas/<slug>.md` (new) + `ideas/_index.md` entry | you mentions a concept worth catalog-capturing |
+| **Presentation anti-pattern** | `feedback/anti_patterns.md` (append section) | you rejects a format, style, or layout |
 | **Reference pointer** | `feedback/<system>_reference.md` (new) | New external system, dashboard, tool mentioned |
-| **Skill candidate** | new `skills/<name>/SKILL.md` (propose-then-scaffold) + install in both profiles | A repeatable multi-step workflow was executed manually 2+ times (this session or recurring), or Tre says "make this a skill / automate this". The agent-os-native version of Hermes's autonomous skill creation — see [[self_improving_skills]] |
+| **Skill candidate** | new `skills/<name>/SKILL.md` (propose-then-scaffold) + install in both profiles | A repeatable multi-step workflow was executed manually 2+ times (this session or recurring), or you say "make this a skill / automate this". The agent-os-native version of Hermes's autonomous skill creation — see [[self_improving_skills]] |
 
 ## The reflection process — 5 steps
 
@@ -50,7 +50,7 @@ Claude drafts; Tre approves; the loop accumulates signal it can later compute on
 
 Decide which transcript to reflect on:
 - **Default**: the current in-context conversation
-- **Past session**: if Tre says "reflect on yesterday's session" or similar, use brain MCP (`get_recent_sessions`, `get_session`) to pull the named session, then proceed against that text
+- **Past session**: if you say "reflect on yesterday's session" or similar, use brain MCP (`get_recent_sessions`, `get_session`) to pull the named session, then proceed against that text
 
 ### Step 2 — Scan for signals
 
@@ -95,7 +95,7 @@ Body shape for `feedback` type (mirroring `feedback/never_commit_without_permiss
 
 <The rule itself, stated plainly in 1–3 sentences>
 
-**Why:** <The reason — often a specific incident or strong preference Tre stated, with the date>
+**Why:** <The reason — often a specific incident or strong preference you stated, with the date>
 
 **How to apply:** <When/where this rule kicks in; how to judge edge cases>
 
@@ -109,7 +109,7 @@ Body shape for `project` updates: append a dated section to the existing `projec
 
 ### Step 4 — Propose-then-confirm
 
-Present candidates to Tre via **AskUserQuestion with `multiSelect: true`**. Up to 4 candidates per question (the tool's max); if there are more, batch into two asks.
+Present candidates to you via **AskUserQuestion with `multiSelect: true`**. Up to 4 candidates per question (the tool's max); if there are more, batch into two asks.
 
 Question shape:
 
@@ -121,7 +121,7 @@ Options (one per candidate):
     description: "<target folder + first 1-2 lines of proposed content>"
 ```
 
-Tre selects which to save. Unselected candidates are discarded silently — that's the whole point. False positives have zero cost beyond the moment of asking.
+you select which to save. Unselected candidates are discarded silently — that's the whole point. False positives have zero cost beyond the moment of asking.
 
 For each approved candidate, before writing:
 - If it would **overwrite an existing file**, follow up: *"`<filename>` already exists. Append, replace, or skip?"*
@@ -135,15 +135,15 @@ For each approved candidate:
 
    | candidate category | strategy |
    |---|---|
-   | Behavioral correction (Tre said "no / don't") | `repair` |
-   | Confirmed approach (Tre said "yes, that was right") | `harden` |
+   | Behavioral correction (you said "no / don't") | `repair` |
+   | Confirmed approach (you said "yes, that was right") | `harden` |
    | New skill candidate | `innovate` |
    | New project brief | `innovate` |
    | Project state update | `calibrate` |
-   | Identity fact about Tre | `document` |
+   | Identity fact about you | `document` |
    | Anti-pattern / presentation rejection | `repair` |
 
-   Show the inferred strategy alongside the memory candidate in the Step 4 proposal so Tre can correct it before anything is written. `asset` = path relative to `Z:\agent-os\` (e.g. `feedback/my_rule.md`). `session` = first 8 chars of session ID from brain context.
+   Show the inferred strategy alongside the memory candidate in the Step 4 proposal so you can correct it before anything is written. `asset` = path relative to `Z:\agent-os\` (e.g. `feedback/my_rule.md`). `session` = first 8 chars of session ID from brain context.
 
 1. **Write the file** to its target location with the full frontmatter + body
 2. **Update `Z:\agent-os\memory\MEMORY.md`** by adding the new entry under the correct section (`Behavioral rules`, `Active projects`, `Ideas`, or `Top-level`)
@@ -154,7 +154,7 @@ After all writes, report a short summary:
 - 🟢 Files written (full paths)
 - 🟢 `MEMORY.md` index updated (which sections gained entries)
 - 🟡 Cross-references created (note any `[[wikilinks]]` that point to slugs not yet created — that's fine, marks future captures)
-- 🚫 Candidates skipped per Tre's selection (just count, no detail needed)
+- 🚫 Candidates skipped per your selection (just count, no detail needed)
 
 ## Frontmatter type values
 
@@ -183,15 +183,15 @@ Use `[[slug]]` syntax (matches the `name:` field in the frontmatter of the targe
 ## What this skill does NOT do
 
 - **No auto-commit.** `Z:\agent-os\` is not a git repo by design. Memory writes happen, no commit fires. The auto-commit hook at `Z:\agent-os\bin\hooks\auto-commit.ps1` is scoped to `Z:\Clone\` only.
-- **No automatic invocation.** Manual trigger only for now. A future iteration may add a `Stop` hook integration once Tre has validated the false-positive rate. The brain's existing `Stop` hook owns that lifecycle slot today — coordinate any future automation with the brain hooks, don't compete.
+- **No automatic invocation.** Manual trigger only for now. A future iteration may add a `Stop` hook integration once you has validated the false-positive rate. The brain's existing `Stop` hook owns that lifecycle slot today — coordinate any future automation with the brain hooks, don't compete.
 - **No modification of existing memory files without explicit confirmation.** Append-to-existing is acceptable (e.g., `anti_patterns.md`, `user.md`), but ask first when the file already exists and the candidate would change its contents.
-- **No broader-brain search by default.** Scope is the current session unless Tre explicitly names another session ID or date.
+- **No broader-brain search by default.** Scope is the current session unless you explicitly names another session ID or date.
 - **No git operations** of any kind. Per [[never_commit_without_permission]]. The skill produces files; it does not touch version control.
-- **Proposes NEW skills, never silently rewrites existing ones.** When it detects a repeatable workflow (2+ manual runs), it may draft a **new** `skills/<name>/SKILL.md` candidate for Tre's approval — the agent-os-native version of Hermes's autonomous skill creation (see [[self_improving_skills]]). On approval it scaffolds the skill and flags the both-profile install per [[parallel_subscriptions]]. It does NOT edit *existing* `SKILL.md` files without explicit confirmation.
+- **Proposes NEW skills, never silently rewrites existing ones.** When it detects a repeatable workflow (2+ manual runs), it may draft a **new** `skills/<name>/SKILL.md` candidate for your approval — the agent-os-native version of Hermes's autonomous skill creation (see [[self_improving_skills]]). On approval it scaffolds the skill and flags the both-profile install per [[parallel_subscriptions]]. It does NOT edit *existing* `SKILL.md` files without explicit confirmation.
 
 ## Reversibility
 
-If a memory file gets written that Tre doesn't want:
+If a memory file gets written that you doesn't want:
 
 1. **Delete the file**: `rm Z:\agent-os\memory\<folder>\<slug>.md`
 2. **Remove the line** from `MEMORY.md` index
@@ -206,8 +206,8 @@ Per [[parallel_subscriptions]], this skill must live in three locations:
 | Path | Role |
 |---|---|
 | `Z:\agent-os\skills\session-reflect\SKILL.md` | Canonical (source of truth) |
-| `C:\Users\trerh\.claude-udig\skills\session-reflect\SKILL.md` | Udig profile install |
-| `C:\Users\trerh\.claude\skills\session-reflect\SKILL.md` | Personal profile install |
+| `C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md` | <profile2> profile install |
+| `C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md` | Personal profile install |
 
 All three must hold identical content. When this skill evolves, update all three.
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """user-prompt-submit.py - Claude Code UserPromptSubmit hook for claude-brain.
 
 Fires before every user message is sent to Claude.
@@ -127,7 +127,7 @@ def handle_frustration(prompt_text, root):
         "Do NOT continue what you were doing. Instead:",
         "1. Review the brain context below",
         "2. Verify your assumptions are correct",
-        "3. Present your findings to Tre BEFORE taking any action",
+        "3. Present your findings to you BEFORE taking any action",
         "",
     ]
 
@@ -195,7 +195,7 @@ def handle_frustration(prompt_text, root):
 # ---------------------------------------------------------------------------
 # GO check - Rule #2 enforcement
 # Detects "discussion" messages that do NOT contain explicit GO trigger.
-# Prevents Claude from coding when Tre is asking for thoughts/opinions.
+# Prevents Claude from coding when the user is asking for thoughts/opinions.
 # ---------------------------------------------------------------------------
 
 DISCUSSION_PATTERNS = [
@@ -276,7 +276,7 @@ def main():
                 "## RULE #2 REMINDER - DO NOT CODE\n"
                 "Tre is asking for your THOUGHTS, not code.\n"
                 "PRESENT the plan. Do NOT write, edit, or create any files.\n"
-                "Wait for Tre to say 'GO' + name the specific step.\n"
+                "Wait for the user to say 'GO' + name the specific step.\n"
                 "Violated in sessions 17, 19, 21, 25, 36. ZERO TOLERANCE."
             )
             print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": context}}))

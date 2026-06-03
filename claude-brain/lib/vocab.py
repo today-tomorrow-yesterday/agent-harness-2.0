@@ -1,4 +1,4 @@
-"""Tre's tag vocabulary — the canonical TAG_KEYWORDS dict.
+﻿"""Tre's tag vocabulary — the canonical TAG_KEYWORDS dict.
 
 Used by `hooks/session-end.py` for live session tagging, and by
 `scripts/import_*.py` + `scripts/brain_tag_review.py` for batch/CLI
@@ -14,7 +14,6 @@ from __future__ import annotations
 
 TAG_KEYWORDS: dict[str, list[str]] = {
     # Work / consultancy
-    "udig":              ["udig", "consultancy", "tre.hill"],
     "ses":               ["ses", "223-mm", "modular-monolith", "modular template", "modular-template", "sales module", "customer module", "inventory module"],
     "mosaic":            ["mosaic", "mosaic-platform", "mosaic-architecture", "turborepo", "convex", "clerk"],
 
@@ -58,9 +57,6 @@ TAG_KEYWORDS: dict[str, list[str]] = {
 
 # Human-readable category descriptions (for brain_tag_review.py and similar UIs)
 TAG_DESCRIPTIONS: dict[str, str] = {
-    "udig":              "Udig consultancy work — Tre's day job",
-    "ses":               "SES client engagement — Modular Monolith Template, vertical-slice DDD",
-    "mosaic":            "Mosaic Platform — Turborepo + Next.js + Convex + Clerk",
     "agent-os":          "Personal AI OS — memory, persona, standing rules",
     "claude-brain":      "claude-brain transcript persistence layer (forked from mikeadolan)",
     "claude-code":       "Claude Code harness — skills, hooks, MCP, settings",

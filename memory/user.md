@@ -1,4 +1,4 @@
----
+﻿---
 name: user
 description: Who you are — role, goals, responsibilities, knowledge, working setup
 type: user
@@ -8,7 +8,7 @@ type: user
 
 > **BOOTSTRAP — fill this out before your first session.**
 > Answer the questions below, then delete this block and write the file in your own words.
-> Sol (or whatever you name your Claude instance) reads this at the start of substantive work.
+> Your Claude instance (once you name it in sol.md) reads this at the start of substantive work.
 
 ## Bootstrap questions
 

@@ -1,4 +1,4 @@
-"""Contribution scoring and (report-only) action classification.
+﻿"""Contribution scoring and (report-only) action classification.
 
 Score: c(s) = (helped - hurt) / trials, where trials = helped+hurt+neutral.
 'inapplicable' verdicts are excluded from trials (the window didn't show the

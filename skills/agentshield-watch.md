@@ -1,26 +1,26 @@
----
+﻿---
 name: agentshield-watch
 description: Configure, inspect, debug, or remove the AgentShield security watcher that monitors Claude Code config changes on this machine. Use when the user asks about shield-watch.ps1, the hourly security scan, toast notifications from agent-os, the shield-state.json file, agentshield-watch.log, or wants to add/remove watched directories, change polling cadence, adjust severity threshold, switch notification modes, or uninstall the watcher.
 ---
 
 # AgentShield Watch — operator skill
 
-This skill documents the always-running security watcher Tre installed on 2026-05-23 to detect when sub-agents (or anything else) install new skills, plugins, or agents into his Claude Code profiles without explicit awareness.
+This skill documents the always-running security watcher you installed on 2026-05-23 to detect when sub-agents (or anything else) install new skills, plugins, or agents into his Claude Code profiles without explicit awareness.
 
 ## What this is and why it exists
 
-Tre runs Claude Code with two profiles on this machine: `.claude-udig` (Udig work) and `.claude` (personal). Both can install skills, plugins, agents, MCP servers, and hooks — sometimes via sub-agents he didn't directly approve each time.
+you runs Claude Code with two profiles on this machine: `.claude-<profile>` (<YourOrg> work) and `.claude` (personal). Both can install skills, plugins, agents, MCP servers, and hooks — sometimes via sub-agents he didn't directly approve each time.
 
-The threat model: a sub-agent installs a skill or plugin that carries prompt-injection bait, secret-exfiltration logic, or an over-permissive hook. Tre might not notice until damage is done.
+The threat model: a sub-agent installs a skill or plugin that carries prompt-injection bait, secret-exfiltration logic, or an over-permissive hook. you might not notice until damage is done.
 
 The watcher catches this by:
 1. Polling the file system in both profiles on a schedule
 2. Detecting added/modified/removed files in skill/plugin/agent paths
 3. Running `npx ecc-agentshield scan` when changes appear
-4. Toasting Tre (Windows notification) for any *new* HIGH or CRITICAL finding
+4. Toasting you (Windows notification) for any *new* HIGH or CRITICAL finding
 5. Logging everything for after-the-fact review
 
-It is **reactive, not preventive**. It does not block tool calls or installs (that would require `agentshield runtime install`, which we explicitly skipped to keep Claude's request path latency-free). It tells Tre something happened so he can investigate and roll back if needed.
+It is **reactive, not preventive**. It does not block tool calls or installs (that would require `agentshield runtime install`, which we explicitly skipped to keep Claude's request path latency-free). It tells you something happened so he can investigate and roll back if needed.
 
 ## Architecture at a glance
 
@@ -54,7 +54,7 @@ The watcher itself runs under the Scheduled Task name **`AgentShield-Watch`**. H
 
 ## What it watches
 
-For each profile (`.claude-udig` and `.claude`):
+For each profile (`.claude-<profile>` and `.claude`):
 
 - Loose files: `CLAUDE.md`, `settings.json`
 - Subdirectories (recursive): `skills/`, `plugins/`, `agents/`, `commands/`, `skills.d/`, `agents.d/`
@@ -65,7 +65,7 @@ The path lists live in `shield-watch.ps1` at the top:
 $WatchedSubdirs = @("skills", "plugins", "agents", "commands", "skills.d", "agents.d")
 $WatchedFiles   = @("CLAUDE.md", "settings.json")
 $Profiles = @(
-    @{ Name = "udig";     Path = Join-Path $env:USERPROFILE ".claude-udig" }
+    @{ Name = "<profile2>"; Path = Join-Path $env:USERPROFILE ".claude-<profile2>" }
     @{ Name = "personal"; Path = Join-Path $env:USERPROFILE ".claude" }
 )
 ```
@@ -241,19 +241,19 @@ The watcher logs `Scan invocation failed for <path>` lines when this happens. Co
 
 | Decision | Why |
 |---|---|
-| Watch (reactive) instead of `runtime install` (preventive) | PreToolUse hook adds latency to every Claude tool call. With six existing claude-brain hooks already running, stacking another active hook made the cost > benefit for Tre's threat model. |
+| Watch (reactive) instead of `runtime install` (preventive) | PreToolUse hook adds latency to every Claude tool call. With six existing claude-brain hooks already running, stacking another active hook made the cost > benefit for your threat model. |
 | Polling instead of FileSystemWatcher event-driven | FileSystemWatcher in PowerShell is fragile with long-running daemons and doesn't survive across user sessions well. Polling is dumber and more reliable. |
-| 1-hour cadence (default) | Background cost basically zero. Acceptable detection lag for "I want to know if a sub-agent installed something today" use case. Tre explicitly chose this over 60s. |
+| 1-hour cadence (default) | Background cost basically zero. Acceptable detection lag for "I want to know if a sub-agent installed something today" use case. you explicitly chose this over 60s. |
 | Scheduled Task `ONLOGON` instead of a service | No admin required. Survives reboots. Runs in user context so it has the right `~/.claude\` paths. |
 | Hashing instead of mtime comparison | Some sub-agents may `touch` files without changing content (or vice versa). SHA-256 is the right granularity for "did the content actually change." |
 | HIGH/CRITICAL toast threshold | LOW and INFO are heavily polluted by ECC-funnel-pattern findings (missing version metadata, missing observation hooks). MEDIUM and below would generate too many alerts to be useful. |
 | Dedupe via `seen_findings` table | First scan after install fires a baseline burst of toasts for pre-existing HIGH+ findings (mostly false positives in official plugins). After that, only genuinely-new findings break through. |
-| Both `.claude` and `.claude-udig` watched | Tre runs two subscriptions on the same machine. A malicious skill landing in either profile is a risk regardless of which Claude Code instance loads it. |
+| All configured profiles watched | you runs two subscriptions on the same machine. A malicious skill landing in either profile is a risk regardless of which Claude Code instance loads it. |
 
 ## What this skill does NOT cover
 
 - The runtime `agentshield runtime install` PreToolUse hook (we explicitly didn't install it; consider only if reactive detection proves insufficient)
-- Scanning anything outside `.claude` and `.claude-udig` (e.g., npm-installed packages, pip-installed Python packages)
+- Scanning anything outside your configured profile directories (e.g., npm-installed packages, pip-installed Python packages)
 - Active blocking — this system observes and reports, it does not prevent anything from happening
 
 If those become needed, the next iteration adds: (a) `agentshield runtime install` for PreToolUse blocking on the most sensitive tool patterns, (b) a `pip list` / `npm list -g` snapshot diff to catch dependency-installed surprises.

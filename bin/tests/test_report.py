@@ -1,4 +1,4 @@
-from skill_forge.report import render_report
+﻿from skill_forge.report import render_report
 
 
 def _row(name, origin, trials, score, action, invocations):

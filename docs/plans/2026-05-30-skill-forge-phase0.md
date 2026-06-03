@@ -1,4 +1,4 @@
-# Skill-Forge Phase 0 (Signal Validator) Implementation Plan
+﻿# Skill-Forge Phase 0 (Signal Validator) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -76,7 +76,7 @@ from pathlib import Path
 
 AGENT_OS = Path(r"Z:\agent-os")
 BRAIN_DB = AGENT_OS / "claude-brain" / "claude-brain.db"
-SKILLS_DIR = AGENT_OS / "skills"          # canonical source skills (Tre-authored)
+SKILLS_DIR = AGENT_OS / "skills"          # canonical source skills (you-authored)
 FORGE_DIR = AGENT_OS / "forge"
 REPORT_PATH = FORGE_DIR / "report-latest.md"
 LOG_PATH = AGENT_OS / "skill-forge.log"
@@ -135,7 +135,7 @@ def brain_conn():
 
 @pytest.fixture
 def sample_skills_dir(tmp_path):
-    """A skills/ dir with two SKILL.md files (one Tre-authored, one Forge-minted)."""
+    """A skills/ dir with two SKILL.md files (one you-authored, one Forge-minted)."""
     sd = tmp_path / "skills"
     (sd / "clone-route").mkdir(parents=True)
     (sd / "clone-route" / "SKILL.md").write_text(
@@ -435,7 +435,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'skill_forge.judge'`
 """LLM-as-judge: classify whether a skill invocation helped or hurt.
 
 Bias note (NeurIPS 2024 self-preference; RAND 2026): the judge scores skills
-Sol may have authored. Mitigation is a STRUCTURED RUBRIC with a fixed verdict
+[NAME] may have authored. Mitigation is a STRUCTURED RUBRIC with a fixed verdict
 vocabulary (no free-form scoring), and — where the caller chooses — a different
 judge model than the author. Unknown/garbled output defaults to 'inapplicable'
 so a parse failure can never be mistaken for a 'hurt' signal.
@@ -710,7 +710,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'skill_forge.report'`
 """Render the weekly Skill-Forge report (Phase 0: read-only)."""
 from __future__ import annotations
 
-# Action items surface first (Tre's green-on-top: most-actionable at the top).
+# Action items surface first (your green-on-top: most-actionable at the top).
 _ACTION_ORDER = {"retire-candidate": 0, "insufficient-evidence": 1,
                  "dead": 2, "healthy": 3}
 
@@ -882,7 +882,7 @@ def main() -> int:
     # Deliver to Slack (no-op if webhook unset) — reuse the existing helper.
     try:
         from notify_slack import post_slack
-        post_slack(md, title=f"Sol — Skill-Forge report ({today})")
+        post_slack(md, title=f"[NAME] — Skill-Forge report ({today})")
     except Exception as e:  # noqa: BLE001
         log("WARN", f"Slack notify skipped: {type(e).__name__}: {e}")
 

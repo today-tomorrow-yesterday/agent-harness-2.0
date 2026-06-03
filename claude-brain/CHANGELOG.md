@@ -1,4 +1,4 @@
-# CHANGELOG
+﻿# CHANGELOG
 
 All notable changes to claude-brain.
 
@@ -15,15 +15,15 @@ All notable changes to claude-brain.
 
 ---
 
-## [2026-05-24] — Forked in place by Tre Hill
+## [2026-05-24] — Forked and extended
 
 - Detached from upstream `mikeadolan/claude-brain` (`.git` archived to `.git.upstream-archive/`). No remote is configured.
 - Vocabulary rebuilt for Tre's domains: `agent-os`, `clone`, `cinematic-content`, `mosaic`, `ses`, `claude-code`, `neurodivergence`, `meta-learning`, `ownership` (was: memoir editing, family, health, etc.).
-- Cross-platform fixes: cwd encoding handles Windows paths; multi-profile JSONL discovery (`.claude` + `.claude-udig`); detached subprocess uses Windows `DETACHED_PROCESS` instead of POSIX `start_new_session`.
+- Cross-platform fixes: cwd encoding handles Windows paths; multi-profile JSONL discovery (`.claude` + `.claude-<profile>`); detached subprocess uses Windows `DETACHED_PROCESS` instead of POSIX `start_new_session`.
 - Bug fixes: FTS recency weighting was inverted (older results ranked higher); `ingest_jsonl` now UPSERTs `sys_sessions` so `ended_at` and `message_count` populate on re-ingest; `write_exchange` uses `cursor.lastrowid` for `transcript_embeddings`.
-- Identity: removed mikeadolan-specific keywords (Johnny, Harlem, etc.); "Mike" hardcoded in `user-prompt-submit`'s frustration messages → "Tre".
+- Identity: removed mikeadolan-specific keywords (Johnny, Harlem, etc.); "Mike" hardcoded in `user-prompt-submit`'s frustration messages → "[NAME]".
 - Shared library: extracted `TAG_KEYWORDS` to `lib/vocab.py`, path/session-id helpers to `lib/paths.py`.
-- License: dual MIT copyright (Tre 2026 + Mike Dolan 2026 original).
+- License: dual MIT copyright (contributors + Mike Dolan 2026 original).
 
 ---
 

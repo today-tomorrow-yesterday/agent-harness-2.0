@@ -1,4 +1,4 @@
-from skill_forge.usage_logger import build_usage_record, parse_payload
+﻿from skill_forge.usage_logger import build_usage_record, parse_payload
 
 
 def test_parse_payload_strips_bom():

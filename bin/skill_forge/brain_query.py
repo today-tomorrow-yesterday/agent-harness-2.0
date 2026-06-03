@@ -1,4 +1,4 @@
-"""Query the claude-brain transcript DB for skill invocations and their outcomes.
+﻿"""Query the claude-brain transcript DB for skill invocations and their outcomes.
 
 Detection (Phase 0): a transcript row whose content contains
 `<command-name>SKILL</command-name>` (slash-invocation form) OR the literal

@@ -1,4 +1,4 @@
-from skill_forge.brain_query import find_invocations, get_after_window
+﻿from skill_forge.brain_query import find_invocations, get_after_window
 
 
 def test_finds_command_name_invocations(brain_conn):

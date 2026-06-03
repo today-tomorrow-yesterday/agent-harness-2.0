@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 daily-brief.py — assemble a cheap daily digest of agent-os activity and post it
 to Slack. LLM-FREE (zero subscription/API cost): it just reads the farmer logs,
@@ -80,7 +80,7 @@ def _methodology_count() -> int:
 
 def build_brief() -> str:
     today = dt.datetime.now().strftime("%Y-%m-%d")
-    lines = [f"Sol — daily brief ({today})", ""]
+    lines = [f"[NAME] — daily brief ({today})", ""]
 
     lines.append("*Farmers (last run):*")
     for name, path in FARMER_LOGS.items():

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 shield-alerts.py — view recent shield-watch.ps1 alerts.
 

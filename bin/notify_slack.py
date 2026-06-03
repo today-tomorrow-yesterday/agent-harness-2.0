@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 notify_slack.py — post a message to Slack via an Incoming Webhook.
 

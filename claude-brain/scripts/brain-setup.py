@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 brain-setup.py - First-run installer for claude-brain.
 
@@ -1070,7 +1070,7 @@ def _discover_profile_dirs(home):
     config root (contains settings.json or projects/). Honors CLAUDE_CONFIG_DIR
     so the active session's profile is always included.
 
-    Multi-profile users (e.g. .claude-udig for work + .claude for personal)
+    Multi-profile users (e.g. .claude-<profile> for work + .claude for personal)
     need brain-server registered in every profile or the MCP / hooks silently
     no-op under whichever profile got skipped.
     """

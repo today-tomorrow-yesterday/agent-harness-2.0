@@ -1,4 +1,4 @@
-"""Tests for skill_forge.evolution.append_event."""
+﻿"""Tests for skill_forge.evolution.append_event."""
 from __future__ import annotations
 import json
 import pytest

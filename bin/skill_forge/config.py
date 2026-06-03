@@ -1,4 +1,4 @@
-"""Skill-Forge configuration: paths and lifecycle thresholds.
+﻿"""Skill-Forge configuration: paths and lifecycle thresholds.
 
 Threshold provenance: Library Drift (arxiv 2605.19576) — contribution score,
 evidence floor Nmin=100, retirement tau=0.10, bounded active-cap. Phase 0 only

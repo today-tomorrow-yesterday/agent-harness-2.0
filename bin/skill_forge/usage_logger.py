@@ -1,4 +1,4 @@
-"""Parse a PostToolUse hook payload into a usage record (testable core).
+﻿"""Parse a PostToolUse hook payload into a usage record (testable core).
 
 Field-name robustness: this harness's Skill tool uses `skill`/`args`, while the
 Claude Code docs example shows `skill_name`/`arguments`. Accept both so the

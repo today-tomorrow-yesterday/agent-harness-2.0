@@ -1,8 +1,8 @@
-# agent-harness
+# agent-harness 🧠
 
-A portable Claude Code OS — persistent memory, skills, scheduled agents, and a self-improving loop, running entirely on your Claude subscription with no API key required.
+A portable Claude Code OS — persistent memory, skills, scheduled agents, and a self-improving loop, running entirely on your Claude subscription. No API key. No per-token billing. No starting from scratch every session.
 
-Built so Claude Code doesn't start fresh every session.
+> **Claude remembers you. The system gets smarter the more you use it.**
 
 ---
 
@@ -12,34 +12,44 @@ Three runtime layers stacked together:
 
 | Layer | Where | What it does |
 |---|---|---|
-| **Identity + rules** | `CLAUDE.md` (auto-loaded by Claude Code) | Who you are, how Claude talks to you, standing rules |
-| **Source-of-truth markdown** | `memory/` | Project briefs, behavioral rules, persona, ideas |
-| **Conversation history** | `claude-brain/` (SQLite + MCP) | Every session, searchable semantically + by keyword |
+| 🪪 **Identity + rules** | `CLAUDE.md` (auto-loaded by Claude Code) | Who you are, how Claude talks to you, standing rules |
+| 📚 **Source-of-truth markdown** | `memory/` | Project briefs, behavioral rules, persona, ideas |
+| 🔍 **Conversation history** | `claude-brain/` (SQLite + MCP) | Every session searchable — semantically and by keyword |
 
 Plus:
 
-- **Skills** (`skills/`) — reusable slash commands: `/session-reflect`, `/persona-architect`
-- **Scheduled agents** (`bin/`) — weekly planner, daily brief, AgentShield security watcher
-- **Skill-Forge** (`bin/skill_forge/`) — self-improving loop: mines transcripts → scores skills → proposes improvements
-- **Evolution trail** (`forge/evolution.jsonl`) — append-only changelog of every system change
+- ⚡ **Skills** (`skills/`) — reusable slash commands: `/session-reflect`, `/persona-architect`
+- 🤖 **Scheduled agents** (`bin/`) — weekly planner, daily digest, AgentShield security watcher — running while you sleep
+- 🔄 **Skill-Forge** (`bin/skill_forge/`) — self-improving loop: mines your transcripts → scores skills → proposes improvements
+- 📋 **Evolution trail** (`forge/evolution.jsonl`) — append-only changelog of every change to the system
+
+---
+
+## What makes it different
+
+**It compounds.** Every correction you give Claude, every confirmed good approach, every new project brief — all of it gets captured and stays captured. Session 100 is smarter than session 1 because the system learned from sessions 1–99.
+
+**It's yours.** SQLite, Windows Scheduled Tasks, local markdown files. Zero cloud dependencies, zero vendor lock-in. Your data lives on your machine.
+
+**It uses your subscription.** The `claude -p` headless automation runs on your existing Claude Pro/Team/Max account. No API key setup, no surprise bills.
+
+**It's ~70% portable scaffold.** The architecture is reusable. The memory is yours to fill in. You bring the 30% that makes it specific to your life and work.
 
 ---
 
 ## What you need to bring
 
-This repo is ~70% portable scaffold. The other ~30% is yours:
-
 | File | What you fill in |
 |---|---|
-| `memory/user.md` | Who you are |
-| `memory/soul.md` | How Claude talks to you |
-| `memory/sol.md` | Claude instance name/identity (optional) |
-| `memory/frame.md` | Operating philosophy (optional) |
-| `memory/feedback/*.md` | Your behavioral rules |
+| `memory/user.md` | Who you are — role, projects, goals, setup |
+| `memory/soul.md` | How Claude should talk to you |
+| `memory/sol.md` | A name and identity for your Claude instance *(optional)* |
+| `memory/frame.md` | Your operating philosophy *(optional)* |
+| `memory/feedback/*.md` | Your behavioral rules — corrections and confirmations |
 | `memory/projects/*.md` | Your active project briefs |
 | `CLAUDE.md` | Your name, email, environment |
 
-Each file has a **BOOTSTRAP** section with questions to answer.
+Every file has a **BOOTSTRAP** section — answer the questions inside, then write the file in your own words.
 
 ---
 
@@ -49,37 +59,46 @@ Each file has a **BOOTSTRAP** section with questions to answer.
 # 1. Clone
 git clone https://github.com/YOUR_USERNAME/agent-harness Z:\agent-harness
 
-# 2. Fill in the bootstrap files
-# Start with memory/user.md, then soul.md
-# Follow the questions inside each file
+# 2. Fill in memory/user.md and memory/soul.md
+# (follow the BOOTSTRAP questions inside each file)
 
 # 3. Set up claude-brain (transcript memory)
 cd Z:\agent-harness\claude-brain
 pip install -r requirements.txt
 python scripts/brain-setup.py
 
-# 4. Register MCP server in Claude Code (for both profiles if you have multiple)
-CLAUDE_CONFIG_DIR='C:\Users\YOU\.claude' claude mcp add -s user brain-server -- python3 'Z:\agent-harness\claude-brain\mcp\server.py'
+# 4. Register the MCP server in Claude Code
+claude mcp add -s user brain-server -- python3 'Z:\agent-harness\claude-brain\mcp\server.py'
 
-# 5. Install skills
-# Copy skills/session-reflect/SKILL.md → ~/.claude/skills/session-reflect/SKILL.md
+# 5. Install skills (copy to your Claude profile)
+Copy-Item skills\session-reflect\SKILL.md $env:USERPROFILE\.claude\skills\session-reflect\SKILL.md -Force
 
-# 6. Open a Claude Code session in Z:\agent-harness and start talking
+# 6. Open a Claude Code session in Z:\agent-harness — you're live
 ```
 
-Full setup: `docs/REHYDRATE.md`
+Full setup guide: `docs/REHYDRATE.md`
 
 ---
 
-## Key design decisions
+## Key capabilities
 
-**No API key required.** Everything runs via your Claude Pro/Team/Max subscription. The `claude -p` headless invocations (farmers, weekly-planner) consume subscription rate limits, not per-token billing.
+### 🧠 Persistent memory
+`session-reflect` captures corrections, confirmed approaches, and new facts at session end — one skill invocation writes them into `memory/` where they load every future session.
 
-**Local-first.** SQLite, no cloud dependencies, Windows Scheduled Task for automation. Nothing phones home except the Claude CLI.
+### 🔍 Searchable history
+`claude-brain` indexes every conversation into SQLite with FTS5 + semantic embeddings. Ask "what did we decide about X last month?" and get the answer.
 
-**Convention over enforcement.** Behavioral rules live in `memory/feedback/` as markdown. Claude reads them — they're not enforced by hooks. This makes them easy to edit and extend.
+### 🛡️ AgentShield security watcher
+Polls `~/.claude*/` for skill/plugin/agent file changes every hour. Surfaces findings via Windows Toast notifications. Keeps your Claude environment auditable.
 
-**Self-improving.** `session-reflect` captures corrections and surprises at session end. Skill-Forge scores skill effectiveness over time. The system gets better by being used.
+### 🤖 Scheduled automation
+Windows Scheduled Tasks drive:
+- **Weekly Planner** (Sunday 9am) — what landed, what's closer to ready, highest-leverage next move → `next-session.md` + optional Slack delivery
+- **Daily Brief** (7am) — activity digest, inbox pulse, news summary
+- **Brain Embed** (5am) — nightly semantic embedding backfill
+
+### 📈 Skill-Forge self-improvement loop
+Phase 0 (live): scores every skill by usage frequency + outcome signal (did Claude's behavior after invoking the skill look like it helped or hurt?). Surfaces the data for your review. Phase 2 (coming): autonomous revision of self-authored skills.
 
 ---
 
@@ -89,7 +108,7 @@ Full setup: `docs/REHYDRATE.md`
 agent-harness/
 ├── CLAUDE.md               ← auto-loaded by Claude Code every session
 ├── memory/
-│   ├── MEMORY.md           ← canonical index
+│   ├── MEMORY.md           ← canonical index (update when adding files)
 │   ├── user.md             ← who you are [BOOTSTRAP]
 │   ├── soul.md             ← how Claude talks to you [BOOTSTRAP]
 │   ├── sol.md              ← Claude instance identity [optional]
@@ -97,24 +116,24 @@ agent-harness/
 │   ├── feedback/           ← standing behavioral rules
 │   ├── projects/           ← active project briefs
 │   ├── ideas/              ← pre-project concepts
-│   └── archive/            ← superseded files (don't delete)
+│   └── archive/            ← superseded files (kept for history)
 ├── skills/
-│   ├── session-reflect/    ← end-of-session memory capture
-│   └── persona-architect/  ← AI persona design + consistency path
+│   ├── session-reflect/    ← end-of-session memory capture skill
+│   └── persona-architect/  ← AI persona design + consistency path skill
 ├── bin/
-│   ├── skill_forge/        ← Skill-Forge Python package
+│   ├── skill_forge/        ← Skill-Forge Python package (44 tests)
 │   ├── skill-refiner.py    ← Phase 0 scorer (read-only signal)
-│   ├── weekly-planner.py   ← Sunday briefing → next-session.md
+│   ├── weekly-planner.py   ← Sunday briefing generator
 │   ├── daily-brief.py      ← Daily digest
-│   ├── shield-watch.ps1    ← AgentShield security watcher
+│   ├── shield-watch.ps1    ← AgentShield security watcher loop
 │   └── install-*.bat       ← Register Windows Scheduled Tasks
 ├── forge/
 │   ├── skill-usage.jsonl   ← per-invocation skill log [gitignored]
 │   └── evolution.jsonl     ← system changelog [gitignored]
-├── claude-brain/           ← transcript memory engine (third-party, MIT)
+├── claude-brain/           ← transcript memory engine (MIT, see credits)
 └── docs/
     ├── REHYDRATE.md        ← cross-machine setup guide
-    ├── specs/              ← design specs
+    ├── specs/              ← design specifications
     └── plans/              ← implementation plans
 ```
 
@@ -122,5 +141,5 @@ agent-harness/
 
 ## Credits
 
-- `claude-brain` — [mikeadolan/claude-brain](https://github.com/mikeadolan/claude-brain) (MIT) — transcript ingestion, SQLite storage, MCP server, semantic embeddings
-- Design inspired by [Hermes Agent](https://github.com/nousresearch/hermes-agent) (same idea, arrived at independently)
+- **`claude-brain`** — [mikeadolan/claude-brain](https://github.com/mikeadolan/claude-brain) (MIT) — transcript ingestion, SQLite storage, MCP server, semantic embeddings. Extended in this fork.
+- Design validated against [Hermes Agent](https://github.com/nousresearch/hermes-agent) by Nous Research — same idea, arrived at independently; Hermes proved the architecture pattern.

@@ -1,4 +1,4 @@
-# shield-watch.ps1
+﻿# shield-watch.ps1
 #
 # Polls Claude Code config directories for changes. When a skill, plugin, agent,
 # CLAUDE.md, or settings.json changes, runs `agentshield scan` against the
@@ -31,7 +31,7 @@ $LogFile     = Join-Path $AgentOsRoot "agentshield-watch.log"
 $StateFile   = Join-Path $AgentOsRoot "bin\shield-state.json"
 
 $Profiles = @(
-    @{ Name = "udig";     Path = Join-Path $env:USERPROFILE ".claude-udig" }
+    @{ Name = "<YourOrg>";     Path = Join-Path $env:USERPROFILE ".claude-<profile>" }
     @{ Name = "personal"; Path = Join-Path $env:USERPROFILE ".claude" }
 )
 

@@ -1,4 +1,4 @@
-# Evolution Audit Trail — Design Spec
+﻿# Evolution Audit Trail — Design Spec
 
 **Date:** 2026-06-02
 **Status:** Approved
@@ -84,15 +84,15 @@ Strategy is inferred from candidate category:
 
 | session-reflect category | default strategy |
 |---|---|
-| Behavioral correction (Tre said "no / don't") | `repair` |
-| Confirmed approach (Tre said "yes, that was right") | `harden` |
+| Behavioral correction (you said "no / don't") | `repair` |
+| Confirmed approach (you said "yes, that was right") | `harden` |
 | New skill candidate | `innovate` |
 | New project brief | `innovate` |
 | Project state update | `calibrate` |
-| Identity fact about Tre | `document` |
+| Identity fact about you | `document` |
 | Anti-pattern / presentation rejection | `repair` |
 
-Claude picks the strategy; the entry is shown alongside the memory candidate in the approval step so Tre can correct it before it's written.
+Claude picks the strategy; the entry is shown alongside the memory candidate in the approval step so you can correct it before it's written.
 
 ### Skill-Forge
 

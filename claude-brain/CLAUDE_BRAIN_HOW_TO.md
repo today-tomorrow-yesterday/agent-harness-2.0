@@ -1,6 +1,6 @@
-# CLAUDE-BRAIN: HOW TO USE YOUR BRAIN
+﻿# CLAUDE-BRAIN: HOW TO USE YOUR BRAIN
 
-**For:** Tre Hill's fork of claude-brain inside `agent-os`. Originally written for the upstream `mikeadolan/claude-brain` project; adapted for in-place use.
+**For:** contributor's fork of claude-brain inside `agent-os`. Originally written for the upstream `mikeadolan/claude-brain` project; adapted for in-place use.
 
 ---
 

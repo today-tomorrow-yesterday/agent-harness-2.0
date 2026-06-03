@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 brain_health.py - 9-point health check for claude-brain.
 
@@ -38,7 +38,7 @@ SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 ROOT_PATH = str(SCRIPT_DIR.parent)
 
 # Multi-profile aware: report against every Claude profile on this machine,
-# not just ~/.claude. Tre runs both .claude and .claude-udig.
+# not just ~/.claude -- supports multiple profiles (e.g. .claude-work, .claude)
 sys.path.insert(0, ROOT_PATH)
 from lib.paths import discover_profile_dirs  # noqa: E402
 

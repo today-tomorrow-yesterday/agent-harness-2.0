@@ -1,15 +1,15 @@
-"""
+﻿"""
 weekly-planner.py — Sunday-morning briefing for Tre.
 
 Runs once a week (Sunday 09:00 local by default). Reads the current state
 of the AI Production Engine project, the CLONE wiki, and recent agent-os
 memory changes, then invokes `claude -p` headlessly to synthesize a
 "here's what's next and why" report. Writes the result to
-`Z:\\agent-os\\next-session.md` so when Tre opens a session he finds the
+`Z:\\agent-os\\next-session.md` so when you open a session he finds the
 briefing waiting.
 
 What this does NOT do:
-  - Make decisions for Tre (just surfaces options + reasoning)
+  - Make decisions for you (just surfaces options + reasoning)
   - Build production plumbing (that's still session-based work)
   - Modify memory or project files (read-only synthesis)
 
@@ -19,7 +19,7 @@ What it DOES do:
     new methodology files, new experts)
   - Track which capability gaps in projects/ai_production_engine.md are
     closer to being unblock-worthy
-  - Note any standing feedback rule changes Tre might want to remember
+  - Note any standing feedback rule changes you might want to remember
 
 Cost model: uses Tre's OAuth Claude subscription via `claude -p`. Each
 run consumes ~1-3 messages from the 5-hour rate-limit window. No dollar
@@ -146,7 +146,7 @@ def _gather_context() -> dict:
             max_chars=10000,
         ),
         "user_md": _read_file(AGENT_OS / "memory" / "user.md", max_chars=6000),
-        "sol_md": _read_file(AGENT_OS / "memory" / "sol.md", max_chars=4000),
+        "sol_md": _read_file(AGENT_OS / "memory" / "[NAME].md", max_chars=4000),
         "memory_index": _read_file(AGENT_OS / "memory" / "MEMORY.md", max_chars=4000),
         "recent_clone_log": _recent_clone_log_entries(days=7),
         "methodology_files_summary": _list_methodology_files(),
@@ -157,9 +157,9 @@ def _gather_context() -> dict:
 
 
 def _build_prompt(ctx: dict) -> str:
-    return f"""You are Sol — the Claude instance that loads when agent-os is the context. Your job today is the weekly Sunday-morning briefing for Tre.
+    return f"""You are a Claude instance — the Claude instance that loads when agent-os is the context. Your job today is the weekly Sunday-morning briefing for Tre.
 
-The briefing's purpose: when Tre opens a session this week, he should find a file at Z:\\agent-os\\next-session.md that tells him (a) what landed since last week, (b) what the highest-leverage next move is, (c) why that's the move, and (d) what's deferred or waiting.
+The briefing's purpose: when you open a session this week, he should find a file at Z:\\agent-os\\next-session.md that tells him (a) what landed since last week, (b) what the highest-leverage next move is, (c) why that's the move, and (d) what's deferred or waiting.
 
 PRIMARY CONSTRAINTS (do not violate)
 ====================================
@@ -168,7 +168,7 @@ PRIMARY CONSTRAINTS (do not violate)
 2. NEVER recommend committing code in projects with default-ask commit policies (SES, Mosaic). See feedback/never_commit_without_permission.md.
 3. NEVER suggest setting ANTHROPIC_API_KEY or quoting dollar costs for Claude inference. See feedback/subscription_first_design.md.
 4. NEVER suggest content production that would reveal Tre's identity. See feedback/faceless_production_only.md.
-5. Tre does 5%, Sol does 95% — frame work as "I would do X; you'd approve Y" not "you need to do X."
+5. you does 5%, [NAME] does 95% — frame work as "I would do X; you'd approve Y" not "you need to do X."
 6. Match Tre's tone (see soul.md and anti_patterns.md): no walls of prose, no decorative emojis, structured tables OK, severity glyphs OK.
 
 YOUR INPUTS
@@ -176,10 +176,10 @@ YOUR INPUTS
 
 TODAY: {ctx['today']}
 
-USER (who Tre is — abridged):
+USER (who you are — abridged):
 {ctx['user_md']}
 
-SOL (who I am, my self-commitments — abridged):
+[NAME] (who I am, my self-commitments — abridged):
 {ctx['sol_md']}
 
 MEMORY INDEX (what feedback rules / projects exist):
@@ -333,7 +333,7 @@ def main() -> int:
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         from notify_slack import post_slack
-        sent = post_slack(output, title=f"Sol — weekly brief ({ctx['today']})")
+        sent = post_slack(output, title=f"[NAME] — weekly brief ({ctx['today']})")
         if sent is True:
             log("INFO", "posted weekly brief to Slack")
         elif sent is None:

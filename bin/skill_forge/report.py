@@ -1,4 +1,4 @@
-"""Render the weekly Skill-Forge report (Phase 0: read-only)."""
+﻿"""Render the weekly Skill-Forge report (Phase 0: read-only)."""
 from __future__ import annotations
 
 # Action items surface first (Tre's green-on-top: most-actionable at the top).

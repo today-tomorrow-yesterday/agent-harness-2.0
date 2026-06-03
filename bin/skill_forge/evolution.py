@@ -1,4 +1,4 @@
-"""evolution.py — append EvolutionEvent entries to forge/evolution.jsonl.
+﻿"""evolution.py — append EvolutionEvent entries to forge/evolution.jsonl.
 
 Schema: {ts, strategy, asset, what, why, session}
 Strategies: repair | harden | innovate | calibrate | document

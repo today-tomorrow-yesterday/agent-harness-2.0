@@ -1,4 +1,4 @@
-# auto-commit.ps1 — PostToolUse hook for Z:\Clone\ wiki content
+﻿# auto-commit.ps1 — PostToolUse hook for Z:\Clone\ wiki content
 #
 # Triggered by Claude Code on Write|Edit. Receives a JSON payload via stdin
 # describing the tool invocation. If the written file is inside Z:\Clone\ and
@@ -9,7 +9,7 @@
 # remote, switch the pull-then-push pattern in here.
 #
 # The carve-out in Z:\agent-os\memory\feedback\never_commit_without_permission.md
-# covers this autonomous behavior: Tre approved the hook design 2026-05-24
+# covers this autonomous behavior: owner approved the hook design 2026-05-24
 # while implementing the Brad-inspired infrastructure layer. Once approved,
 # the hook commits without per-write asks; Claude itself doesn't issue
 # `git commit` from session work — only this hook does.

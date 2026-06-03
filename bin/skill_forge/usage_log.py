@@ -1,4 +1,4 @@
-"""Read the skill-usage JSONL log written by the PostToolUse hook.
+﻿"""Read the skill-usage JSONL log written by the PostToolUse hook.
 
 This is the reliable FREQUENCY source (the brain doesn't capture Skill-tool
 invocations queryably — see spec 2026-05-29 §5). Forward-only: entries exist

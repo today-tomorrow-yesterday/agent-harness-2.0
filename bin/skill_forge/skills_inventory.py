@@ -1,4 +1,4 @@
-"""Enumerate skills from their SKILL.md frontmatter."""
+﻿"""Enumerate skills from their SKILL.md frontmatter."""
 from __future__ import annotations
 import re
 from pathlib import Path

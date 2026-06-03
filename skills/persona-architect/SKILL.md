@@ -1,4 +1,4 @@
----
+﻿---
 name: persona-architect
 description: Design and LOCK a consistent, photorealistic AI persona, then route to the right production skill. Owns the train-a-model identity lane (OpenArt @name, Enhancor trigger-word, Crea/Pykaso face-swap) that banana-pro-director/cinema-worldbuilder do NOT cover — the cheap (<5¢/img), drift-proof, reusable persona path for a recurring monetized influencer. Front-ends the concept/brand/brief, picks the consistency path (train vs reference) and tool, builds the reference sheet, then hands off. Use to create a new recurring AI persona, set up character training, or decide which consistency pipeline a character needs.
 ---
@@ -9,7 +9,7 @@ description: Design and LOCK a consistent, photorealistic AI persona, then route
 > actual methodology files (not the summary pages, which a multi-agent audit proved are
 > lossy — they miss the train-vs-reference fork, Licbe's accent-lock, product-in-hand, and
 > Joey's v2 stack). Settings below are quoted from the raw expert files; they are
-> **defaults to validate against visual results**, not gospel. Tre is the visual oracle:
+> **defaults to validate against visual results**, not gospel. you are the visual oracle:
 > he generates, inspects (or I inspect via Read), and we iterate this file.
 
 ## What this skill is — and what it is NOT
@@ -28,7 +28,7 @@ It then **routes** the per-shot work to the skill that owns it:
 | Voice clone + lip-sync | *(future `voice-lipsync` skill — not built yet; manual for now)* |
 | Product-in-hand UGC ads, bulk variation | *(future `ugc-ad` skill — not built yet)* |
 
-**Does NOT** generate images (Claude can't — Tre generates, Claude inspects via Read), produce video/voice, commit to git, or duplicate banana-pro's Higgsfield prompt grammar.
+**Does NOT** generate images (Claude can't — you generates, Claude inspects via Read), produce video/voice, commit to git, or duplicate banana-pro's Higgsfield prompt grammar.
 
 ## The genuine fork this skill exists to navigate
 
@@ -41,7 +41,7 @@ The roster's deepest split (confirmed across 17 experts): **train a model** vs *
 
 Joey/Tao (and therefore `banana-pro-director`) only do reference-only. Dan Kieft, Dan Ko, Isa, Sirio, Yaroflasher all train. Note the whole UGC-ad cluster (Alfie/Youri/Jason/makeugc/Alex) trains *nothing* — they reuse library actors + edit-from-base.
 
-> **DEFAULT RULE (validated 2026-05-31, the Mia build): start reference-at-generation, don't pay to train.** With Nano Banana Pro's 2026 reference-consistency and a free credit pool (e.g. Gemini Flow's ~10k credits/mo), reference-at-generation holds identity well enough to run a persona's whole feed for **$0** — proven: Mia held her face across a fresh gym scene with only the reference sheet attached. The classic training pitch (cheaper-per-image, tighter lock, type-by-name) is **largely neutralized** when generation is already free and already photographic. **Escalate to a trained model ONLY when** (1) free reference-gen credits run out, (2) drift-at-volume becomes a real problem across months, or (3) you need rock-locked identity feeding *video*. Until then, training is a paid step you don't need — and Tre hates being upsold.
+> **DEFAULT RULE (validated 2026-05-31, the Mia build): start reference-at-generation, don't pay to train.** With Nano Banana Pro's 2026 reference-consistency and a free credit pool (e.g. Gemini Flow's ~10k credits/mo), reference-at-generation holds identity well enough to run a persona's whole feed for **$0** — proven: Mia held her face across a fresh gym scene with only the reference sheet attached. The classic training pitch (cheaper-per-image, tighter lock, type-by-name) is **largely neutralized** when generation is already free and already photographic. **Escalate to a trained model ONLY when** (1) free reference-gen credits run out, (2) drift-at-volume becomes a real problem across months, or (3) you need rock-locked identity feeding *video*. Until then, training is a paid step you don't need — and you hates being upsold.
 
 ## The procedure
 
@@ -119,7 +119,7 @@ Per the routing table at top: Higgsfield stills → `banana-pro-director`; Seeda
 
 ## The iteration loop
 
-This is a hypothesis. After each real use, Tre reports what the visual result got wrong; Sol traces it to the offending stage/setting, edits this file (and the wiki page if the wiki was wrong), re-installs to both profiles. Settings that survive visual confirmation get marked validated.
+This is a hypothesis. After each real use, you report what the visual result got wrong; your Claude instance traces it to the offending stage/setting, edits this file (and the wiki page if the wiki was wrong), re-installs to both profiles. Settings that survive visual confirmation get marked validated.
 
 ## Reversibility
 
@@ -127,8 +127,8 @@ Delete `Z:\agent-os\skills\persona-architect\` + the two profile copies. No othe
 
 ## Cross-references
 
-- `C:\Users\trerh\.claude-udig\skills\banana-pro-director\SKILL.md` — Higgsfield image lane (hand-off target)
-- `C:\Users\trerh\.claude-udig\skills\cinema-worldbuilder\SKILL.md` — Seedance video lane (hand-off target)
+- `C:\Users\<USERNAME>\.claude-<profile>\skills\banana-pro-director\SKILL.md` — Higgsfield image lane (hand-off target)
+- `C:\Users\<USERNAME>\.claude-<profile>\skills\cinema-worldbuilder\SKILL.md` — Seedance video lane (hand-off target)
 - `Z:\Clone\research\character-skill-suite-coverage.md` — the 17-expert coverage analysis behind this design
 - `Z:\Clone\techniques\character-consistency.md` · `Z:\Clone\research\ai-influencer-realism.md` · `Z:\Clone\research\prompt-library.md` — wiki sources (known-lossy; prefer the raw expert methodology files)
 - `Z:\agent-os\memory\projects\ai_production_engine.md` — the goal this unblocks (channel #1 recurring persona)

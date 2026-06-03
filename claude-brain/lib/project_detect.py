@@ -1,4 +1,4 @@
-"""project_detect.py — project-prefix resolution + auto-onboarding.
+﻿"""project_detect.py — project-prefix resolution + auto-onboarding.
 
 The flow:
   1. Try explicit patterns from `config.yaml::jsonl_project_mapping` (longest-first,
@@ -38,7 +38,7 @@ _CAMEL_BOUNDARY_RE = re.compile(r"(?<=[a-z])(?=[A-Z])")
 def extract_workspace(source_file: str | None) -> str | None:
     """Return the encoded workspace folder name from a JSONL `source_file`.
 
-    `C:\\Users\\trerh\\.claude-udig\\projects\\X--SES-Legacy\\<uuid>.jsonl`
+    `C:\\Users\\<USERNAME>\\.claude-<profile>\\projects\\X--SES-Legacy\\<uuid>.jsonl`
         → `'X--SES-Legacy'`
     Sub-agent paths still resolve to the parent workspace.
     Returns None if the path doesn't look like a Claude Code projects path.

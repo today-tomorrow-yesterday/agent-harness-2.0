@@ -1,4 +1,4 @@
-"""Shared pytest fixtures: an in-memory-on-disk brain DB and a sample skills dir."""
+﻿"""Shared pytest fixtures: an in-memory-on-disk brain DB and a sample skills dir."""
 from __future__ import annotations
 import sqlite3
 import pytest

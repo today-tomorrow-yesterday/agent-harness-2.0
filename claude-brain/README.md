@@ -1,6 +1,6 @@
-# claude-brain
+﻿# claude-brain
 
-**Forked in place from `mikeadolan/claude-brain` on 2026-05-24. Maintained by Tre Hill as part of `agent-os`.** See CHANGELOG for the fork notes.
+**Forked in place from `mikeadolan/claude-brain` on 2026-05-24. Maintained as part of agent-harness.** See CHANGELOG for the fork notes.
 
 **Primary environment:** Windows 11 + WSL2 (PowerShell + Git Bash). Original upstream targeted Fedora 43, macOS, and Ubuntu; portions of those code paths are still in place.
 
@@ -424,7 +424,7 @@ See `CLAUDE_BRAIN_HOW_TO.md` for the complete user guide.
 
 MIT.
 
-Originally created by Mike Dolan (`mikeadolan/claude-brain`); the MIT license permits the fork-in-place that produced this version. Upstream copyright is preserved alongside the fork copyright in the `LICENSE` file. This fork is maintained by Tre Hill as part of the `agent-os` system.
+Originally created by Mike Dolan (`mikeadolan/claude-brain`); the MIT license permits the fork-in-place that produced this version. Upstream copyright is preserved alongside the fork copyright in the `LICENSE` file. This fork is maintained as part of the agent-harness system.
 
 ---
 

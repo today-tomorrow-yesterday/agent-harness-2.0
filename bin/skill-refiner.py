@@ -1,4 +1,4 @@
-"""skill-refiner.py — Skill-Forge Phase 0 (read-only signal validator).
+﻿"""skill-refiner.py — Skill-Forge Phase 0 (read-only signal validator).
 
 Scores every skill in Z:\\agent-os\\skills\\ from claude-brain transcript
 history and writes Z:\\agent-os\\forge\\report-latest.md. MODIFIES NOTHING.
@@ -135,7 +135,7 @@ def main() -> int:
     # Deliver to Slack (no-op if webhook unset) — reuse the existing helper.
     try:
         from notify_slack import post_slack
-        post_slack(md, title=f"Sol — Skill-Forge report ({today})")
+        post_slack(md, title=f"Skill-Forge report ({today})")
     except Exception as e:  # noqa: BLE001
         log("WARN", f"Slack notify skipped: {type(e).__name__}: {e}")
 

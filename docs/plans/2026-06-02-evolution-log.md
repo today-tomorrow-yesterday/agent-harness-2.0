@@ -1,4 +1,4 @@
-# Evolution Audit Trail Implementation Plan
+﻿# Evolution Audit Trail Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -22,8 +22,8 @@
 | Create | `Z:\agent-os\memory\feedback\evolution_log_convention.md` |
 | Modify | `Z:\agent-os\memory\MEMORY.md` |
 | Modify | `Z:\agent-os\skills\session-reflect\SKILL.md` |
-| Modify | `C:\Users\trerh\.claude-udig\skills\session-reflect\SKILL.md` |
-| Modify | `C:\Users\trerh\.claude\skills\session-reflect\SKILL.md` |
+| Modify | `C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md` |
+| Modify | `C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md` |
 
 ---
 
@@ -429,15 +429,15 @@ For each approved candidate:
 
    | candidate category | strategy |
    |---|---|
-   | Behavioral correction (Tre said "no / don't") | `repair` |
-   | Confirmed approach (Tre said "yes, that was right") | `harden` |
+   | Behavioral correction (you said "no / don't") | `repair` |
+   | Confirmed approach (you said "yes, that was right") | `harden` |
    | New skill candidate | `innovate` |
    | New project brief | `innovate` |
    | Project state update | `calibrate` |
-   | Identity fact about Tre | `document` |
+   | Identity fact about you | `document` |
    | Anti-pattern / presentation rejection | `repair` |
 
-   The entry is shown alongside the candidate in the proposal step (Step 4) so Tre can correct the strategy before anything is written. `asset` = the path relative to `Z:\agent-os\` (e.g. `feedback/my_rule.md`). `session` = first 8 chars of the current session ID from brain context.
+   The entry is shown alongside the candidate in the proposal step (Step 4) so you can correct the strategy before anything is written. `asset` = the path relative to `Z:\agent-os\` (e.g. `feedback/my_rule.md`). `session` = first 8 chars of the current session ID from brain context.
 
 1. **Write the file** to its target location with the full frontmatter + body
 2. **Update `Z:\agent-os\memory\MEMORY.md`** by adding the new entry under the correct section (`Behavioral rules`, `Active projects`, `Ideas`, or `Top-level`)
@@ -457,29 +457,29 @@ Expected: at least 2 matches referencing `evolution.jsonl` and `evolution_log_co
 ## Task 9: Sync session-reflect to both Claude profiles
 
 **Files:**
-- Modify: `C:\Users\trerh\.claude-udig\skills\session-reflect\SKILL.md`
-- Modify: `C:\Users\trerh\.claude\skills\session-reflect\SKILL.md`
+- Modify: `C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md`
+- Modify: `C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md`
 
 Per [[parallel_subscriptions]], all three copies must be identical.
 
-- [ ] **Step 1: Copy canonical to udig profile**
+- [ ] **Step 1: Copy canonical to <YourOrg> profile**
 
 ```powershell
-Copy-Item "Z:\agent-os\skills\session-reflect\SKILL.md" "C:\Users\trerh\.claude-udig\skills\session-reflect\SKILL.md" -Force
+Copy-Item "Z:\agent-os\skills\session-reflect\SKILL.md" "C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md" -Force
 ```
 
 - [ ] **Step 2: Copy canonical to personal profile**
 
 ```powershell
-Copy-Item "Z:\agent-os\skills\session-reflect\SKILL.md" "C:\Users\trerh\.claude\skills\session-reflect\SKILL.md" -Force
+Copy-Item "Z:\agent-os\skills\session-reflect\SKILL.md" "C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md" -Force
 ```
 
 - [ ] **Step 3: Verify all three are identical**
 
 ```powershell
 $a = Get-FileHash "Z:\agent-os\skills\session-reflect\SKILL.md"
-$b = Get-FileHash "C:\Users\trerh\.claude-udig\skills\session-reflect\SKILL.md"
-$c = Get-FileHash "C:\Users\trerh\.claude\skills\session-reflect\SKILL.md"
+$b = Get-FileHash "C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md"
+$c = Get-FileHash "C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md"
 if ($a.Hash -eq $b.Hash -and $b.Hash -eq $c.Hash) { "PASS: all three identical" } else { "FAIL: hash mismatch" }
 ```
 

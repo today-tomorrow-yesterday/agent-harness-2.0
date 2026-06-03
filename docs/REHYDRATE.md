@@ -1,4 +1,4 @@
-# Rehydrate the agent-os on a new machine
+﻿# Rehydrate the agent-os on a new machine
 
 This folder (`Z:\agent-os\` or wherever you put it) is mostly self-contained. To bring it up on a fresh computer, follow this. Total time: under 30 minutes (most of it is the interactive claude-brain setup).
 
@@ -14,7 +14,7 @@ Inside `Z:\agent-os\`:
 
 Outside the agent-os folder:
 
-- `~/.claude-udig\CLAUDE.md` — your identity / persona / rules, auto-loaded every session. **Carry this with you.**
+- `~/.claude-<profile>\CLAUDE.md` — your identity / persona / rules, auto-loaded every session. **Carry this with you.**
 
 ## What does NOT carry over
 
@@ -23,7 +23,7 @@ These live in the OS environment of the new machine:
 1. **Claude Code itself** — `npm install -g @anthropic-ai/claude-code` (or the Windows installer / `curl https://claude.ai/install.sh | bash` on macOS/Linux)
 2. **Python 3.10+** — needs to be on PATH so `python` resolves
 3. **claude-brain Python deps** — `pip install -r claude-brain/requirements.txt` after copying the folder
-4. **Hook + MCP registration in `~/.claude\settings.json`** (or `~/.claude-udig\settings.json`) — claude-brain's `brain-setup.py` rewrites these
+4. **Hook + MCP registration in `~/.claude\settings.json`** (or `~/.claude-<profile>\settings.json`) — claude-brain's `brain-setup.py` rewrites these
 
 ## Rehydrate steps
 
@@ -41,13 +41,13 @@ Get the entire `agent-os/` directory onto the new machine. Any method works:
 
 ```powershell
 # Windows
-Copy-Item "<old machine>\Users\<you>\.claude-udig\CLAUDE.md" "$env:USERPROFILE\.claude-udig\CLAUDE.md"
+Copy-Item "<old machine>\Users\<you>\.claude-<profile>\CLAUDE.md" "$env:USERPROFILE\.claude-<profile>\CLAUDE.md"
 
 # macOS / Linux
-cp /path/to/old/.claude-udig/CLAUDE.md ~/.claude/CLAUDE.md
+cp /path/to/old/.claude-<profile>/CLAUDE.md ~/.claude/CLAUDE.md
 ```
 
-(macOS/Linux use `~/.claude/`. Windows udig profile uses `~/.claude-udig/`. Adjust per machine.)
+(macOS/Linux use `~/.claude/`. Windows <YourOrg> profile uses `~/.claude-<profile>/`. Adjust per machine.)
 
 ### 3. Verify Claude Code is installed
 
@@ -95,7 +95,7 @@ Start a new Claude Code session in any directory. Ask:
 
 > "What do you know about me?"
 
-The answer should include your name, role, working preferences, and recent project context — pulled from `~/.claude-udig\CLAUDE.md` + claude-brain's recent-summaries injection.
+The answer should include your name, role, working preferences, and recent project context — pulled from `~/.claude-<profile>\CLAUDE.md` + claude-brain's recent-summaries injection.
 
 Then ask:
 
@@ -107,7 +107,7 @@ If both work, the rehydrate succeeded.
 
 ## If something goes wrong
 
-- **CLAUDE.md not loading:** Confirm the file is at `~/.claude\CLAUDE.md` (or `~/.claude-udig\CLAUDE.md` for the udig profile). Claude Code auto-loads this on session start; if it's not there, no identity context appears.
+- **CLAUDE.md not loading:** Confirm the file is at `~/.claude\CLAUDE.md` (or `~/.claude-<profile>\CLAUDE.md` for the <YourOrg> profile). Claude Code auto-loads this on session start; if it's not there, no identity context appears.
 - **claude-brain hooks not firing:** Check `~/.claude\settings.json` for the `hooks.SessionStart` entries. Confirm the paths point at files that exist on the new machine.
 - **MCP tools unavailable:** Run `claude mcp list` — `brain-server` should appear. If not, brain-setup didn't register it; rerun setup or manually `claude mcp add brain-server python <NEW_PATH>\claude-brain\mcp\server.py`.
 - **Encoding issues:** If non-ASCII characters in `CLAUDE.md` or memory files render as `?`, set `PYTHONIOENCODING=utf-8` in your environment.
@@ -133,7 +133,7 @@ The `.gitignore` keeps the SQLite DB and the claude-brain submodule out of your 
 To version `CLAUDE.md` alongside `memory/`, you can symlink it or just copy after edits:
 
 ```powershell
-Copy-Item "$env:USERPROFILE\.claude-udig\CLAUDE.md" "<agent-os path>\CLAUDE.md.snapshot"
+Copy-Item "$env:USERPROFILE\.claude-<profile>\CLAUDE.md" "<agent-os path>\CLAUDE.md.snapshot"
 ```
 
 ## Portability principles applied

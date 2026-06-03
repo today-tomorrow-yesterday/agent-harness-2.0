@@ -1,4 +1,4 @@
-from skill_forge.skills_inventory import list_skills
+﻿from skill_forge.skills_inventory import list_skills
 
 
 def test_lists_both_skills_with_names_and_origin(sample_skills_dir):

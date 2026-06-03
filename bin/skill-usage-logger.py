@@ -1,4 +1,4 @@
-"""PostToolUse hook: log Skill-tool invocations to forge/skill-usage.jsonl.
+﻿"""PostToolUse hook: log Skill-tool invocations to forge/skill-usage.jsonl.
 
 Registered in BOTH profiles' settings.json with matcher "Skill". Reads the hook
 payload JSON on stdin and appends one JSONL line per Skill invocation.

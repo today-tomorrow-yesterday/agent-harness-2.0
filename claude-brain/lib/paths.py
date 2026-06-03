@@ -1,4 +1,4 @@
-"""Shared path / session-id discovery used by hooks and scripts.
+﻿"""Shared path / session-id discovery used by hooks and scripts.
 
 Created 2026-05-24 to fix a critical bug: the original `cwd.replace("/", "-")`
 only handled POSIX separators, so on Windows the encoded folder name never
@@ -8,12 +8,12 @@ path instead of the live hook path. See `docs/AUDIT_2026_05_24.md` for the
 full story.
 
 Claude Code's actual encoding convention (verified by inspecting both
-`~/.claude/projects/` and `~/.claude-udig/projects/` on Windows + macOS):
+`~/.claude/projects/` and `~/.claude-<profile>/projects/` on Windows + macOS):
 - Each of `/`, `\\`, `:` is replaced with `-`.
-- Consecutive separators are NOT collapsed: `C:\\Users\\trerh` → `C--Users-trerh`.
+- Consecutive separators are NOT collapsed: `C:\Users\<USERNAME>` → `C--Users-<USERNAME>`.
 - Drive-colon expansion is the load-bearing piece for Windows.
 
-Multi-profile awareness: Tre runs both `~/.claude-udig/` and `~/.claude/` on
+Multi-profile awareness: You may run multiple profiles (e.g. ~/.claude-work/ and ~/.claude/) on
 the same machine, plans for a third. Every helper that searches for JSONLs
 walks all discovered profile dirs, not just the hardcoded default.
 """
@@ -30,8 +30,8 @@ def encode_cwd(cwd: str) -> str:
 
     Cross-platform safe. Verified against real folder names in
     ~/.claude*/projects/ on Windows. Does not collapse consecutive
-    separators, by design — `C:\\Users\\trerh` must round-trip to
-    `C--Users-trerh` to match what Claude Code creates.
+    separators, by design — `C:\Users\<USERNAME>` must round-trip to
+    `C--Users-<USERNAME>` to match what Claude Code creates.
     """
     return cwd.replace("/", "-").replace("\\", "-").replace(":", "-")
 
@@ -42,7 +42,7 @@ def discover_profile_dirs() -> list[str]:
     Order of precedence:
     1. `$CLAUDE_CONFIG_DIR` if set (single dir, respects explicit override)
     2. Otherwise: every `~/.claude*` directory that exists
-       (`.claude`, `.claude-udig`, future `.claude-foo`)
+       (`.claude`, `.claude-<profile>`, future `.claude-foo`)
 
     Returns absolute paths. Empty list is possible (no Claude Code installed).
     """

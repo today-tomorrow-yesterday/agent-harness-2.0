@@ -1,4 +1,4 @@
-<#
+﻿<#
 brain-embed.ps1 — nightly semantic-embedding backfill for claude-brain.
 
 Runs scripts/batch_embed.py, which embeds every eligible transcript that has no
@@ -14,7 +14,7 @@ Logs to claude-brain/logs/<hostname>/batch_embed.log with size-based rotation.
 
 $Root      = 'Z:\agent-os\claude-brain'
 $Script    = Join-Path $Root 'scripts\batch_embed.py'
-$Python    = 'C:\Users\trerh\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\python.exe'
+$Python    = 'C:\Users\<USERNAME>\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\python.exe'
 $LogDir    = Join-Path $Root ("logs\" + [System.Net.Dns]::GetHostName())
 $LogFile   = Join-Path $LogDir 'batch_embed.log'
 $MaxBytes  = 5MB
