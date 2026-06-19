@@ -48,6 +48,8 @@ Write identity-level facts (who you are, standing rules, project context) to `me
 4. Run `claude-brain`'s `brain-setup.py` to register transcript hooks
 5. Add your first project brief in `memory/projects/`
 6. Install skills into your Claude profile(s) via the `skills/` directory
-7. Register scheduled tasks via `bin/install-*.bat`
+7. (Optional) Schedule background agents cross-platform: `python bin/scheduler/install.py --apply`
+
+Tip: the fastest path is just to open the repo in Claude Code and say "onboard me" (see `ONBOARDING.md`).
 
 Full setup guide: `docs/REHYDRATE.md`
