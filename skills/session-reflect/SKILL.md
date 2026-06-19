@@ -1,11 +1,11 @@
 ﻿---
 name: session-reflect
-description: Self-noticing reflection — scans the current session's transcript for moments of correction, surprise, confirmed approaches, or novel standing guidance, drafts candidate memory entries (feedback rules, project facts, identity notes, ideas, anti-patterns), and asks you to approve each one before writing into Z:\agent-os\memory\. The capture layer of the meta-learning loop. Use when you say "what did we learn today", "reflect on this session", "save what's important", "/session-reflect", or whenever you notice corrections piling up unsaved during a conversation.
+description: Self-noticing reflection — scans the current session's transcript for moments of correction, surprise, confirmed approaches, or novel standing guidance, drafts candidate memory entries (feedback rules, project facts, identity notes, ideas, anti-patterns), and asks you to approve each one before writing into memory/. The capture layer of the meta-learning loop. Use when you say "what did we learn today", "reflect on this session", "save what's important", "/session-reflect", or whenever you notice corrections piling up unsaved during a conversation.
 ---
 
 # session-reflect — capture layer for the meta-learning loop
 
-This skill turns the conversation we just had into memory candidates. Claude drafts each candidate; you approve them individually; approved ones get written into `Z:\agent-os\memory\` with the right frontmatter, type, folder placement, and cross-references.
+This skill turns the conversation we just had into memory candidates. Claude drafts each candidate; you approve them individually; approved ones get written into `memory/` with the right frontmatter, type, folder placement, and cross-references.
 
 ## Why this exists
 
@@ -74,7 +74,7 @@ Reject these as non-candidates:
 For each accepted signal, draft a candidate memory file in full:
 - **Filename** — lowercase-kebab-case, descriptive (e.g., `no_github_remote_for_agent_os.md`)
 - **Target folder** — per the table above
-- **Frontmatter** matching the convention used elsewhere in `Z:\agent-os\memory\`
+- **Frontmatter** matching the convention used elsewhere in `memory/`
 - **Body** with the rule/fact + **Why** + **How to apply** sections (for feedback type)
 - **Cross-references** via `[[wikilinks]]`
 
@@ -131,7 +131,7 @@ For each approved candidate, before writing:
 
 For each approved candidate:
 
-0. **Append an evolution entry** to `Z:\agent-os\forge\evolution.jsonl` before writing the file. Use the inline Python snippet from [[evolution_log_convention]] or the Write tool to append directly. Infer strategy from the candidate category:
+0. **Append an evolution entry** to `forge/evolution.jsonl` before writing the file. Use the inline Python snippet from [[evolution_log_convention]] or the Write tool to append directly. Infer strategy from the candidate category:
 
    | candidate category | strategy |
    |---|---|
@@ -143,10 +143,10 @@ For each approved candidate:
    | Identity fact about you | `document` |
    | Anti-pattern / presentation rejection | `repair` |
 
-   Show the inferred strategy alongside the memory candidate in the Step 4 proposal so you can correct it before anything is written. `asset` = path relative to `Z:\agent-os\` (e.g. `feedback/my_rule.md`). `session` = first 8 chars of session ID from brain context.
+   Show the inferred strategy alongside the memory candidate in the Step 4 proposal so you can correct it before anything is written. `asset` = path relative to the repo root (e.g. `feedback/my_rule.md`). `session` = first 8 chars of session ID from brain context.
 
 1. **Write the file** to its target location with the full frontmatter + body
-2. **Update `Z:\agent-os\memory\MEMORY.md`** by adding the new entry under the correct section (`Behavioral rules`, `Active projects`, `Ideas`, or `Top-level`)
+2. **Update `memory/MEMORY.md`** by adding the new entry under the correct section (`Behavioral rules`, `Active projects`, `Ideas`, or `Top-level`)
 3. **Append, don't overwrite**, when the target is an existing file like `feedback/anti_patterns.md`, `ideas/_index.md`, or `user.md`
 
 After all writes, report a short summary:
@@ -182,7 +182,7 @@ Use `[[slug]]` syntax (matches the `name:` field in the frontmatter of the targe
 
 ## What this skill does NOT do
 
-- **No auto-commit.** `Z:\agent-os\` is not a git repo by design. Memory writes happen, no commit fires. The auto-commit hook at `Z:\agent-os\bin\hooks\auto-commit.ps1` is scoped to `Z:\Clone\` only.
+- **No auto-commit.** Memory writes happen; no commit fires. Commit your `memory/` changes yourself when you want them versioned.
 - **No automatic invocation.** Manual trigger only for now. A future iteration may add a `Stop` hook integration once you have validated the false-positive rate. The brain's existing `Stop` hook owns that lifecycle slot today — coordinate any future automation with the brain hooks, don't compete.
 - **No modification of existing memory files without explicit confirmation.** Append-to-existing is acceptable (e.g., `anti_patterns.md`, `user.md`), but ask first when the file already exists and the candidate would change its contents.
 - **No broader-brain search by default.** Scope is the current session unless you explicitly names another session ID or date.
@@ -193,30 +193,22 @@ Use `[[slug]]` syntax (matches the `name:` field in the frontmatter of the targe
 
 If a memory file gets written that you doesn't want:
 
-1. **Delete the file**: `rm Z:\agent-os\memory\<folder>\<slug>.md`
+1. **Delete the file**: `rm memory/<folder>\<slug>.md`
 2. **Remove the line** from `MEMORY.md` index
 3. *Optional*: add the slug to a `feedback_anti_capture_signals.md` so future runs don't propose the same shape (this file doesn't exist yet — pioneer it when needed)
 
 For appended-to files (`anti_patterns.md`, `user.md`, `_index.md`): manually remove the new section via Edit. No automation for this — append-then-rollback is rare enough that manual is fine.
 
-## Parallel-subscription install
+## Install
 
-Per [[parallel_subscriptions]], this skill must live in three locations:
-
-| Path | Role |
-|---|---|
-| `Z:\agent-os\skills\session-reflect\SKILL.md` | Canonical (source of truth) |
-| `C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md` | <profile2> profile install |
-| `C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md` | Personal profile install |
-
-All three must hold identical content. When this skill evolves, update all three.
+The canonical copy lives in this repo at `skills/session-reflect/SKILL.md`. If you
+run multiple Claude profiles, install it into each (`~/.claude*/skills/`) and keep
+them identical.
 
 ## Cross-references
 
 - [[projects/agent_os]] — meta-learning loop architecture this skill operationalizes (Layer 2)
-- [[memory_routing]] — identity-level memory goes to `Z:\agent-os\memory\`, not the harness default
+- [[memory_routing]] — identity-level memory goes to `memory/`, not the harness default
 - [[parallel_subscriptions]] — rule for installing this skill in every Claude profile
 - [[anti_patterns]] — one of the existing files this skill may append to
 - [[never_commit_without_permission]] — why this skill never commits
-- `Z:\agent-os\skills\clone-onboard\SKILL.md` — sibling skill following the same propose-then-confirm pattern
-- `Z:\agent-os\bin\hooks\auto-commit.ps1` — Clone-scoped commit hook (NOT triggered by this skill's writes)

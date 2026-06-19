@@ -26,7 +26,7 @@ Three runtime layers stacked together:
 
 Plus:
 
-- ⚡ **Skills** (`skills/`) — reusable slash commands: `/session-reflect`, `/persona-architect`
+- ⚡ **Skills** (`skills/`) — reusable slash commands: `/onboard`, `/session-reflect`
 - 🤖 **Scheduled agents** (`bin/scheduler/`) — weekly planner + security watcher, scheduled **cross-platform** (cron / launchd / Task Scheduler) — running while you sleep
 - 🔄 **Skill-Forge** (`bin/skill_forge/`) — self-improving loop: mines your transcripts → scores skills → proposes improvements
 - 📋 **Evolution trail** (`forge/evolution.jsonl`) — append-only changelog of every change to the system
@@ -124,8 +124,8 @@ agent-harness/
 │   ├── ideas/              ← pre-project concepts
 │   └── archive/            ← superseded files (kept for history)
 ├── skills/
-│   ├── session-reflect/    ← end-of-session memory capture skill
-│   └── persona-architect/  ← AI persona design + consistency path skill
+│   ├── onboard/            ← guided first-time setup (/onboard)
+│   └── session-reflect/    ← end-of-session memory capture skill
 ├── bin/
 │   ├── scheduler/          ← cross-platform job scheduler (cron/launchd/schtasks)
 │   ├── configure_claude.py ← register extra MCP servers (cross-platform)
