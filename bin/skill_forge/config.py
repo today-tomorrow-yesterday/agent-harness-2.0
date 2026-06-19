@@ -7,13 +7,14 @@ COMPUTES these; it never acts on them.
 from __future__ import annotations
 from pathlib import Path
 
-AGENT_OS = Path(r"Z:\agent-os")
-BRAIN_DB = AGENT_OS / "claude-brain" / "claude-brain.db"
-SKILLS_DIR = AGENT_OS / "skills"          # canonical source skills (user-authored)
-FORGE_DIR = AGENT_OS / "forge"
+# Repo root (this file is bin/skill_forge/config.py) — cross-platform, no hardcoded paths.
+REPO = Path(__file__).resolve().parents[2]
+BRAIN_DB = REPO / "claude-brain" / "claude-brain.db"
+SKILLS_DIR = REPO / "skills"          # canonical source skills (user-authored)
+FORGE_DIR = REPO / "forge"
 REPORT_PATH = FORGE_DIR / "report-latest.md"
 EVOLUTION_LOG = FORGE_DIR / "evolution.jsonl"
-LOG_PATH = AGENT_OS / "skill-forge.log"
+LOG_PATH = REPO / "logs" / "skill-forge.log"
 
 # Lifecycle thresholds (computed in Phase 0, acted on in Phase 2+)
 N_MIN = 100          # evidence floor: trials required before retire/revise is eligible

@@ -30,7 +30,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-WEBHOOK_FILE = Path(r"Z:\agent-os\bin\secrets\slack-webhook.txt")
+WEBHOOK_FILE = Path(__file__).resolve().parent / "secrets" / "slack-webhook.txt"
 _PLACEHOLDER_MARK = "PASTE_YOUR"  # the scaffolded placeholder contains this
 
 
