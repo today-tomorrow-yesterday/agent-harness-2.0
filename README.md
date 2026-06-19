@@ -27,7 +27,7 @@ Three runtime layers stacked together:
 Plus:
 
 - ⚡ **Skills** (`skills/`) — reusable slash commands: `/session-reflect`, `/persona-architect`
-- 🤖 **Scheduled agents** (`bin/`) — weekly planner, daily digest, AgentShield security watcher — running while you sleep
+- 🤖 **Scheduled agents** (`bin/scheduler/`) — weekly planner + security watcher, scheduled **cross-platform** (cron / launchd / Task Scheduler) — running while you sleep
 - 🔄 **Skill-Forge** (`bin/skill_forge/`) — self-improving loop: mines your transcripts → scores skills → proposes improvements
 - 📋 **Evolution trail** (`forge/evolution.jsonl`) — append-only changelog of every change to the system
 
@@ -127,12 +127,11 @@ agent-harness/
 │   ├── session-reflect/    ← end-of-session memory capture skill
 │   └── persona-architect/  ← AI persona design + consistency path skill
 ├── bin/
-│   ├── skill_forge/        ← Skill-Forge Python package (44 tests)
-│   ├── skill-refiner.py    ← Phase 0 scorer (read-only signal)
-│   ├── weekly-planner.py   ← Sunday briefing generator
-│   ├── daily-brief.py      ← Daily digest
-│   ├── shield-watch.ps1    ← AgentShield security watcher loop
-│   └── install-*.bat       ← Register Windows Scheduled Tasks
+│   ├── scheduler/          ← cross-platform job scheduler (cron/launchd/schtasks)
+│   ├── configure_claude.py ← register extra MCP servers (cross-platform)
+│   ├── skill_forge/        ← Skill-Forge Python package
+│   ├── weekly-planner.py   ← weekly "what's next" briefing from your memory
+│   └── security_watch.py   ← flags unexpected changes to your Claude setup
 ├── forge/
 │   ├── skill-usage.jsonl   ← per-invocation skill log [gitignored]
 │   └── evolution.jsonl     ← system changelog [gitignored]

@@ -26,23 +26,23 @@ re-running replaces the harness's own entries (tagged `agent-harness`).
 
 ## Adding a job
 
-Edit `REGISTRY` in `jobs.py`:
+Edit `REGISTRY` in `jobs.py`. Two generic jobs ship ready to add:
 
 ```python
 REGISTRY = [
-    Job("my-report", ["bin/my-report.py"], "daily",  "08:00"),
-    Job("weekly",    ["bin/weekly.py"],    "weekly", "09:00", dow="SUN"),
+    Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
+    Job("security-watch", ["bin/security_watch.py"], "daily",  "08:00"),
 ]
 ```
+
+- **weekly-planner** — synthesizes a "what's next" briefing from your `memory/`.
+- **security-watch** — flags unexpected changes to your Claude setup.
 
 Cadence is `"daily"` or `"weekly"` (+ `dow` MON..SUN). Re-run `--apply`.
 
 ## Status / caveats
 
-- `REGISTRY` ships **empty** so a fresh clone never schedules a broken job.
-- The bundled `bin/weekly-planner.py` and `bin/daily-brief.py` are currently
-  **author/CLONE-specific** (hardcoded paths + farmer-pipeline logic). Genericize
-  them (make paths repo-relative, drop CLONE/farmer inputs) **before** adding them
-  to `REGISTRY`.
+- `REGISTRY` ships **empty** so a fresh clone never schedules anything until you
+  opt in (the two jobs above are generic + safe to add).
 - The Linux/macOS `apply`/`remove` backends are implemented but need validation
   on a real machine (they were authored on Windows). `--dry-run` is safe anywhere.

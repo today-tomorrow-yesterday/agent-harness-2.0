@@ -13,7 +13,7 @@ from pathlib import Path
 @dataclass
 class Job:
     id: str
-    args: list[str]          # argv relative to repo root, e.g. ["bin/daily-brief.py"]
+    args: list[str]          # argv relative to repo root, e.g. ["bin/security_watch.py"]
     cadence: str             # "daily" | "weekly"
     time: str                # "HH:MM" 24h local
     dow: str | None = None   # weekly only: MON..SUN
@@ -30,10 +30,9 @@ def repo_root() -> Path:
 #
 #   REGISTRY = [
 #       Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
-#       Job("daily-brief",    ["bin/daily-brief.py"],    "daily",  "07:00"),
+#       Job("security-watch", ["bin/security_watch.py"], "daily",  "08:00"),
 #   ]
 #
-# NOTE: the bundled bin/weekly-planner.py and bin/daily-brief.py are currently
-# author/CLONE-specific (hardcoded paths + farmer logic) — genericize them before
-# registering. See bin/scheduler/README.md.
+# Both bundled jobs above are generic + cross-platform and safe to add.
+# See bin/scheduler/README.md.
 REGISTRY: list[Job] = []

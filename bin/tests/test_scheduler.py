@@ -39,18 +39,18 @@ def test_registry_is_list_and_repo_relative():
 
 
 _EXAMPLE = [
-    jobs.Job("daily-brief", ["bin/daily-brief.py"], "daily", "07:00"),
+    jobs.Job("security-watch", ["bin/security_watch.py"], "daily", "08:00"),
     jobs.Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
 ]
 
 
 # --- cron ---
 def test_cron_daily():
-    j = jobs.Job("daily-brief", ["bin/daily-brief.py"], "daily", "07:00")
+    j = jobs.Job("security-watch", ["bin/security_watch.py"], "daily", "08:00")
     line = backends.to_cron_line(j, python="/usr/bin/python3", repo="/home/u/ah")
-    assert line.startswith("0 7 * * * ")
-    assert "cd /home/u/ah && /usr/bin/python3 bin/daily-brief.py" in line
-    assert "# agent-harness:daily-brief" in line
+    assert line.startswith("0 8 * * * ")
+    assert "cd /home/u/ah && /usr/bin/python3 bin/security_watch.py" in line
+    assert "# agent-harness:security-watch" in line
 
 
 def test_cron_weekly_sunday():
