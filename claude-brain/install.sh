@@ -1,21 +1,20 @@
 #!/bin/bash
 # ============================================================================
-# claude-brain installer — DEPRECATED in this fork
+# claude-brain installer — DEPRECATED in agent-harness
 # ============================================================================
 #
-# This installer was the upstream (mikeadolan/claude-brain) one-line bootstrap:
-#   curl -fsSL https://raw.githubusercontent.com/mikeadolan/claude-brain/main/install.sh | bash
+# This was the upstream (mikeadolan/claude-brain) one-line bootstrap. In
+# agent-harness, claude-brain is set up as part of the harness onboarding, not
+# as a standalone one-shot install.
 #
-# In this fork (agent-os), claude-brain lives at Z:\agent-os\claude-brain\
-# and is rehydrated via the parent agent-os REHYDRATE flow — not a one-shot
-# install. There is no upstream remote to clone from anymore (the .git was
-# archived to .git.upstream-archive/ on 2026-05-24).
+# Use the guided onboarding instead: open the repo in Claude Code and say
+# "onboard me" (or run /onboard). See ONBOARDING.md.
 #
-# Keep this file as a reference for what the old install flow looked like,
-# but do not run it. If you ever want to publish a fresh install path for
-# this fork, the steps below are the template; just repoint the URL.
+# Manual fallback:
+#   python3 -m pip install -r claude-brain/requirements.txt
+#   python3 claude-brain/scripts/brain-setup.py
 # ============================================================================
 
-echo "This installer is deprecated in this fork. See Z:\\agent-os\\docs\\REHYDRATE.md"
-echo "for the current setup flow, or read this file for the original upstream logic."
+echo "This installer is deprecated. See ONBOARDING.md (or run /onboard in Claude Code)."
+echo "Manual: pip install -r claude-brain/requirements.txt && python3 claude-brain/scripts/brain-setup.py"
 exit 1

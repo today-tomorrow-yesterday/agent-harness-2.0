@@ -6,6 +6,14 @@ A portable Claude Code OS — persistent memory, skills, scheduled agents, and a
 
 ---
 
+## Get started
+
+**Use this template** (or clone), open the folder in **Claude Code**, and say **"onboard me"** (or run **`/onboard`**). Claude detects your OS, installs dependencies, sets up the brain, and interviews you to fill in your own memory. Works on macOS, Linux, and Windows.
+
+Full steps + prerequisites: **[ONBOARDING.md](ONBOARDING.md)**.
+
+---
+
 ## What it is
 
 Three runtime layers stacked together:
@@ -55,28 +63,26 @@ Every file has a **BOOTSTRAP** section — answer the questions inside, then wri
 
 ## Quick start
 
-```powershell
-# 1. Clone
-git clone https://github.com/YOUR_USERNAME/agent-harness Z:\agent-harness
+**Recommended:** open the repo in Claude Code and say **"onboard me"** (or run **`/onboard`**) — see [ONBOARDING.md](ONBOARDING.md). It does all of the below for you, on any OS.
 
-# 2. Fill in memory/user.md and memory/soul.md
-# (follow the BOOTSTRAP questions inside each file)
+**Manual setup** (cross-platform — `python` on Windows, `python3` on macOS/Linux):
 
-# 3. Set up claude-brain (transcript memory)
-cd Z:\agent-harness\claude-brain
-pip install -r requirements.txt
-python scripts/brain-setup.py
+```bash
+# 1. Clone, then cd in
+git clone <your-fork-url> agent-harness && cd agent-harness
 
-# 4. Register the MCP server in Claude Code
-claude mcp add -s user brain-server -- python3 'Z:\agent-harness\claude-brain\mcp\server.py'
+# 2. Install deps + set up claude-brain
+#    (creates the DB, registers the brain-server MCP + session hooks)
+python3 -m pip install -r claude-brain/requirements.txt
+python3 claude-brain/scripts/brain-setup.py
 
-# 5. Install skills (copy to your Claude profile)
-Copy-Item skills\session-reflect\SKILL.md $env:USERPROFILE\.claude\skills\session-reflect\SKILL.md -Force
+# 3. Fill in memory/user.md, memory/soul.md, ...
+#    (answer the BOOTSTRAP questions inside each file)
 
-# 6. Open a Claude Code session in Z:\agent-harness — you're live
+# 4. Open the folder in Claude Code — you're live
 ```
 
-Full setup guide: `docs/REHYDRATE.md`
+Full manual guide: `docs/REHYDRATE.md`
 
 ---
 
