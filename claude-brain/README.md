@@ -87,7 +87,7 @@ No Activity Yesterday:
 
 ## Quick Start
 
-This fork lives inside `Z:\agent-os\claude-brain\` and is not currently published as a standalone install. To run the setup against an existing checkout:
+This fork lives inside the agent-harness repo at `claude-brain/` and is not published as a standalone install. To run the setup against an existing checkout:
 
 ```bash
 cd /path/to/claude-brain

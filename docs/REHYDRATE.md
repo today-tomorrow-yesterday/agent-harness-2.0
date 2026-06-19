@@ -1,10 +1,10 @@
 ﻿# Rehydrate the agent-os on a new machine
 
-This folder (`Z:\agent-os\` or wherever you put it) is mostly self-contained. To bring it up on a fresh computer, follow this. Total time: under 30 minutes (most of it is the interactive claude-brain setup).
+This repo is mostly self-contained. To bring it up on a fresh computer manually, follow this (the guided path is just opening it in Claude Code and saying "onboard me" — see ONBOARDING.md). Total time: under 30 minutes (most of it is the interactive claude-brain setup).
 
 ## What carries over
 
-Inside `Z:\agent-os\`:
+Inside the repo:
 
 - `memory/` — every fact, preference, project note, and behavioral rule (markdown, source of truth)
 - `skills/` — custom Claude Code skills (when you have them)
@@ -35,7 +35,7 @@ Get the entire `agent-os/` directory onto the new machine. Any method works:
 - Cloud sync (Dropbox/OneDrive/Google Drive) of just this folder — note that the SQLite DB inside `claude-brain/` may need attention if multiple machines write to it concurrently
 - Private git repo (recommended for long-term — see "Versioning notes" below)
 
-**Note the new path.** It does NOT have to be `Z:\agent-os\` — anywhere is fine, including `C:\agent-os\`, `D:\tools\agent-os\`, or `/home/me/agent-os/` on Linux.
+**Put it anywhere.** `C:\dev\agent-harness`, `~/agent-harness`, `/home/me/agent-harness` — any path on any OS is fine.
 
 ### 2. Copy your CLAUDE.md
 

@@ -21,7 +21,7 @@ try:
 except Exception:  # noqa: BLE001 - degrade gracefully if package import fails
     build_usage_record = None
     parse_payload = None
-    _LOG = Path(r"Z:\agent-os\forge\skill-usage.jsonl")
+    _LOG = Path(__file__).resolve().parents[1] / "forge" / "skill-usage.jsonl"
 
 
 def main() -> int:
