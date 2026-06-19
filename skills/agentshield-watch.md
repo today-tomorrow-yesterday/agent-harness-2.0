@@ -5,11 +5,11 @@ description: Configure, inspect, debug, or remove the AgentShield security watch
 
 # AgentShield Watch — operator skill
 
-This skill documents the always-running security watcher you installed on 2026-05-23 to detect when sub-agents (or anything else) install new skills, plugins, or agents into his Claude Code profiles without explicit awareness.
+This skill documents the always-running security watcher you installed on 2026-05-23 to detect when sub-agents (or anything else) install new skills, plugins, or agents into your Claude Code profiles without explicit awareness.
 
 ## What this is and why it exists
 
-you runs Claude Code with two profiles on this machine: `.claude-<profile>` (<YourOrg> work) and `.claude` (personal). Both can install skills, plugins, agents, MCP servers, and hooks — sometimes via sub-agents he didn't directly approve each time.
+You run Claude Code with two profiles on this machine: `.claude-<profile>` (<YourOrg> work) and `.claude` (personal). Both can install skills, plugins, agents, MCP servers, and hooks — sometimes via sub-agents you didn't directly approve each time.
 
 The threat model: a sub-agent installs a skill or plugin that carries prompt-injection bait, secret-exfiltration logic, or an over-permissive hook. you might not notice until damage is done.
 
@@ -248,7 +248,7 @@ The watcher logs `Scan invocation failed for <path>` lines when this happens. Co
 | Hashing instead of mtime comparison | Some sub-agents may `touch` files without changing content (or vice versa). SHA-256 is the right granularity for "did the content actually change." |
 | HIGH/CRITICAL toast threshold | LOW and INFO are heavily polluted by ECC-funnel-pattern findings (missing version metadata, missing observation hooks). MEDIUM and below would generate too many alerts to be useful. |
 | Dedupe via `seen_findings` table | First scan after install fires a baseline burst of toasts for pre-existing HIGH+ findings (mostly false positives in official plugins). After that, only genuinely-new findings break through. |
-| All configured profiles watched | you runs two subscriptions on the same machine. A malicious skill landing in either profile is a risk regardless of which Claude Code instance loads it. |
+| All configured profiles watched | You run two subscriptions on the same machine. A malicious skill landing in either profile is a risk regardless of which Claude Code instance loads it. |
 
 ## What this skill does NOT cover
 

@@ -5,7 +5,7 @@ Runs once a week (Sunday 09:00 local by default). Reads the current state
 of the AI Production Engine project, the CLONE wiki, and recent agent-os
 memory changes, then invokes `claude -p` headlessly to synthesize a
 "here's what's next and why" report. Writes the result to
-`Z:\\agent-os\\next-session.md` so when you open a session he finds the
+`Z:\\agent-os\\next-session.md` so when you open a session Claude finds the
 briefing waiting.
 
 What this does NOT do:
@@ -146,7 +146,7 @@ def _gather_context() -> dict:
             max_chars=10000,
         ),
         "user_md": _read_file(AGENT_OS / "memory" / "user.md", max_chars=6000),
-        "sol_md": _read_file(AGENT_OS / "memory" / "[NAME].md", max_chars=4000),
+        "sol_md": _read_file(AGENT_OS / "memory" / "sol.md", max_chars=4000),
         "memory_index": _read_file(AGENT_OS / "memory" / "MEMORY.md", max_chars=4000),
         "recent_clone_log": _recent_clone_log_entries(days=7),
         "methodology_files_summary": _list_methodology_files(),
@@ -168,7 +168,7 @@ PRIMARY CONSTRAINTS (do not violate)
 2. NEVER recommend committing code in projects with default-ask commit policies (see feedback/never_commit_without_permission.md).
 3. NEVER suggest setting ANTHROPIC_API_KEY or quoting dollar costs for Claude inference. See feedback/subscription_first_design.md.
 4. NEVER suggest content that would reveal your identity, if you have a faceless-production rule. See feedback/faceless_production_only.md.
-5. you does 5%, [NAME] does 95% — frame work as "I would do X; you'd approve Y" not "you need to do X."
+5. the AI does ~95%, you do ~5% — frame work as "I would do X; you'd approve Y" not "you need to do X."
 6. Match the user's tone (see soul.md and anti_patterns.md): no walls of prose, no decorative emojis, structured tables OK, severity glyphs OK.
 
 YOUR INPUTS

@@ -9,8 +9,8 @@ description: Design and LOCK a consistent, photorealistic AI persona, then route
 > actual methodology files (not the summary pages, which a multi-agent audit proved are
 > lossy — they miss the train-vs-reference fork, Licbe's accent-lock, product-in-hand, and
 > Joey's v2 stack). Settings below are quoted from the raw expert files; they are
-> **defaults to validate against visual results**, not gospel. you are the visual oracle:
-> he generates, inspects (or I inspect via Read), and we iterate this file.
+> **defaults to validate against visual results**, not gospel. You are the visual oracle:
+> you generate, inspect (or I inspect via Read), and we iterate this file.
 
 ## What this skill is — and what it is NOT
 
@@ -63,7 +63,7 @@ Interview for the full persona, not just appearance. Capture:
 ### Stage 1 — Strong realistic BASE image
 
 Identity quality is set here. *"The source image matters more than the prompting"* (Sirio); *"garbage in, garbage out"* (Dan Ko/Isa).
-- **Two-shot base (validated 2026-05-31).** Generate a **full-body, white background, studio** shot so the lock grabs the *person* not the scene (Isa/Alfie; Dan Kieft: *"use a full/upper-body shot, NOT a face close-up"*) — then a **chest-up companion of the SAME person**, edited *from* the full-body ("using the exact woman in this reference, chest-up, identical face"). The full-body gives body context; the chest-up makes the face **readable** so you (and Sol) can actually verify skin, eye color, and markers before locking. Don't try to judge a face you can't see in a full-body — it'll be too small (*"a half-body reference often gives more accurate faces"* — Dan Kieft).
+- **Two-shot base (validated 2026-05-31).** Generate a **full-body, white background, studio** shot so the lock grabs the *person* not the scene (Isa/Alfie; Dan Kieft: *"use a full/upper-body shot, NOT a face close-up"*) — then a **chest-up companion of the SAME person**, edited *from* the full-body ("using the exact woman in this reference, chest-up, identical face"). The full-body gives body context; the chest-up makes the face **readable** so you can actually verify skin, eye color, and markers before locking. Don't try to judge a face you can't see in a full-body — it'll be too small (*"a half-body reference often gives more accurate faces"* — Dan Kieft).
 - **Upscale the hero first.** Isa is emphatic this is the step everyone skips and it *"influences the quality of ALL downstream generations — do not skip the upscaling"* (OpenArt "2× + Face").
 - Base-model choice is itself a live disagreement — surface it, don't pretend it's settled: **Higgsfield Soul 2.0** (Alex: best for realistic people) vs **GPT Image 2** (Youri/makeugc: best skin) vs **Juggernaut XL** (Isa) vs **Nano Banana 2 / Kora** (Sirio). If on Higgsfield, hand the image prompt to `banana-pro-director` (Mode 0).
 

@@ -183,7 +183,7 @@ Use `[[slug]]` syntax (matches the `name:` field in the frontmatter of the targe
 ## What this skill does NOT do
 
 - **No auto-commit.** `Z:\agent-os\` is not a git repo by design. Memory writes happen, no commit fires. The auto-commit hook at `Z:\agent-os\bin\hooks\auto-commit.ps1` is scoped to `Z:\Clone\` only.
-- **No automatic invocation.** Manual trigger only for now. A future iteration may add a `Stop` hook integration once you has validated the false-positive rate. The brain's existing `Stop` hook owns that lifecycle slot today — coordinate any future automation with the brain hooks, don't compete.
+- **No automatic invocation.** Manual trigger only for now. A future iteration may add a `Stop` hook integration once you have validated the false-positive rate. The brain's existing `Stop` hook owns that lifecycle slot today — coordinate any future automation with the brain hooks, don't compete.
 - **No modification of existing memory files without explicit confirmation.** Append-to-existing is acceptable (e.g., `anti_patterns.md`, `user.md`), but ask first when the file already exists and the candidate would change its contents.
 - **No broader-brain search by default.** Scope is the current session unless you explicitly names another session ID or date.
 - **No git operations** of any kind. Per [[never_commit_without_permission]]. The skill produces files; it does not touch version control.
