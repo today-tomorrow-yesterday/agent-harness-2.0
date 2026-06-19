@@ -1,7 +1,7 @@
 # Portable Distribution + Claude-Guided Onboarding — Design Spec
 
 **Date:** 2026-06-18
-**Status:** Phase 1 ✅ complete (merged `c519b8f`) · Phase 2 + 3 pending
+**Status:** Phase 1 ✅ (merged `c519b8f`) · Phase 2 ✅ scheduler framework (merged `f98f5cf`; *nix apply + job-script genericization pending real-machine validation / curation) · Phase 3 pending
 **Goal:** Turn `agent-harness` from a Windows-centric personal scaffold into a **cross-platform, self-installing "Claude Code OS"** that a colleague clones, opens in Claude Code, and sets up by asking Claude to "onboard me" — adapting to macOS, Linux, or Windows.
 
 ---
