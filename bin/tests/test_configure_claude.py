@@ -54,15 +54,6 @@ def test_add_mcp_server_updates_existing():
     assert cfg["mcpServers"]["brain-server"]["env"] == {"X": "1"}
 
 
-def test_add_hook_idempotent():
-    cfg = {}
-    cc.add_hook(cfg, "Stop", "python3 hooks/stop.py")
-    cc.add_hook(cfg, "Stop", "python3 hooks/stop.py")
-    stop = cfg["hooks"]["Stop"]
-    cmds = [h["command"] for grp in stop for h in grp["hooks"]]
-    assert cmds.count("python3 hooks/stop.py") == 1
-
-
 def test_cli_dry_run_does_not_write(tmp_path, monkeypatch, capsys):
     cfg = tmp_path / ".claude.json"
     monkeypatch.setenv("CLAUDE_CONFIG_PATH", str(cfg))
@@ -80,12 +71,3 @@ def test_cli_add_mcp_writes(tmp_path, monkeypatch):
                   "--arg", "server.py"])
     assert rc == 0
     assert cc.read_config(cfg)["mcpServers"]["brain-server"]["command"] == "python3"
-
-
-def test_cli_add_hook_writes(tmp_path, monkeypatch):
-    cfg = tmp_path / ".claude.json"
-    monkeypatch.setenv("CLAUDE_CONFIG_PATH", str(cfg))
-    rc = cc.main(["add-hook", "--event", "Stop", "--command", "python3 stop.py"])
-    assert rc == 0
-    hooks = cc.read_config(cfg)["hooks"]["Stop"]
-    assert hooks[0]["hooks"][0]["command"] == "python3 stop.py"

@@ -1,15 +1,18 @@
-"""Cross-platform, idempotent, BOM-free editor for the Claude Code config
-(~/.claude.json): register MCP servers and hooks.
+"""Cross-platform, idempotent, BOM-free registrar for *extra* MCP servers in the
+Claude Code config (~/.claude.json).
 
-Pure stdlib so it runs anywhere Python 3.10+ does. A UTF-8 BOM breaks JSON
-parsers, so writes are always BOM-free (encoding="utf-8"); reads tolerate a
-pre-existing BOM (encoding="utf-8-sig").
+Scope: this registers ADDITIONAL stdio MCP servers (e.g. gbrain) that the core
+installer does not. `claude-brain/scripts/brain-setup.py` already owns the
+brain-server MCP registration AND all hook registration (hooks live in
+settings.json) — do not duplicate those here.
+
+A UTF-8 BOM breaks JSON parsers, so writes are always BOM-free
+(encoding="utf-8"); reads tolerate a pre-existing BOM (encoding="utf-8-sig").
 
 CLI:
-    python bin/configure_claude.py add-mcp  --name brain-server \
-        --command python3 --arg claude-brain/mcp/server.py [--env KEY=VAL] [--dry-run]
-    python bin/configure_claude.py add-hook --event Stop \
-        --command "python3 claude-brain/hooks/stop.py" [--dry-run]
+    python bin/configure_claude.py add-mcp --name gbrain \
+        --command bun --arg /path/to/gbrain/src/cli.ts --arg serve \
+        --env OLLAMA_HOST=http://localhost:11434 [--dry-run]
 
 Config location: $CLAUDE_CONFIG_PATH if set, else ~/.claude.json.
 """
@@ -57,20 +60,10 @@ def add_mcp_server(
     return config
 
 
-def add_hook(config: dict, event: str, command: str) -> dict:
-    """Idempotently add a command hook for an event (no duplicate commands)."""
-    hooks = config.setdefault("hooks", {})
-    groups = hooks.setdefault(event, [])
-    for grp in groups:
-        for h in grp.get("hooks", []):
-            if h.get("command") == command:
-                return config  # already registered
-    groups.append({"hooks": [{"type": "command", "command": command}]})
-    return config
-
-
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Edit Claude Code config (MCP/hooks).")
+    parser = argparse.ArgumentParser(
+        description="Register an extra MCP server in the Claude Code config."
+    )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("add-mcp", help="Register an MCP server")
@@ -80,11 +73,6 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--env", action="append", default=[], help="KEY=VALUE")
     p.add_argument("--dry-run", action="store_true")
 
-    h = sub.add_parser("add-hook", help="Register a command hook")
-    h.add_argument("--event", required=True)
-    h.add_argument("--command", required=True)
-    h.add_argument("--dry-run", action="store_true")
-
     ns = parser.parse_args(argv)
     path = locate_config()
     config = read_config(path)
@@ -92,8 +80,6 @@ def main(argv: list[str] | None = None) -> int:
     if ns.cmd == "add-mcp":
         env = dict(kv.split("=", 1) for kv in ns.env)
         add_mcp_server(config, ns.name, ns.command, ns.args, env)
-    elif ns.cmd == "add-hook":
-        add_hook(config, ns.event, ns.command)
 
     if ns.dry_run:
         print(json.dumps(config, indent=2))
