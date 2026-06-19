@@ -1,7 +1,7 @@
 # Portable Distribution + Claude-Guided Onboarding — Design Spec
 
 **Date:** 2026-06-18
-**Status:** Phase 1 ✅ (merged `c519b8f`) · Phase 2 ✅ scheduler framework + bin/ curation (merged `f98f5cf`, `66b05a4`; *nix apply needs real-machine validation) · Phase 3 pending. Deferred genericization: session-reflect + persona-architect skill paths, skill_forge internals (Phase 3), REHYDRATE/claude-brain docs; persona-architect keep/drop TBD.
+**Status:** ✅ ALL PHASES COMPLETE. Phase 1 (`c519b8f`) · Phase 2 + curation (`f98f5cf`, `66b05a4`) · Phase 3 gbrain + Skill-Forge + final genericization (`27d52bf`). 67 tests pass; repo clean of author paths (`Z:\agent-os`/`Z:\Clone`) and identity/client data. **Remaining = real-machine VALIDATION only** (not build): the *nix scheduler apply/remove, gbrain_setup --apply, and the full /onboard flow were authored on Windows and need one run on a real macOS/Linux box (see docs/validate-phase1.md).
 **Goal:** Turn `agent-harness` from a Windows-centric personal scaffold into a **cross-platform, self-installing "Claude Code OS"** that a colleague clones, opens in Claude Code, and sets up by asking Claude to "onboard me" — adapting to macOS, Linux, or Windows.
 
 ---
