@@ -30,11 +30,18 @@ def test_job_defaults():
     assert j.dow is None and j.cadence == "daily"
 
 
-def test_registry_nonempty_and_repo_relative():
-    assert jobs.REGISTRY
+def test_registry_is_list_and_repo_relative():
+    # Empty by default (safe); any entries the user adds must be repo-relative.
+    assert isinstance(jobs.REGISTRY, list)
     for j in jobs.REGISTRY:
         for a in j.args:
             assert not a.startswith("/") and ":" not in a  # no absolute/Windows paths
+
+
+_EXAMPLE = [
+    jobs.Job("daily-brief", ["bin/daily-brief.py"], "daily", "07:00"),
+    jobs.Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
+]
 
 
 # --- cron ---
@@ -85,11 +92,15 @@ def test_detect_os(monkeypatch):
 
 
 def test_plan_one_artifact_per_job_linux():
-    p = install.plan(os_name="linux", python="/usr/bin/python3", repo="/r")
-    assert len(p) == len(jobs.REGISTRY)
+    p = install.plan(os_name="linux", python="/usr/bin/python3", repo="/r", registry=_EXAMPLE)
+    assert len(p) == len(_EXAMPLE)
     assert all("# agent-harness:" in x for x in p)
 
 
 def test_plan_macos_emits_plists():
-    p = install.plan(os_name="macos", python="/usr/bin/python3", repo="/r")
-    assert all("<plist" in x for x in p)
+    p = install.plan(os_name="macos", python="/usr/bin/python3", repo="/r", registry=_EXAMPLE)
+    assert len(p) == 2 and all("<plist" in x for x in p)
+
+
+def test_plan_empty_registry_is_safe():
+    assert install.plan(os_name="linux", python="/usr/bin/python3", repo="/r") == []

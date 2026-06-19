@@ -28,10 +28,11 @@ def detect_os(name: str | None = None) -> str:
     return {"darwin": "macos", "linux": "linux", "windows": "windows"}.get(s, s)
 
 
-def plan(os_name: str, python: str, repo: str) -> list[str]:
+def plan(os_name: str, python: str, repo: str, registry=None) -> list[str]:
     """Return the artifact text per job for the given OS (no side effects)."""
+    registry = _jobs.REGISTRY if registry is None else registry
     out: list[str] = []
-    for j in _jobs.REGISTRY:
+    for j in registry:
         if os_name == "linux":
             out.append(_be.to_cron_line(j, python, repo))
         elif os_name == "macos":

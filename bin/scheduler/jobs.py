@@ -24,8 +24,16 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-# The harness's background agents. Add jobs here; the backends handle the rest.
-REGISTRY: list[Job] = [
-    Job("daily-brief",    ["bin/daily-brief.py"],    "daily",  "07:00"),
-    Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
-]
+# Your scheduled jobs. EMPTY by default so `install.py --apply` never installs a
+# broken job in a fresh clone. Add your own — each `args` is repo-relative and
+# the per-OS backends do the rest. Example:
+#
+#   REGISTRY = [
+#       Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
+#       Job("daily-brief",    ["bin/daily-brief.py"],    "daily",  "07:00"),
+#   ]
+#
+# NOTE: the bundled bin/weekly-planner.py and bin/daily-brief.py are currently
+# author/CLONE-specific (hardcoded paths + farmer logic) — genericize them before
+# registering. See bin/scheduler/README.md.
+REGISTRY: list[Job] = []
