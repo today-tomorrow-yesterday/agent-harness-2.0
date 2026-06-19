@@ -31,3 +31,6 @@ Thumbs.db
 
 # Personal scheduled task configs
 scheduled-tasks.md
+
+# generated runtime logs + scheduler state
+logs/
