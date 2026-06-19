@@ -28,7 +28,7 @@ It then **routes** the per-shot work to the skill that owns it:
 | Voice clone + lip-sync | *(future `voice-lipsync` skill — not built yet; manual for now)* |
 | Product-in-hand UGC ads, bulk variation | *(future `ugc-ad` skill — not built yet)* |
 
-**Does NOT** generate images (Claude can't — you generates, Claude inspects via Read), produce video/voice, commit to git, or duplicate banana-pro's Higgsfield prompt grammar.
+**Does NOT** generate images (Claude can't — you generate, Claude inspects via Read), produce video/voice, commit to git, or duplicate banana-pro's Higgsfield prompt grammar.
 
 ## The genuine fork this skill exists to navigate
 

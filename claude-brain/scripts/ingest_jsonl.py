@@ -119,8 +119,8 @@ def connect_db(db_path):
 def build_project_mappings(config):
     """Build ordered list of (pattern, prefix) for project detection.
 
-    Longer patterns sort first so e.g. 'mosaic-platform' matches before
-    a bare 'mosaic' pattern. Handles both Windows folder names and
+    Longer patterns sort first so e.g. 'myproject-platform' matches before
+    a bare 'myproject' pattern. Handles both Windows folder names and
     POSIX cwd paths.
     """
     raw = config.get("jsonl_project_mapping", {})

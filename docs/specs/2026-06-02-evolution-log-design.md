@@ -51,7 +51,7 @@ One JSON object per line:
 |---|---|---|
 | `ts` | ISO 8601 string | Timestamp of the write |
 | `strategy` | enum (see below) | What kind of evolution drove this change |
-| `asset` | string | Path relative to `Z:\agent-os\` (e.g. `feedback/rule.md`, `skills/clone-route/SKILL.md`, `settings`) |
+| `asset` | string | Path relative to `Z:\agent-os\` (e.g. `feedback/rule.md`, `skills/route-inbox/SKILL.md`, `settings`) |
 | `what` | string | One sentence: what changed |
 | `why` | string | One sentence: why — the incident, signal, or reason |
 | `session` | string | First 8 chars of the session ID (from brain context or `$CLAUDE_SESSION_ID`) |

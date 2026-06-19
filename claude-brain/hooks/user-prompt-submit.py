@@ -274,7 +274,7 @@ def main():
         if prompt_text and detect_discussion_not_go(prompt_text):
             context = (
                 "## RULE #2 REMINDER - DO NOT CODE\n"
-                "Tre is asking for your THOUGHTS, not code.\n"
+                "The user is asking for THOUGHTS, not code.\n"
                 "PRESENT the plan. Do NOT write, edit, or create any files.\n"
                 "Wait for the user to say 'GO' + name the specific step.\n"
                 "Violated in sessions 17, 19, 21, 25, 36. ZERO TOLERANCE."

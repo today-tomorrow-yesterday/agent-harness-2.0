@@ -5,8 +5,8 @@ from skill_forge.judge import build_judge_prompt, parse_verdict, classify_invoca
 def test_prompt_includes_skill_and_window_and_rubric():
     window = [{"role": "assistant", "content": "Did the thing."},
               {"role": "user", "content": "no that's wrong"}]
-    p = build_judge_prompt("clone-route", "Route inbox content.", window)
-    assert "clone-route" in p
+    p = build_judge_prompt("route-inbox", "Route inbox content.", window)
+    assert "route-inbox" in p
     assert "Route inbox content." in p
     assert "no that's wrong" in p
     # rubric must enumerate the four verdicts and demand a structured last line
@@ -35,9 +35,9 @@ def test_classify_invocation_uses_injected_invoker():
         return "looks like a correction.\nVERDICT: hurt"
 
     window = [{"role": "user", "content": "no that's wrong"}]
-    verdict = classify_invocation("clone-route", "Route inbox.", window, invoke_fn=fake_invoke)
+    verdict = classify_invocation("route-inbox", "Route inbox.", window, invoke_fn=fake_invoke)
     assert verdict == "hurt"
-    assert "clone-route" in captured["prompt"]
+    assert "route-inbox" in captured["prompt"]
 
 
 def test_classify_invocation_handles_invoker_failure():

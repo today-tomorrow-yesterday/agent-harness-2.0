@@ -9,7 +9,7 @@ from pathlib import Path
 
 AGENT_OS = Path(r"Z:\agent-os")
 BRAIN_DB = AGENT_OS / "claude-brain" / "claude-brain.db"
-SKILLS_DIR = AGENT_OS / "skills"          # canonical source skills (Tre-authored)
+SKILLS_DIR = AGENT_OS / "skills"          # canonical source skills (user-authored)
 FORGE_DIR = AGENT_OS / "forge"
 REPORT_PATH = FORGE_DIR / "report-latest.md"
 EVOLUTION_LOG = FORGE_DIR / "evolution.jsonl"

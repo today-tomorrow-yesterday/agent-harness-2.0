@@ -37,7 +37,7 @@ ROOT_DIR = SCRIPT_DIR.parent
 
 # PROJECT_KEYWORDS — fall through to DEFAULT_PROJECT for historical imports.
 # The legacy upstream values (jg=Johnny Goods, js=job-search) don't apply to
-# Tre's project set (gen/ses/av/oth). Reviewers can re-assign via the xlsx UI.
+# your project set (e.g. gen/oth). Reviewers can re-assign via the xlsx UI.
 PROJECT_KEYWORDS: dict[str, list[str]] = {}
 DEFAULT_PROJECT = "gen"
 

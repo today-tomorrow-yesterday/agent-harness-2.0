@@ -38,8 +38,8 @@ _CAMEL_BOUNDARY_RE = re.compile(r"(?<=[a-z])(?=[A-Z])")
 def extract_workspace(source_file: str | None) -> str | None:
     """Return the encoded workspace folder name from a JSONL `source_file`.
 
-    `C:\\Users\\<USERNAME>\\.claude-<profile>\\projects\\X--SES-Legacy\\<uuid>.jsonl`
-        → `'X--SES-Legacy'`
+    `C:\\Users\\<USERNAME>\\.claude-<profile>\\projects\\X--MyProject-Legacy\\<uuid>.jsonl`
+        → `'X--MyProject-Legacy'`
     Sub-agent paths still resolve to the parent workspace.
     Returns None if the path doesn't look like a Claude Code projects path.
     """
@@ -55,7 +55,7 @@ def encoded_to_tokens(encoded: str) -> list[str]:
 
     Strips the leading drive code, splits on hyphens AND underscores, further
     splits each part on CamelCase boundaries, lowercases everything. Pure-digit
-    tokens are preserved (don't filter `223` from `SES-223-MM-template`) but
+    tokens are preserved (don't filter `223` from `MyProject-223-Template`) but
     de-prioritized when picking initials.
     """
     s = _DRIVE_RE.sub("", encoded or "")
@@ -155,8 +155,8 @@ def ensure_registry_row(conn, prefix: str, workspace: str | None,
     """Idempotent INSERT into project_registry for an auto-onboarded workspace.
 
     folder_name is the encoded workspace name (e.g. 'Z--NewProjectFoo') so a
-    single curated prefix (like 'ses') can still cover multiple encoded
-    workspaces (X--SES, X--SES-Legacy, X--SES-223-MM-template, ...) without
+    single curated prefix (like 'myproject') can still cover multiple encoded
+    workspaces (X--MyProject, X--MyProject-Legacy, X--MyProject-223-Template, ...) without
     primary-key collision.
 
     Safe to call on every write — no-op when the row already exists.

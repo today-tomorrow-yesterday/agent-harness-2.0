@@ -59,7 +59,7 @@ $RelPath = $FilePath.Substring($WikiRootFull.Length).TrimStart('\','/').Replace(
 
 # --- Carve-outs: don't commit these ---
 # 00_inbox/ unrouted folders are farmer territory. Only _routed/ writes are
-# clone-route output and worth auto-committing.
+# route-inbox output and worth auto-committing.
 if ($RelPath -like "00_inbox\*" -and $RelPath -notlike "00_inbox\_routed\*") {
     exit 0
 }

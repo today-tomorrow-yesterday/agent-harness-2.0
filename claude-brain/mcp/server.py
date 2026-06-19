@@ -158,7 +158,7 @@ def get_profile() -> str:
 @mcp.tool()
 def get_project_state(project: str) -> str:
     """Returns recent decisions and key facts for a given project.
-    Args: project - project prefix configured in config.yaml (e.g. gen, ses, av, oth)."""
+    Args: project - project prefix configured in config.yaml (e.g. gen, oth)."""
     conn = get_db()
     try:
         decisions = conn.execute(

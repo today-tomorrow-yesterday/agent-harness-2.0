@@ -76,7 +76,7 @@ from pathlib import Path
 
 AGENT_OS = Path(r"Z:\agent-os")
 BRAIN_DB = AGENT_OS / "claude-brain" / "claude-brain.db"
-SKILLS_DIR = AGENT_OS / "skills"          # canonical source skills (you-authored)
+SKILLS_DIR = AGENT_OS / "skills"          # canonical source skills (user-authored)
 FORGE_DIR = AGENT_OS / "forge"
 REPORT_PATH = FORGE_DIR / "report-latest.md"
 LOG_PATH = AGENT_OS / "skill-forge.log"
@@ -113,14 +113,14 @@ def brain_conn():
         " content TEXT, timestamp TEXT)"
     )
     rows = [
-        # session s1: clone-route invoked, then user thanks (helped)
-        (1, "s1", "user", "<command-name>clone-route</command-name>", "2026-05-01T10:00:00Z"),
+        # session s1: route-inbox invoked, then user thanks (helped)
+        (1, "s1", "user", "<command-name>route-inbox</command-name>", "2026-05-01T10:00:00Z"),
         (2, "s1", "assistant", "Routed 3 folders.", "2026-05-01T10:01:00Z"),
         (3, "s1", "user", "perfect, thanks", "2026-05-01T10:02:00Z"),
-        # session s2: clone-route invoked, then user corrects (hurt)
-        (4, "s2", "user", "<command-name>clone-route</command-name>", "2026-05-02T11:00:00Z"),
-        (5, "s2", "assistant", "Routed to expert joey.", "2026-05-02T11:01:00Z"),
-        (6, "s2", "user", "no that's wrong, it should go to kallaway", "2026-05-02T11:02:00Z"),
+        # session s2: route-inbox invoked, then user corrects (hurt)
+        (4, "s2", "user", "<command-name>route-inbox</command-name>", "2026-05-02T11:00:00Z"),
+        (5, "s2", "assistant", "Routed to expert alice.", "2026-05-02T11:01:00Z"),
+        (6, "s2", "user", "no that's wrong, it should go to bob", "2026-05-02T11:02:00Z"),
         # session s3: an unrelated skill, never our target
         (7, "s3", "user", "<command-name>watch</command-name>", "2026-05-03T12:00:00Z"),
         (8, "s3", "assistant", "Watched the video.", "2026-05-03T12:01:00Z"),
@@ -135,11 +135,11 @@ def brain_conn():
 
 @pytest.fixture
 def sample_skills_dir(tmp_path):
-    """A skills/ dir with two SKILL.md files (one you-authored, one Forge-minted)."""
+    """A skills/ dir with two SKILL.md files (one user-authored, one Forge-minted)."""
     sd = tmp_path / "skills"
-    (sd / "clone-route").mkdir(parents=True)
-    (sd / "clone-route" / "SKILL.md").write_text(
-        "---\nname: clone-route\ndescription: Route inbox content into wiki.\n---\n\nBody.",
+    (sd / "route-inbox").mkdir(parents=True)
+    (sd / "route-inbox" / "SKILL.md").write_text(
+        "---\nname: route-inbox\ndescription: Route inbox content into wiki.\n---\n\nBody.",
         encoding="utf-8")
     (sd / "compose-shorts").mkdir(parents=True)
     (sd / "compose-shorts" / "SKILL.md").write_text(
@@ -174,11 +174,11 @@ from skill_forge.skills_inventory import list_skills
 def test_lists_both_skills_with_names_and_origin(sample_skills_dir):
     skills = list_skills(sample_skills_dir)
     by_name = {s["name"]: s for s in skills}
-    assert set(by_name) == {"clone-route", "compose-shorts"}
-    assert by_name["clone-route"]["origin"] == "authored"
+    assert set(by_name) == {"route-inbox", "compose-shorts"}
+    assert by_name["route-inbox"]["origin"] == "authored"
     assert by_name["compose-shorts"]["origin"] == "skill-forge"
-    assert by_name["clone-route"]["description"].startswith("Route inbox")
-    assert by_name["clone-route"]["path"].endswith("SKILL.md")
+    assert by_name["route-inbox"]["description"].startswith("Route inbox")
+    assert by_name["route-inbox"]["path"].endswith("SKILL.md")
 
 
 def test_empty_dir_returns_empty(tmp_path):
@@ -261,14 +261,14 @@ from skill_forge.brain_query import find_invocations
 
 
 def test_finds_command_name_invocations(brain_conn):
-    inv = find_invocations(brain_conn, "clone-route", since="2026-01-01T00:00:00Z")
+    inv = find_invocations(brain_conn, "route-inbox", since="2026-01-01T00:00:00Z")
     sessions = sorted(i["session_id"] for i in inv)
     assert sessions == ["s1", "s2"]            # not s3 (that was 'watch')
     assert all("timestamp" in i and "id" in i for i in inv)
 
 
 def test_respects_since_cutoff(brain_conn):
-    inv = find_invocations(brain_conn, "clone-route", since="2026-05-02T00:00:00Z")
+    inv = find_invocations(brain_conn, "route-inbox", since="2026-05-02T00:00:00Z")
     assert [i["session_id"] for i in inv] == ["s2"]   # s1 was 2026-05-01
 
 
@@ -341,8 +341,8 @@ def test_after_window_returns_following_messages_same_session(brain_conn):
     window = get_after_window(brain_conn, session_id="s2",
                               after_timestamp="2026-05-02T11:00:00Z", limit=6)
     contents = [m["content"] for m in window]
-    assert "Routed to expert joey." in contents
-    assert "no that's wrong, it should go to kallaway" in contents
+    assert "Routed to expert alice." in contents
+    assert "no that's wrong, it should go to bob" in contents
     # must not leak rows from other sessions
     assert all(m["role"] in ("user", "assistant") for m in window)
 
@@ -401,8 +401,8 @@ from skill_forge.judge import build_judge_prompt, parse_verdict
 def test_prompt_includes_skill_and_window_and_rubric():
     window = [{"role": "assistant", "content": "Did the thing."},
               {"role": "user", "content": "no that's wrong"}]
-    p = build_judge_prompt("clone-route", "Route inbox content.", window)
-    assert "clone-route" in p
+    p = build_judge_prompt("route-inbox", "Route inbox content.", window)
+    assert "route-inbox" in p
     assert "Route inbox content." in p
     assert "no that's wrong" in p
     # rubric must enumerate the four verdicts and demand a structured last line
@@ -513,9 +513,9 @@ def test_classify_invocation_uses_injected_invoker():
         return "looks like a correction.\nVERDICT: hurt"
 
     window = [{"role": "user", "content": "no that's wrong"}]
-    verdict = classify_invocation("clone-route", "Route inbox.", window, invoke_fn=fake_invoke)
+    verdict = classify_invocation("route-inbox", "Route inbox.", window, invoke_fn=fake_invoke)
     assert verdict == "hurt"
-    assert "clone-route" in captured["prompt"]
+    assert "route-inbox" in captured["prompt"]
 
 
 def test_classify_invocation_handles_invoker_failure():
@@ -679,14 +679,14 @@ def _row(name, origin, trials, score, action, invocations):
 
 def test_report_has_header_and_rows_and_is_readonly_labeled():
     rows = [
-        _row("clone-route", "authored", 120, -0.50, "retire-candidate", 130),
+        _row("route-inbox", "authored", 120, -0.50, "retire-candidate", 130),
         _row("watch", "authored", 4, -0.20, "insufficient-evidence", 4),
         _row("compose-shorts", "skill-forge", 0, 0.0, "dead", 0),
     ]
     md = render_report(rows, today="2026-05-30")
     assert "# Skill-Forge report — 2026-05-30" in md
     assert "READ-ONLY" in md                 # Phase 0 must label itself read-only
-    assert "clone-route" in md and "retire-candidate" in md
+    assert "route-inbox" in md and "retire-candidate" in md
     assert "insufficient-evidence" in md     # the floor guard is visible
     # green-on-top ordering: healthy/dead last, action items first is fine, but
     # the table must contain all three skills
@@ -902,7 +902,7 @@ Expected: exits 0; logs `scoring N skills`; writes `Z:\agent-os\forge\report-lat
 - [ ] **Step 3: Open the report and sanity-check**
 
 Run: `type Z:\agent-os\forge\report-latest.md`
-Expected: the READ-ONLY header + a table listing your real skills (`clone-route`, `session-reflect`, `watch`, etc.) with invocation counts pulled from the brain.
+Expected: the READ-ONLY header + a table listing your real skills (`route-inbox`, `session-reflect`, `watch`, etc.) with invocation counts pulled from the brain.
 
 - [ ] **Step 4: Checkpoint** — report file exists and lists real skills; `python -m pytest tests -q` still green.
 
@@ -938,7 +938,7 @@ The decision the whole loop hinges on: **is the judge's `hurt` verdict trustwort
 
 Create `Z:\agent-os\forge\eval\labels.sample.jsonl` — one JSON object per line, each a real outcome window you label by hand. Start with ~30 (aim for ~10 genuine `hurt` cases so precision is measurable). Format:
 ```json
-{"skill": "clone-route", "description": "Route inbox content.", "gold": "hurt", "window": [{"role": "assistant", "content": "Routed to joey."}, {"role": "user", "content": "no, that should be kallaway"}]}
+{"skill": "route-inbox", "description": "Route inbox content.", "gold": "hurt", "window": [{"role": "assistant", "content": "Routed to alice."}, {"role": "user", "content": "no, that should be bob"}]}
 {"skill": "watch", "description": "Watch a video.", "gold": "helped", "window": [{"role": "assistant", "content": "Here's the summary."}, {"role": "user", "content": "great, thanks"}]}
 ```
 (Pull real windows by skimming `forge/report-latest.md` invocation sites, or query the brain directly.)

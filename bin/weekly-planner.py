@@ -1,5 +1,5 @@
 ﻿"""
-weekly-planner.py — Sunday-morning briefing for Tre.
+weekly-planner.py — Sunday-morning briefing for you.
 
 Runs once a week (Sunday 09:00 local by default). Reads the current state
 of the AI Production Engine project, the CLONE wiki, and recent agent-os
@@ -21,7 +21,7 @@ What it DOES do:
     closer to being unblock-worthy
   - Note any standing feedback rule changes you might want to remember
 
-Cost model: uses Tre's OAuth Claude subscription via `claude -p`. Each
+Cost model: uses your OAuth Claude subscription via `claude -p`. Each
 run consumes ~1-3 messages from the 5-hour rate-limit window. No dollar
 cost. See feedback/subscription_first_design.md.
 
@@ -157,7 +157,7 @@ def _gather_context() -> dict:
 
 
 def _build_prompt(ctx: dict) -> str:
-    return f"""You are a Claude instance — the Claude instance that loads when agent-os is the context. Your job today is the weekly Sunday-morning briefing for Tre.
+    return f"""You are a Claude instance — the Claude instance that loads when agent-os is the context. Your job today is the weekly Sunday-morning briefing for the user.
 
 The briefing's purpose: when you open a session this week, he should find a file at Z:\\agent-os\\next-session.md that tells him (a) what landed since last week, (b) what the highest-leverage next move is, (c) why that's the move, and (d) what's deferred or waiting.
 
@@ -165,11 +165,11 @@ PRIMARY CONSTRAINTS (do not violate)
 ====================================
 
 1. Be HONEST about what's actually new vs. unchanged from last week.
-2. NEVER recommend committing code in projects with default-ask commit policies (SES, Mosaic). See feedback/never_commit_without_permission.md.
+2. NEVER recommend committing code in projects with default-ask commit policies (see feedback/never_commit_without_permission.md).
 3. NEVER suggest setting ANTHROPIC_API_KEY or quoting dollar costs for Claude inference. See feedback/subscription_first_design.md.
-4. NEVER suggest content production that would reveal Tre's identity. See feedback/faceless_production_only.md.
+4. NEVER suggest content that would reveal your identity, if you have a faceless-production rule. See feedback/faceless_production_only.md.
 5. you does 5%, [NAME] does 95% — frame work as "I would do X; you'd approve Y" not "you need to do X."
-6. Match Tre's tone (see soul.md and anti_patterns.md): no walls of prose, no decorative emojis, structured tables OK, severity glyphs OK.
+6. Match the user's tone (see soul.md and anti_patterns.md): no walls of prose, no decorative emojis, structured tables OK, severity glyphs OK.
 
 YOUR INPUTS
 ===========
@@ -238,7 +238,7 @@ Constraints on style:
 - No prose walls
 - No decorative emoji
 - Severity glyphs OK (🔴🟡🟢) — use sparingly
-- Match Tre's voice — direct, peer-to-peer, no salesman energy
+- Match the user's voice — direct, peer-to-peer, no salesman energy
 
 Do not include backticks around the output. Just write the markdown directly.
 """
@@ -284,7 +284,7 @@ def _invoke_claude(prompt: str, timeout: int = 300) -> str | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Weekly Sunday-morning briefing for Tre.")
+    parser = argparse.ArgumentParser(description="Weekly Sunday-morning briefing for you.")
     parser.add_argument("--dry-run", action="store_true", help="Build prompt + show what would happen, don't invoke claude or write output.")
     parser.add_argument("--skip-claude", action="store_true", help="Bundle context, write to disk for inspection, but don't actually invoke claude.")
     parser.add_argument("--quiet", action="store_true", help="Suppress stderr logging.")

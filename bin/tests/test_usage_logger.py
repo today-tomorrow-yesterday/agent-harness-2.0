@@ -21,9 +21,9 @@ def test_parse_payload_handles_empty_and_garbage():
 
 def test_skill_payload_skill_field():
     p = {"tool_name": "Skill", "session_id": "s9", "cwd": "C:\\x",
-         "tool_input": {"skill": "clone-route", "args": "now"}}
+         "tool_input": {"skill": "route-inbox", "args": "now"}}
     rec = build_usage_record(p, "2026-05-30T00:00:00Z")
-    assert rec == {"ts": "2026-05-30T00:00:00Z", "skill": "clone-route",
+    assert rec == {"ts": "2026-05-30T00:00:00Z", "skill": "route-inbox",
                    "args": "now", "session_id": "s9", "cwd": "C:\\x"}
 
 

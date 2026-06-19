@@ -1,4 +1,4 @@
-﻿"""Tre's tag vocabulary — the canonical TAG_KEYWORDS dict.
+﻿"""Your tag vocabulary — the canonical TAG_KEYWORDS dict.
 
 Used by `hooks/session-end.py` for live session tagging, and by
 `scripts/import_*.py` + `scripts/brain_tag_review.py` for batch/CLI
@@ -13,9 +13,9 @@ from __future__ import annotations
 
 
 TAG_KEYWORDS: dict[str, list[str]] = {
-    # Work / consultancy
-    "ses":               ["ses", "223-mm", "modular-monolith", "modular template", "modular-template", "sales module", "customer module", "inventory module"],
-    "mosaic":            ["mosaic", "mosaic-platform", "mosaic-architecture", "turborepo", "convex", "clerk"],
+    # EXAMPLE projects — replace these keys + keywords with your own.
+    "webapp":            ["webapp", "web app", "frontend", "backend", "api"],
+    "research":          ["research", "literature review", "experiment", "notes"],
 
     # Agent infrastructure
     "agent-os":          ["agent-os", "memory.md", "soul.md", "user.md", "feedback/", "projects/", "ideas/"],
@@ -23,13 +23,12 @@ TAG_KEYWORDS: dict[str, list[str]] = {
     "claude-code":       ["claude code", "claude-code", "skill ", "subagent", "/skill", "settings.json", "hook"],
     "claude-api":        ["anthropic sdk", "anthropic-ai/sdk", "claude api", "prompt cache", "tool use"],
 
-    # CLONE / Karpathy patterns
-    "clone":             ["clone", "expert roster", "experts/", "techniques/", "strategies/", "wiki layer"],
+    # Karpathy patterns
     "karpathy":          ["karpathy", "llm os", "knowledge base"],
     "farmer":            ["farmer", "farmer-youtube", "00_inbox", "ingest.py", "watchlist"],
 
-    # AI video gen
-    "cinematic-content": ["cinematic", "scene plate", "character sheet", "seedance", "higgsfield", "banana pro", "soul cinema", "kpop", "k-pop"],
+    # EXAMPLE project — replace with your own.
+    "content":           ["content", "article", "draft", "publishing"],
     "ai-video":          ["ai video", "video generation", "yt-dlp", "ffmpeg", "whisper"],
 
     # Tech stack
@@ -57,14 +56,16 @@ TAG_KEYWORDS: dict[str, list[str]] = {
 
 # Human-readable category descriptions (for brain_tag_review.py and similar UIs)
 TAG_DESCRIPTIONS: dict[str, str] = {
+    # EXAMPLE projects — replace these with your own.
+    "webapp":            "EXAMPLE project — a web application",
+    "research":          "EXAMPLE project — research / notes",
+    "content":           "EXAMPLE project — content / writing",
     "agent-os":          "Personal AI OS — memory, persona, standing rules",
     "claude-brain":      "claude-brain transcript persistence layer (forked from mikeadolan)",
     "claude-code":       "Claude Code harness — skills, hooks, MCP, settings",
     "claude-api":        "Anthropic SDK / Claude API work",
-    "clone":             "CLONE — Karpathy-style expert knowledge wiki",
     "karpathy":          "Karpathy LLM-OS pattern — knowledge layer, LLM-maintained from raw sources",
     "farmer":            "Source farmers — automated ingestion from YouTube, Slack, etc.",
-    "cinematic-content": "AI cinematic image / video work — Seedance, Higgsfield, Banana Pro",
     "ai-video":          "AI video generation tooling — yt-dlp, ffmpeg, Whisper",
     "csharp-dotnet":     "C# / .NET / EF Core",
     "typescript":        "TypeScript / Next.js / Node",

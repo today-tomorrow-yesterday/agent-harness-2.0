@@ -6,7 +6,7 @@
 # This installer was the upstream (mikeadolan/claude-brain) one-line bootstrap:
 #   curl -fsSL https://raw.githubusercontent.com/mikeadolan/claude-brain/main/install.sh | bash
 #
-# In Tre's fork (agent-os), claude-brain lives at Z:\agent-os\claude-brain\
+# In this fork (agent-os), claude-brain lives at Z:\agent-os\claude-brain\
 # and is rehydrated via the parent agent-os REHYDRATE flow — not a one-shot
 # install. There is no upstream remote to clone from anymore (the .git was
 # archived to .git.upstream-archive/ on 2026-05-24).

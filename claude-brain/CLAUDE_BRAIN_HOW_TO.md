@@ -22,8 +22,8 @@
 
 ---
 
-> **Note:** Examples in this guide reference Tre's actual projects -- `agent-os`,
-> `clone` (CLONE), `mosaic`, `ses`, `cinematic-content` -- alongside generic prefixes
+> **Note:** Examples in this guide reference example projects -- `agent-os`,
+> `webapp`, `research`, `content` -- alongside generic prefixes
 > like `app` or `gen` where the original upstream phrasing is preserved. Your project
 > prefixes are defined in `config.yaml`.
 
@@ -58,7 +58,7 @@ get answers from your own history. Here are real things you can ask:
 **Simple keyword searches:**
 ```
 "Search the brain for prompt caching"
-"Find sessions about CLONE farmers"
+"Find sessions about source farmers"
 "Look up the agent-os memory routing rule"
 ```
 
@@ -68,7 +68,7 @@ get answers from your own history. Here are real things you can ask:
 "Show me every decision we made about agent-os memory"
 "Find conversations where I was frustrated - what went wrong?"
 "Compare my most productive sessions to my worst ones"
-"What's the full history of the mosaic project from the beginning?"
+"What's the full history of the webapp project from the beginning?"
 ```
 
 **Meaning-based searches** (finds related content even when words don't match):
@@ -79,9 +79,9 @@ get answers from your own history. Here are real things you can ask:
 
 **Cross-project intelligence** (searches across ALL your projects, not siloed):
 ```
-"Search all projects for anything about Seedance"
+"Search all projects for anything about video generation"
 "What decisions have we made about MCP servers across every project?"
-"Find sessions where we discussed CLONE routing - any project"
+"Find sessions where we discussed inbox routing - any project"
 "What patterns show up in my worst sessions across all projects?"
 ```
 
@@ -175,7 +175,7 @@ Type a question in plain English. Claude automatically picks the right brain too
 
 ```
 "What did we discuss about the agent-os memory routing rule?"
-"Show me recent sessions for the clone project"
+"Show me recent sessions for the research project"
 "What was decided about the never-commit-without-permission policy?"
 "What happened two days ago in the afternoon?"
 "Find conversations where the farmer subagent failed"
@@ -184,8 +184,8 @@ Type a question in plain English. Claude automatically picks the right brain too
 If Claude answers from its own context instead of checking the brain, be explicit:
 ```
 "Search the brain for everything about the agent-os memory setup"
-"Use the brain tools to find all sessions about clone-route"
-"Check the brain - what project facts do we have for mosaic?"
+"Use the brain tools to find all sessions about route-inbox"
+"Check the brain - what project facts do we have for webapp?"
 ```
 
 ### Way 2: Slash Commands (direct access)
@@ -205,7 +205,7 @@ Type these yourself for instant, specific results. All 14 brain commands:
 | `/brain-questionnaire` | Fill out or update your profile | Name, preferences, goals, working style |
 | `/brain-setup` | Re-run setup to add projects or fix config | Safe to re-run anytime |
 | `/brain-export` | Save brain data to text files | Exports profile, decisions, or search results |
-| `/brain-topics` | Browse sessions by tag | Shows tag counts, drill into "agent-os", "clone", "cinematic-content", etc. |
+| `/brain-topics` | Browse sessions by tag | Shows tag counts, drill into "agent-os", "webapp", "research", etc. |
 | `/brain-tag-review` | Batch tag review via spreadsheet | Generates xlsx, you edit tags, then update DB |
 | `/brain-consistency` | Automated consistency check | Verifies all counts, paths, data integrity |
 
@@ -278,8 +278,8 @@ ask better questions.
 **Example prompts:**
 ```
 "Search transcripts for 'prompt caching cache_control'"
-"Find everything we discussed about the farmer subagent in the clone project"
-"What have we talked about recently regarding Seedance shot prompts?"
+"Find everything we discussed about the farmer subagent in the research project"
+"What have we talked about recently regarding video shot prompts?"
 "Search the brain for 'agent-os memory routing'"
 ```
 
@@ -314,10 +314,10 @@ projects, run `/brain-status` or check `config.yaml`.
 
 **Example prompts:**
 ```
-"What skills are defined for the clone project?"
-"Look up the feature list for the mosaic project"
+"What skills are defined for the research project?"
+"Look up the feature list for the webapp project"
 "What's the status of the agent-os deliverables?"
-"What do we know about the farmer-youtube subagent in the clone project?"
+"What do we know about the farmer-youtube subagent in the research project?"
 "What's the current setup for the gen project?"
 ```
 
@@ -326,8 +326,8 @@ projects, run `/brain-status` or check `config.yaml`.
 | Project | Categories | Example |
 |---------|-----------|---------|
 | agent-os | rule, brief, status | Standing rules, project briefs |
-| clone | skill, farmer, expert, status | CLONE roster, farmer scripts |
-| mosaic | feature, architecture, status | Mosaic platform facts |
+| research | skill, farmer, expert, status | research notes, farmer scripts |
+| webapp | feature, architecture, status | Webapp project facts |
 | gen | setup | Machine config, tools |
 
 ---
@@ -343,8 +343,8 @@ projects, run `/brain-status` or check `config.yaml`.
 ```
 "What decisions did we make about the agent-os memory layout?"
 "Look up the decision about never-commit-without-permission"
-"What was decided about the CLONE routing workflow?"
-"Find all decisions about Seedance cinema modes"
+"What was decided about the inbox routing workflow?"
+"Find all decisions about video generation modes"
 ```
 
 Decisions accumulate as you work. Searches both description and rationale fields.
@@ -560,8 +560,8 @@ Here are example queries you can type in Claude Code and what happens behind the
   -> Finds "cache_control breakpoint", "prompt caching hit rate", "system block reuse"
      even though "token cost" never appears in those messages
 
-"Find conversations related to CLONE routing decisions"
-  -> Claude calls search_semantic("CLONE routing decisions")
+"Find conversations related to inbox routing decisions"
+  -> Claude calls search_semantic("inbox routing decisions")
   -> Finds inbox triage, expert folder layout, propose-then-confirm flow
 
 "Semantic search for sessions where we struggled with hooks"
@@ -577,7 +577,7 @@ Here are example queries you can type in Claude Code and what happens behind the
   -> Claude can then use get_session() to read the full transcript
 
 "Which project has the most frustrated sessions?"
-  -> Claude queries quality_tags across all sessions, grouped by project (agent-os, clone, mosaic, ...)
+  -> Claude queries quality_tags across all sessions, grouped by project (agent-os, webapp, research, ...)
 
 "Compare the patterns in my best vs worst sessions"
   -> Claude queries both ends of the quality_score spectrum
@@ -602,23 +602,23 @@ Here are example queries you can type in Claude Code and what happens behind the
   -> Claude calls search_transcripts("agent-os memory index", project="agent-os")
   -> Returns matching transcript snippets with dates
 
-"Find everything about the CLONE clone-route skill"
-  -> Claude calls search_transcripts("clone-route")
-  -> Returns results from the clone project
+"Find everything about the route-inbox skill"
+  -> Claude calls search_transcripts("route-inbox")
+  -> Returns results from the research project
 
-"What work did we do on the Seedance cinematography grammar?"
-  -> Claude calls search_transcripts("Seedance cinema modes", project="cinematic-content")
+"What work did we do on the video cinematography grammar?"
+  -> Claude calls search_transcripts("video generation modes", project="content")
   -> Returns session snippets about Narrative / Studio / Action / Performance / Atmospheric
 ```
 
 ### Project Facts
 ```
-"What skills are defined for the clone project?"
-  -> Claude calls lookup_fact(project="clone", category="skill")
-  -> Returns clone-onboard, clone-route, create-farmer, start-clone
+"What skills are defined for the research project?"
+  -> Claude calls lookup_fact(project="research", category="skill")
+  -> Returns route-inbox, ingest-source, onboard-source
 
-"What are the main features we've built in mosaic?"
-  -> Claude calls lookup_fact(project="mosaic", category="feature")
+"What are the main features we've built in webapp?"
+  -> Claude calls lookup_fact(project="webapp", category="feature")
   -> Returns feature list with status
 
 "What deliverables were created for agent-os?"
@@ -643,8 +643,8 @@ Here are example queries you can type in Claude Code and what happens behind the
   -> Claude calls get_recent_sessions(count=5)
   -> Lists sessions with dates, projects, message counts
 
-"What happened in recent clone project sessions?"
-  -> Claude calls get_recent_summaries(project="clone")
+"What happened in recent research project sessions?"
+  -> Claude calls get_recent_summaries(project="research")
   -> Returns session summaries with topics, decisions, files
 ```
 
@@ -652,7 +652,7 @@ Here are example queries you can type in Claude Code and what happens behind the
 ```
 "Search all projects for anything about MCP servers"
   -> Claude calls search_transcripts("MCP server") (no project filter)
-  -> Returns results from agent-os, clone, mosaic, and any other project that discussed it
+  -> Returns results from agent-os, webapp, research, and any other project that discussed it
 
 "Give me the full status of the brain"
   -> Claude calls get_status()
@@ -737,13 +737,13 @@ python3 scripts/import_gemini.py --import imports/gemini-export/ --map imports/g
 
 ### 7.4 Tags and Topic Discovery
 
-Every import auto-suggests tags based on conversation content (e.g., `agent-os`, `clone`, `cinematic-content`, `farmer`, `mosaic`, `karpathy`). You review and edit tags in the xlsx before importing.
+Every import auto-suggests tags based on conversation content (e.g., `agent-os`, `webapp`, `research`, `content`, `farmer`). You review and edit tags in the xlsx before importing.
 
 **Browse by topic:**
 ```
 /brain-topics              # Show all tags with session counts
 /brain-topics agent-os     # Show all sessions tagged 'agent-os'
-/brain-topics --project clone # Tags for one project only
+/brain-topics --project research # Tags for one project only
 ```
 
 **Batch tag review** (for sessions imported without tags, like Claude Code sessions):
@@ -753,7 +753,7 @@ Every import auto-suggests tags based on conversation content (e.g., `agent-os`,
 Edit the spreadsheet, then run the update command shown in the output.
 
 **Inline tag editing** (for fixing one session):
-Just tell Claude: "tag this session as agent-os, meta-learning" or "change the tags on yesterday's session to clone, farmer." Claude finds the session and updates it directly. No commands needed.
+Just tell Claude: "tag this session as agent-os, meta-learning" or "change the tags on yesterday's session to research, farmer." Claude finds the session and updates it directly. No commands needed.
 
 ---
 
@@ -1030,7 +1030,7 @@ python3 scripts/brain-setup.py
 
 | Field | Rule | Example |
 |-------|------|---------|
-| Folder name | Lowercase, hyphens only | `agent-os`, `cinematic-content` |
+| Folder name | Lowercase, hyphens only | `agent-os`, `content` |
 | Prefix | Lowercase, 2-3 characters | `aos`, `cc`, `gen` |
 | Label | Plain English, any format | `Agent OS`, `Cinematic Content` |
 
@@ -1129,7 +1129,7 @@ If you prefer to add a project without the script:
 ### "Search returns no results"
 - **Check status:** `python3 scripts/status.py` - are there messages in the DB?
 - **Check FTS5:** The search uses keywords, not exact phrases. Try fewer/different words.
-- **Check project filter:** If you said "search clone for X" but the data is in agent-os,
+- **Check project filter:** If you said "search research for X" but the data is in agent-os,
   you won't find it. Try without a project filter.
 - **Tip:** Short prompts (<15 chars) are skipped by the user-prompt-submit hook.
 

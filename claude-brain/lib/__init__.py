@@ -8,9 +8,9 @@ Modules:
 
   vocab  — single source of truth for TAG_KEYWORDS (used by session-end
            hook + import scripts + brain_tag_review) and TAG_DESCRIPTIONS
-           (used by review-UI generators). Tre's vocabulary; replaced
+           (used by review-UI generators). Your vocabulary; replaced
            upstream's memoir/family/health defaults on the fork-in-place
-           commit of 2026-05-24.
+           commit.
 
 Both modules are pure-Python with no extra dependencies. Importable from
 hooks/ and scripts/ by inserting the brain root onto sys.path:

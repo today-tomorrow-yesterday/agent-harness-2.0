@@ -135,7 +135,7 @@ skill where practical.
 The original design assumed the brain captures skill invocations queryably. **Phase 0
 disproved this.** The built `skill-refiner` ran its SQL `LIKE` detection against the
 real brain DB and found ~0 invocations for heavily-used custom skills (e.g.
-`clone-route`). Direct inspection confirmed why:
+`route-inbox`). Direct inspection confirmed why:
 - `<command-name>…</command-name>` in `transcripts.content` only captures **typed
   slash commands** — overwhelmingly built-ins (`/theme`, `/model`); a custom skill
   appears this way only on the rare occasion it's typed as `/skill` (e.g. exactly
@@ -159,10 +159,10 @@ serves the **frequency** half.
 only **Skill-tool** invocations (Claude-initiated). It misses two real usage
 paths, so frequency must union the hook with the brain's `<command-name>` signal,
 and even then has a known blind spot:
-- **Typed slash commands** (`/clone-route`) → captured by the brain's
+- **Typed slash commands** (`/route-inbox`) → captured by the brain's
   `<command-name>` lines, not the hook. Union both sources.
 - **Scheduled farmers** → a hard blind spot. `farmer-route.py` etc. do NOT invoke
-  the `clone-route` Skill; they replicate the logic via a `claude -p` procedural
+  the `route-inbox` Skill; they replicate the logic via a `claude -p` procedural
   prompt. So the daily/weekly automated routing of the roster generates **zero**
   skill invocations in either source. This usage is real but uncounted. A skill
   known to be farmer-driven must be flagged so it is never scored as low-use
@@ -188,7 +188,7 @@ filesystem-based (snapshots + quarantine), not `git revert`.
 | Guardrail | Rule |
 |---|---|
 | **Evidence floor** 🔴 | Never autonomously revise/retire a skill until it has `trials ≥ Nₘᵢₙ` invocations (start `Nₘᵢₙ = 100` per Library Drift; tune down only if our brain volume can't reach it, accepting more risk). Retire when `trials ≥ Nₘᵢₙ AND ĉ(s) ≤ −0.10`. **Acting on thin evidence is proven to harm more than it helps** (arxiv 2605.19576, ablation A4). |
-| **Maturity gate** 🔴 | **0 tracked invocations is `no-data`, NOT a retire signal** (corrected 2026-05-30). The tracking hook is forward-only and warm-started 2026-05-30; a heavily-used skill (e.g. `clone-route` serving a 40-creator roster) reads as zero until usage accumulates. A skill may be quarantined for non-use ONLY when ALL hold: (a) the tracking window has matured (≥ a configured warm-up, target ~2–4 weeks), (b) it still has 0 invocations across **both** signal sources (hook + brain `<command-name>`), AND (c) it is not a known scheduled/farmer-driven skill (those never invoke the Skill tool — see §5). Until (a), `no-data` is purely informational. |
+| **Maturity gate** 🔴 | **0 tracked invocations is `no-data`, NOT a retire signal** (corrected 2026-05-30). The tracking hook is forward-only and warm-started 2026-05-30; a heavily-used skill (e.g. `route-inbox` serving a large roster) reads as zero until usage accumulates. A skill may be quarantined for non-use ONLY when ALL hold: (a) the tracking window has matured (≥ a configured warm-up, target ~2–4 weeks), (b) it still has 0 invocations across **both** signal sources (hook + brain `<command-name>`), AND (c) it is not a known scheduled/farmer-driven skill (those never invoke the Skill tool — see §5). Until (a), `no-data` is purely informational. |
 | **Bounded active-cap** | Hard cap on concurrently-active Forge-minted skills (start C ≈ 25–50). When a new install would exceed it, evict the lowest-contribution skill to quarantine. Prevents library drift via unbounded growth (the second load-bearing mechanism). |
 | **Circuit breaker** | Halt all autonomous action + alert if `hurt` verdicts exceed 30% of the library, or the library is collapsing (mass-retirement run). Global brake above per-skill limits. |
 | **Protected set** | Phase 1–2 autonomous revise/retire applies **only to Forge-minted skills**. Hand-authored skills get *proposals*, not auto-edits, until calibration is proven (opened in Phase 3). |

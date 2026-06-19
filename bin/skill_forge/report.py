@@ -1,7 +1,7 @@
 ﻿"""Render the weekly Skill-Forge report (Phase 0: read-only)."""
 from __future__ import annotations
 
-# Action items surface first (Tre's green-on-top: most-actionable at the top).
+# Action items surface first (most-actionable at the top).
 _ACTION_ORDER = {"retire-candidate": 0, "insufficient-evidence": 1,
                  "no-data": 2, "healthy": 3}
 

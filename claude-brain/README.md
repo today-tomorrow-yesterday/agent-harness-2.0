@@ -198,14 +198,14 @@ Every message is tagged with its source (`claude_code`, `claude_ai`, `chatgpt`, 
 
 ### Tags and Topic Discovery
 
-Sessions are auto-tagged by topic during import (e.g., `agent-os`, `clone`, `cinematic-content`, `farmer`, `mosaic`, `karpathy`). Browse your sessions by topic:
+Sessions are auto-tagged by topic during import (e.g., `agent-os`, `webapp`, `research`, `content`, `farmer`, `karpathy`). Browse your sessions by topic:
 
 ```
 /brain-topics              # Show all tags with counts
 /brain-topics agent-os     # Show all sessions tagged 'agent-os'
 ```
 
-Edit tags anytime -- just tell Claude: "tag this session as clone, farmer." For bulk tagging, use `/brain-tag-review` to generate a spreadsheet, edit tags, and update the database.
+Edit tags anytime -- just tell Claude: "tag this session as research, farmer." For bulk tagging, use `/brain-tag-review` to generate a spreadsheet, edit tags, and update the database.
 
 ---
 

@@ -98,7 +98,7 @@ def build_brief() -> str:
         lines.extend(f"  {n}" for n in news)
 
     lines.append("")
-    lines.append("_Deep synthesis brief: Sundays (next-session.md). Full inbox: /clone-route._")
+    lines.append("_Deep synthesis brief: Sundays (next-session.md). Full inbox: /route-inbox._")
     return "\n".join(lines)
 
 
