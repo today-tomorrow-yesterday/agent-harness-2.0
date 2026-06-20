@@ -31,7 +31,7 @@ def test_job_defaults():
 
 
 def test_registry_is_list_and_repo_relative():
-    # Empty by default (safe); any entries the user adds must be repo-relative.
+    # Whatever is wired, every job's args must be repo-relative (no absolute/Windows paths).
     assert isinstance(jobs.REGISTRY, list)
     for j in jobs.REGISTRY:
         for a in j.args:
@@ -103,4 +103,6 @@ def test_plan_macos_emits_plists():
 
 
 def test_plan_empty_registry_is_safe():
-    assert install.plan(os_name="linux", python="/usr/bin/python3", repo="/r") == []
+    # An empty registry must produce no artifacts. Pass it explicitly rather than
+    # relying on the global REGISTRY, which now ships with jobs wired.
+    assert install.plan(os_name="linux", python="/usr/bin/python3", repo="/r", registry=[]) == []
