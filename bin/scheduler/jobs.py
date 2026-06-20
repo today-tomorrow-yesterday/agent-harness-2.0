@@ -35,4 +35,11 @@ def repo_root() -> Path:
 #
 # Both bundled jobs above are generic + cross-platform and safe to add.
 # See bin/scheduler/README.md.
-REGISTRY: list[Job] = []
+#
+# Only jobs whose scripts exist in this repo are wired (a Job pointing at a missing
+# script would install a broken scheduled task). weekly-planner.py + security_watch.py
+# are present; daily-brief.py + brain-embed.py are not yet ported, so they're omitted.
+REGISTRY: list[Job] = [
+    Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
+    Job("security-watch", ["bin/security_watch.py"], "daily", "08:00"),
+]
