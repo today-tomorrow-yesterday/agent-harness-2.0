@@ -1,0 +1,4 @@
+# Instance state and the cloned third-party library never get committed.
+skills/
+reports/
+AUTHORIZED-ENGAGEMENT.txt
