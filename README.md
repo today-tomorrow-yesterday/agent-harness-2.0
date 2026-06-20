@@ -28,6 +28,7 @@ Plus:
 
 - ⚡ **Skills** (`skills/`) — reusable slash commands: `/onboard`, `/session-reflect`
 - 🤖 **Scheduled agents** (`bin/scheduler/`) — weekly planner + security watcher, scheduled **cross-platform** (cron / launchd / Task Scheduler) — running while you sleep
+- 🔒 **security-ops** (`security-ops/`, Windows) — optional read-only host-security monitor + one-time hardening + an on-demand `security-analyst` subagent over a vetted skill library
 - 🔄 **Skill-Forge** (`bin/skill_forge/`) — self-improving loop: mines your transcripts → scores skills → proposes improvements
 - 📋 **Evolution trail** (`forge/evolution.jsonl`) — append-only changelog of every change to the system
 
@@ -94,14 +95,18 @@ Full manual guide: `docs/REHYDRATE.md`
 ### 🔍 Searchable history
 `claude-brain` indexes every conversation into SQLite with FTS5 + semantic embeddings. Ask "what did we decide about X last month?" and get the answer.
 
-### 🛡️ AgentShield security watcher
-Polls `~/.claude*/` for skill/plugin/agent file changes every hour. Surfaces findings via Windows Toast notifications. Keeps your Claude environment auditable.
+### 🛡️ Claude-environment watcher
+`bin/security_watch.py` flags unexpected changes to your Claude setup (`~/.claude*/` skills, plugins, agents, settings) so a silently-installed or modified extension gets noticed. Cross-platform; scheduled as the daily `security-watch` job.
+
+### 🔒 security-ops (optional, Windows)
+A deeper, host-level layer in `security-ops/` for a machine that runs autonomous agents. A strictly read-only nightly sweep (persistence, posture, self-integrity), a one-time ACL hardening that stops a non-elevated process from tampering its own baseline, and an on-demand `security-analyst` subagent over a vetted cybersecurity-skill library (public, cloned at setup — never bundled). See `security-ops/README.md`.
 
 ### 🤖 Scheduled automation
-Windows Scheduled Tasks drive:
+A cross-platform scheduler (`bin/scheduler/`) installs jobs natively per-OS (cron / launchd / Task Scheduler) from one declarative registry (`jobs.py`). Bundled + wired by default:
 - **Weekly Planner** (Sunday 9am) — what landed, what's closer to ready, highest-leverage next move → `next-session.md` + optional Slack delivery
-- **Daily Brief** (7am) — activity digest, inbox pulse, news summary
-- **Brain Embed** (5am) — nightly semantic embedding backfill
+- **Security Watch** (daily 8am) — flags unexpected changes to your Claude setup
+
+Add your own by appending a `Job(...)` to `bin/scheduler/jobs.py`, then `python bin/scheduler/install.py --apply`.
 
 ### 📈 Skill-Forge self-improvement loop
 Phase 0 (live): scores every skill by usage frequency + outcome signal (did Claude's behavior after invoking the skill look like it helped or hurt?). Surfaces the data for your review. Phase 2 (coming): autonomous revision of self-authored skills.
@@ -132,6 +137,7 @@ agent-harness/
 │   ├── skill_forge/        ← Skill-Forge Python package
 │   ├── weekly-planner.py   ← weekly "what's next" briefing from your memory
 │   └── security_watch.py   ← flags unexpected changes to your Claude setup
+├── security-ops/           ← optional Windows host-security module [self-contained]
 ├── forge/
 │   ├── skill-usage.jsonl   ← per-invocation skill log [gitignored]
 │   └── evolution.jsonl     ← system changelog [gitignored]
