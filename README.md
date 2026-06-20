@@ -27,7 +27,8 @@ Three runtime layers stacked together:
 Plus:
 
 - ⚡ **Skills** (`skills/`) — reusable slash commands: `/onboard`, `/session-reflect`
-- 🤖 **Scheduled agents** (`bin/scheduler/`) — weekly planner + security watcher, scheduled **cross-platform** (cron / launchd / Task Scheduler) — running while you sleep
+- 🤖 **Scheduled agents** (`bin/scheduler/`) — weekly planner, security watcher, brain-embed, daily digest, scheduled **cross-platform** (cron / launchd / Task Scheduler) — running while you sleep
+- 🛟 **Safety harness** (`bin/runner/`, `bin/execution/`) — kill-switch (STOP file), action/cost ceilings, an audit DB, and a default-deny approval gate wrapping any autonomous action
 - 🔒 **security-ops** (`security-ops/`, Windows) — optional read-only host-security monitor + one-time hardening + an on-demand `security-analyst` subagent over a vetted skill library
 - 🔄 **Skill-Forge** (`bin/skill_forge/`) — self-improving loop: mines your transcripts → scores skills → proposes improvements
 - 📋 **Evolution trail** (`forge/evolution.jsonl`) — append-only changelog of every change to the system
@@ -105,8 +106,13 @@ A deeper, host-level layer in `security-ops/` for a machine that runs autonomous
 A cross-platform scheduler (`bin/scheduler/`) installs jobs natively per-OS (cron / launchd / Task Scheduler) from one declarative registry (`jobs.py`). Bundled + wired by default:
 - **Weekly Planner** (Sunday 9am) — what landed, what's closer to ready, highest-leverage next move → `next-session.md` + optional Slack delivery
 - **Security Watch** (daily 8am) — flags unexpected changes to your Claude setup
+- **Brain Embed** (daily 5am) — backfills semantic embeddings for the conversation brain
+- **Daily Digest** (daily 7am) — "while you were away" report of what ran autonomously (from the runner audit DB)
 
 Add your own by appending a `Job(...)` to `bin/scheduler/jobs.py`, then `python bin/scheduler/install.py --apply`.
+
+### 🛟 Safety harness
+`bin/runner/` wraps autonomous runs with a STOP-file kill-switch, per-run action/cost/time ceilings, and an audit DB (`forge/runner.db`) feeding the daily "while you were away" digest. `bin/execution/` gates real-world actions behind a deterministic risk scorer + default-deny policy + durable approval queue + secret-redaction chokepoint. `bin/goal_loop/` runs a weekly goal assessment from your own git/log signals.
 
 ### 📈 Skill-Forge self-improvement loop
 Phase 0 (live): scores every skill by usage frequency + outcome signal (did Claude's behavior after invoking the skill look like it helped or hurt?). Surfaces the data for your review. Phase 2 (coming): autonomous revision of self-authored skills.
@@ -136,7 +142,10 @@ agent-harness/
 │   ├── configure_claude.py ← register extra MCP servers (cross-platform)
 │   ├── skill_forge/        ← Skill-Forge Python package
 │   ├── weekly-planner.py   ← weekly "what's next" briefing from your memory
-│   └── security_watch.py   ← flags unexpected changes to your Claude setup
+│   ├── security_watch.py   ← flags unexpected changes to your Claude setup
+│   ├── runner/             ← kill-switch + action/cost ceilings + audit DB + digest
+│   ├── execution/          ← gated actions: risk + default-deny policy + approval + secrets
+│   └── goal_loop/          ← weekly goal assessment from your own signals
 ├── security-ops/           ← optional Windows host-security module [self-contained]
 ├── forge/
 │   ├── skill-usage.jsonl   ← per-invocation skill log [gitignored]

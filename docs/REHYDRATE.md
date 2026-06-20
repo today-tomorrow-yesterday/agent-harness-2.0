@@ -9,7 +9,6 @@ Inside the repo:
 - `memory/` — every fact, preference, project note, and behavioral rule (markdown, source of truth)
 - `skills/` — custom Claude Code skills (when you have them)
 - `claude-brain/` — claude-brain runtime + its SQLite DB at `claude-brain/claude-brain.db` (the precious file)
-- `Dockerfile`, `compose.yml` — containerization stubs
 - `docs/REHYDRATE.md` — this file
 
 Outside the agent-os folder:
@@ -122,7 +121,7 @@ git init
 echo "claude-brain/" > .gitignore
 echo "claude-brain/claude-brain.db" >> .gitignore
 echo "claude-brain/logs/" >> .gitignore
-git add memory/ skills/ docs/ README.md Dockerfile compose.yml .gitignore
+git add memory/ skills/ docs/ README.md .gitignore
 git commit -m "Initial agent-os snapshot"
 git remote add origin <your private repo URL>
 git push -u origin main

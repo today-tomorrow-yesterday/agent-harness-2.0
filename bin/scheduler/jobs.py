@@ -37,9 +37,12 @@ def repo_root() -> Path:
 # See bin/scheduler/README.md.
 #
 # Only jobs whose scripts exist in this repo are wired (a Job pointing at a missing
-# script would install a broken scheduled task). weekly-planner.py + security_watch.py
-# are present; daily-brief.py + brain-embed.py are not yet ported, so they're omitted.
+# script would install a broken scheduled task). All four below are generic and
+# present. (A CLONE-style content "daily brief" is intentionally NOT here — that's
+# instance-specific; daily-digest covers the generic "what ran autonomously" report.)
 REGISTRY: list[Job] = [
     Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
     Job("security-watch", ["bin/security_watch.py"], "daily", "08:00"),
+    Job("brain-embed", ["claude-brain/scripts/batch_embed.py"], "daily", "05:00"),
+    Job("daily-digest", ["bin/runner/digest.py"], "daily", "07:00"),
 ]
