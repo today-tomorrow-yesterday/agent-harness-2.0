@@ -10,7 +10,7 @@ from pathlib import Path
 def count_git_commits_since(repo, since: str) -> int:
     try:
         out = subprocess.run(["git", "-C", str(repo), "log", f"--since={since}", "--oneline"],
-                             capture_output=True, text=True)
+                             capture_output=True, text=True, timeout=30)  # don't hang the weekly brief on a locked repo
         if out.returncode != 0:
             return 0
         return len([ln for ln in out.stdout.splitlines() if ln.strip()])

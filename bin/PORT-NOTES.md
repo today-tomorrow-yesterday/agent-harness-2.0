@@ -128,5 +128,25 @@ triggered, no scheduled task is registered.**
   `test_scheduler.py::test_plan_empty_registry_is_safe` — is **pre-existing and
   unrelated to this port** (it asserts an empty scheduler REGISTRY, but
   `bin/scheduler/jobs.py` ships two registered jobs; neither file was touched here).
-```
-```
+
+---
+
+# Port 2 — generic safety improvements (2026-06-21)
+
+A second sweep brought four **genuinely generic** improvements that landed in
+`agent-os` after the first port. Everything else that differs between the repos is
+the *intentional genericization* above (Tre/Sol → operator, `agent-os` → `agent-harness`)
+and was deliberately left untouched — porting those back would re-introduce identity
+into the public repo.
+
+| Improvement | Files | Why generic |
+|---|---|---|
+| **Slack egress secret-scrub** + GH-markdown→mrkdwn conversion + webhook validation (`https://hooks.slack.com/` prefix check, `SLACK_WEBHOOK_FILE` env override) | `bin/notify_slack.py` | every Slack post now passes through `execution.redaction.scrub` before leaving the box — a token in a traceback or a raw `runner.db` dump can't ship off-box. No identity coupling. |
+| **First gated mutation action** — `WriteWorkspace` (ships disabled in `DEFAULT_POLICY`, so it PARKS for approval; reversible `.bak`; self-protection deny-list refuses to write the policy/identity/execution code) | `bin/execution/actions/write_workspace.py` + `bin/tests/test_write_workspace.py` | `policy.py` already listed the `write_workspace` class; only the action file was missing. Deny-list targets the harness's own `memory/*.md` + `bin/{execution,runner}`. "Tre"→"operator" was the only wording change. |
+| **STOP file now self-documenting** — JSON `{ts, reason}`, `reason()` accessor, `engage(reason)`, and a best-effort Slack alert on engage/clear so a stopped fleet can't go unnoticed | `bin/runner/stop.py` | backward-compatible (guards still only check existence). The alert was rewired from `agentos_common.alert` (not present here) to `notify_slack.post_slack`. |
+| **git-call timeout** on the weekly signal gather | `bin/goal_loop/signals.py` | `timeout=30` so a locked repo can't hang the weekly brief. |
+
+**Validation:** smoke imports OK; `scrub` confirmed redacting `xoxb`/`Bearer sk-`/JWT
+shapes; full `bin/tests/` suite **121 passed** (was 114 + the 6 new write_workspace
+tests, minus the pre-existing empty-registry scheduler test which now passes since the
+registry ships jobs). No real state touched.
