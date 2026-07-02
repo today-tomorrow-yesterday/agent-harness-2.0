@@ -34,3 +34,11 @@ scheduled-tasks.md
 
 # generated runtime logs + scheduler state
 logs/
+
+# Self-test / medic / self-loop runtime artifacts — per-machine, regenerated
+self-test-report.md
+forge/test-medic-latest.md
+forge/test-medic-escalation.md
+logs/self-loop.log
+logs/self-loop-state.json
+logs/test-medic.log

@@ -48,3 +48,24 @@ def to_schtasks_cmd(job, python: str, repo: str) -> list[str]:
         cmd += ["DAILY"]
     cmd += ["/ST", job.time, "/TN", f"agent-harness-{job.id}", "/TR", tr, "/F"]
     return cmd
+
+
+def to_schtasks_settings_patch(job) -> list[str]:
+    """Build a post-create PowerShell argv that hardens a Windows task's settings.
+
+    `schtasks /Create` cannot set these, and their absence is a silent-death trap
+    learned the hard way: a weekly task whose trigger fires while the machine is
+    asleep (or whose launch is refused) simply loses that week. The patch adds:
+      - StartWhenAvailable  — missed trigger -> run as soon as possible (catch-up)
+      - RestartCount/Interval — a failed launch retries 3x every 30 minutes
+
+    Pure generator (no OS calls) — the applier runs it after each /Create."""
+    ps = (
+        f"$t = Get-ScheduledTask -TaskName 'agent-harness-{job.id}'; "
+        "$s = $t.Settings; "
+        "$s.StartWhenAvailable = $true; "
+        "$s.RestartCount = 3; "
+        "$s.RestartInterval = 'PT30M'; "
+        f"Set-ScheduledTask -TaskName 'agent-harness-{job.id}' -Settings $s | Out-Null"
+    )
+    return ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps]

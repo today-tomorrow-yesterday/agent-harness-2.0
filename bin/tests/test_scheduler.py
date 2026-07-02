@@ -106,3 +106,22 @@ def test_plan_empty_registry_is_safe():
     # An empty registry must produce no artifacts. Pass it explicitly rather than
     # relying on the global REGISTRY, which now ships with jobs wired.
     assert install.plan(os_name="linux", python="/usr/bin/python3", repo="/r", registry=[]) == []
+
+
+# --- windows settings patch (2026-07-02: catch-up + retry hardening) ---
+def test_schtasks_settings_patch_shape():
+    j = jobs.Job("self-test", ["bin/self_test.py"], "daily", "05:30")
+    argv = backends.to_schtasks_settings_patch(j)
+    assert argv[0] == "powershell" and "-NonInteractive" in argv
+    ps = argv[-1]
+    assert "agent-harness-self-test" in ps
+    assert "StartWhenAvailable = $true" in ps      # missed trigger -> catch-up
+    assert "RestartCount = 3" in ps                # failed launch -> retry
+    assert "RestartInterval = 'PT30M'" in ps
+
+
+def test_schtasks_settings_patch_targets_each_job_uniquely():
+    a = backends.to_schtasks_settings_patch(jobs.Job("a", ["bin/a.py"], "daily", "01:00"))
+    b = backends.to_schtasks_settings_patch(jobs.Job("b", ["bin/b.py"], "daily", "01:00"))
+    assert "agent-harness-a" in a[-1] and "agent-harness-b" in b[-1]
+    assert a[-1] != b[-1]

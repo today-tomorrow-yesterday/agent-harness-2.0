@@ -107,9 +107,19 @@ A cross-platform scheduler (`bin/scheduler/`) installs jobs natively per-OS (cro
 - **Weekly Planner** (Sunday 9am) — what landed, what's closer to ready, highest-leverage next move → `next-session.md` + optional Slack delivery
 - **Security Watch** (daily 8am) — flags unexpected changes to your Claude setup
 - **Brain Embed** (daily 5am) — backfills semantic embeddings for the conversation brain
-- **Daily Digest** (daily 7am) — "while you were away" report of what ran autonomously (from the runner audit DB)
+- **Self-Test** (daily 5:30am) — the harness tests itself: full `bin/tests` suite + brain health + gbrain liveness → `self-test-report.md` (verdict surfaced by the digest). Components you haven't set up yet report SKIPPED, so a fresh clone is green out of the box
+- **Daily Digest** (daily 7am) — "while you were away" report of what ran autonomously (from the runner audit DB), stamped with the self-test verdict
 
-Add your own by appending a `Job(...)` to `bin/scheduler/jobs.py`, then `python bin/scheduler/install.py --apply`.
+Add your own by appending a `Job(...)` to `bin/scheduler/jobs.py`, then `python bin/scheduler/install.py --apply`. `bin/tests/test_fleet_integrity.py` guards the registry itself: every job's script must exist and compile, and (once installed on Windows) every task must still be firing within its cadence — the "it silently died three weeks ago" failure mode becomes a red test.
+
+### 🩺 Test-Medic (opt-in) — the trust model
+`bin/test_medic.py` closes the loop: when the self-test goes red, one scheduled headless `claude -p` attempt repairs the root cause. **It is shipped disabled** (a commented-out Job in `jobs.py`) because — unlike everything else here — it grants an unattended agent *write access* to your repo. Enable it only after you understand what actually constrains it, which is *not* the model's good intentions:
+
+1. **Repair contract** (prompt): no VCS mutation, never delete/skip/weaken a test to go green, smallest-diff root-cause fixes, escalate anything needing human judgment (credentials, spend, policy) to `forge/test-medic-escalation.md`.
+2. **HEAD verification** (runner): git HEAD is recorded before/after; a moved HEAD flags the report as a hard-rule violation.
+3. **Deterministic verdict** (runner): the runner re-runs `self_test.py` itself after the repair — only a green re-run counts as FIXED. The model's claim of success is never trusted.
+
+One attempt per scheduled slot (anti-thrash), rate-limit aware (backs off to the next slot), kill-switch honored (`forge/STOP`). Still-red escalates to you via the report + optional Slack.
 
 ### 🛟 Safety harness
 `bin/runner/` wraps autonomous runs with a STOP-file kill-switch, per-run action/cost/time ceilings, and an audit DB (`forge/runner.db`) feeding the daily "while you were away" digest. `bin/execution/` gates real-world actions behind a deterministic risk scorer + default-deny policy + durable approval queue + secret-redaction chokepoint. `bin/goal_loop/` runs a weekly goal assessment from your own git/log signals.

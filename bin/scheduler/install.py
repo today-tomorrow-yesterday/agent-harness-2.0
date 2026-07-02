@@ -80,6 +80,10 @@ def _macos_remove() -> None:
 def _windows_apply(python: str, repo: str) -> None:
     for j in _jobs.REGISTRY:
         subprocess.run(_be.to_schtasks_cmd(j, python, repo), check=True)
+        # Harden: catch-up on missed triggers + retry failed launches (schtasks
+        # can't set these; a weekly job would otherwise silently lose any week
+        # the machine slept through its trigger). Best-effort — task works without.
+        subprocess.run(_be.to_schtasks_settings_patch(j), capture_output=True)
 
 
 def _windows_remove() -> None:

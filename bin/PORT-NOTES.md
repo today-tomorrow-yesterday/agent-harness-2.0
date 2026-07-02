@@ -105,7 +105,7 @@ keyring is missing, raising `SecretsUnavailable` only on use).
 
 ## How to run the tests
 
-From the harness root (`Z:\agent-harness`):
+From the harness root (`Z:\products\agent-harness`):
 
 ```
 python -m pytest bin/tests/test_execution.py -q
@@ -150,3 +150,26 @@ into the public repo.
 shapes; full `bin/tests/` suite **121 passed** (was 114 + the 6 new write_workspace
 tests, minus the pre-existing empty-registry scheduler test which now passes since the
 registry ships jobs). No real state touched.
+
+---
+
+## Port batch — 2026-07-02 (the self-maintenance chain)
+
+Ported from agent-os after its full-system hardening arc (262-test regression
+fleet, autonomous inbox pipeline, three real production bugs found + fixed).
+Everything below is generic — no operator identity, repo-relative paths only.
+
+| Improvement | Files | Notes |
+|---|---|---|
+| **Self-Test** — the harness tests itself daily: full `bin/tests` + brain health + gbrain probe → `self-test-report.md`; fresh-clone-safe (unset-up components SKIP, not FAIL) | `bin/self_test.py` + `jobs.py` entry (05:30) | verdict surfaced by the digest |
+| **Fleet-integrity guard** — REGISTRY-derived: every job's script exists + compiles; installed tasks not disabled + fired within cadence (Windows; skips gracefully pre-install / non-Windows) | `bin/tests/test_fleet_integrity.py` | derives from `jobs.py`, can't drift |
+| **Hook stdin hardening** — `isinstance(dict)` guard + 61-case smoke suite: no hook may crash on malformed stdin (`null`/`42`/`[]`/garbage) | `claude-brain/hooks/user-prompt-submit.py`, `bin/tests/test_hooks_stdin.py` | crash class found live in agent-os twice |
+| **FIXED SHIPPED BUG:** `claude-brain/lib/paths.py` had a SyntaxError (`C:\Users\<USERNAME>` in a non-raw docstring → truncated `\U` escape) — brain_health + anything importing lib.paths was broken in every clone. Introduced by the genericization pass un-escaping the original's `\` | `claude-brain/lib/paths.py` (raw docstrings) | found BY the ported self-test on its first run |
+| **Test-Medic (opt-in)** — scheduled autonomous repair of a red self-test: repair contract + git-HEAD verification + deterministic re-verify; ships as a commented-out Job | `bin/test_medic.py`, README "trust model" section | the one component granting unattended write access — hence opt-in |
+| **Self-Loop** — fleet liveness auditor + mechanical healer: MISSING/DISABLED/NEVER_FIRED/STALE/FAILED classification, safe_rerun heals (bounded + 24h cooldown), deduped Slack escalation | `bin/self_loop.py`, `Job.safe_rerun` field | recency-based — result codes alone are blind to a task that stopped firing |
+| **Scheduler resilience** — post-create settings patch: `StartWhenAvailable` (missed-trigger catch-up) + `RestartCount 3 / 30m` (failed-launch retry) | `backends.to_schtasks_settings_patch` + `install._windows_apply` | learned from a weekly job that silently lost a week to a refused Sunday launch |
+| **Digest self-test verdict line** — `**Self-test:** PASS/FAIL`, with a >26h STALE flag (a stopped report means the self-test JOB died) | `bin/runner/digest.py` (`selftest_line`) + tests | |
+| **Path-integrity guard template** — the post-reorg stale-path regression test, with the hard-won tuning notes (skip generated narrative, word-boundary patterns, guard-doc self-trips) | `docs/path-integrity-guard.md` | caught 5 live stragglers + 1 agent-reintroduced ref in its first week |
+
+**Validation:** full suite green after the batch (see commit); fresh-clone simulation
+(config.yaml absent) → self-test VERDICT: PASS with brain/gbrain SKIPPED.

@@ -43,11 +43,32 @@ def build_digest(runs: list[dict], evts: list[dict], today: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def selftest_line(report_path: Path | None = None) -> str:
+    """One-line self-test verdict for the digest (see bin/self_test.py).
+    Missing report -> a nudge; stale (>26h) -> flagged, because a report that
+    stopped updating means the self-test JOB died — the exact silent failure
+    the verdict exists to catch. Pure given a path — unit-testable."""
+    p = report_path or (REPO / "self-test-report.md")
+    if not p.exists():
+        return "**Self-test:** not run yet (schedule `self-test` — see bin/scheduler/jobs.py)"
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+        age_h = (time.time() - p.stat().st_mtime) / 3600
+    except OSError:
+        return "**Self-test:** report unreadable"
+    verdict = next((ln.strip("* ").replace("VERDICT:", "").strip()
+                    for ln in text.splitlines() if ln.startswith("**VERDICT:")), "?")
+    stale = f" · STALE ({age_h:.0f}h old — is the self-test job firing?)" if age_h > 26 else ""
+    mark = "✅" if verdict == "PASS" else "🔴"
+    return f"**Self-test:** {mark} {verdict}{stale}"
+
+
 def main(argv=None) -> int:
     since = int(time.time()) - 24 * 3600
     runs, evts = events.fetch_since(since)
     today = time.strftime("%Y-%m-%d")
     md = build_digest(runs, evts, today)
+    md += "\n" + selftest_line() + "\n"
     OUT.write_text(md, encoding="utf-8")
     try:
         sys.path.insert(0, str(REPO / "bin"))

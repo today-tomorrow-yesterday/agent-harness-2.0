@@ -258,6 +258,8 @@ def main():
         except json.JSONDecodeError:
             print("{}")
             return
+        if not isinstance(input_data, dict):
+            input_data = {}  # valid JSON but not an object (null / [] / 42) -> treat as empty
 
         prompt_text = input_data.get("user_prompt", "")
         if not isinstance(prompt_text, str):

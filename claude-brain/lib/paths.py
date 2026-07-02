@@ -1,4 +1,4 @@
-﻿"""Shared path / session-id discovery used by hooks and scripts.
+﻿r"""Shared path / session-id discovery used by hooks and scripts.
 
 Created 2026-05-24 to fix a critical bug: the original `cwd.replace("/", "-")`
 only handled POSIX separators, so on Windows the encoded folder name never
@@ -26,7 +26,7 @@ from typing import Iterable
 
 
 def encode_cwd(cwd: str) -> str:
-    """Encode a working directory to Claude Code's projects-dir folder name.
+    r"""Encode a working directory to Claude Code's projects-dir folder name.
 
     Cross-platform safe. Verified against real folder names in
     ~/.claude*/projects/ on Windows. Does not collapse consecutive
