@@ -75,8 +75,8 @@ def test_no_stale_paths():
   paths forever. That's not breakage — exclude those dirs or the guard cries wolf.
 - **The guard's own docs trip the guard.** Any README that documents the
   forbidden patterns must be in `SKIP_FILES` (or its dir skipped).
-- **Word-boundary every pattern.** `Z:\nichefinder` must not match its new home
-  `Z:\tools\nichefinder` — use `(?<![\\/])\b...` lookbehinds.
+- **Word-boundary every pattern.** A retired root like `D:\mytool` must not match
+  its new home `D:\tools\mytool` — use `(?<![\\/])\b...` lookbehinds.
 - **Windows consoles:** if you add a `__main__` runner, `sys.stdout.reconfigure(
   encoding="utf-8", errors="replace")` first — cp1252 chokes on glyphs.
 - Wire it into `bin/self_test.py`'s suite (it lives in `bin/tests/`, so it's
