@@ -7,6 +7,7 @@ Credentials and webhook URLs. Gitignored — never committed.
 | File | What it holds |
 |---|---|
 | `slack-webhook.txt` | Slack Incoming Webhook URL for `notify_slack.py`. Get from api.slack.com/apps → Incoming Webhooks. |
+| `keyring.env` | The agent keyring — API keys for `bin/api.py` / `bin/gen_image.py` (YouTube, Gemini, Sketchfab, Resend, Supabase, ...). Copy `keyring.env.template` and fill in what you have. Keys are injected at request time and redacted from all output; agents run `api.py`, never read this file. |
 
 ## Setup
 

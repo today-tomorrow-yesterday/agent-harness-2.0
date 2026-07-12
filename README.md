@@ -26,7 +26,8 @@ Three runtime layers stacked together:
 
 Plus:
 
-- ⚡ **Skills** (`skills/`) — reusable slash commands: `/onboard`, `/session-reflect`
+- ⚡ **Skills** (`skills/`) — reusable slash commands: `/onboard`, `/session-reflect`, plus the `/domain-*` suite (check/register/DNS/email — needs the open-source `domain-suite-mcp`)
+- 🔑 **Agent keyring** (`bin/api.py` + gitignored `bin/secrets/keyring.env`) — call your keyed APIs (YouTube, Gemini, Sketchfab, ...) from any session; keys are injected at request time and **redacted from every output**, so credentials never touch a transcript. `bin/gen_image.py` rides on it for image generation with reference-conditioning.
 - 🤖 **Scheduled agents** (`bin/scheduler/`) — weekly planner, security watcher, brain-embed, daily digest, scheduled **cross-platform** (cron / launchd / Task Scheduler) — running while you sleep
 - 🛟 **Safety harness** (`bin/runner/`, `bin/execution/`) — kill-switch (STOP file), action/cost ceilings, an audit DB, and a default-deny approval gate wrapping any autonomous action
 - 🔒 **security-ops** (`security-ops/`, Windows) — optional read-only host-security monitor + one-time hardening + an on-demand `security-analyst` subagent over a vetted skill library

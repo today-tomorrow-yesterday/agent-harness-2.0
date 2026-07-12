@@ -1,4 +1,25 @@
-# Port Notes — runner / goal_loop / execution
+# Port Notes
+
+## 2026-07-12 port — agent keyring / gen_image / orchestrator-worker doc / domain skills / refiner delta
+
+Ported from the private source repo, genericized (no personal identity, no keys,
+no machine paths). Files only.
+
+| What | Dest | Notes |
+|---|---|---|
+| **api.py** (agent keyring: keys never touch transcripts; per-service registry, output redaction) | `bin/api.py` + `bin/secrets/keyring.env.template` | `.gitignore` extended to exclude `keyring.env` and ship the template |
+| **gen_image.py** (Gemini image gen through the keyring; `--ref` reference-conditioning for character consistency / multi-view) | `bin/gen_image.py` | depends on `bin/api.py` |
+| **Orchestrator/worker pattern** (two-subscription operating model: work-order format, delegation heuristics, `codex exec` field notes) | `docs/ORCHESTRATOR-WORKER.md` | fully genericized doc, no code |
+| **Domain skills** (`/domain-check`, `/domain-register`, `/domain-dns-setup`, `/domain-email-setup`, `/domain-full-setup`) | `skills/domain-*` | PREREQUISITE: the open-source `domain-suite-mcp` server (github.com/oso95/domain-suite-mcp); skills state this in their descriptions |
+| **skill-refiner usage-log merge** (PostToolUse hook log merged into invocation detection — brain LIKE-detection alone has ~7% recall) | delta applied to `bin/skill-refiner.py` + `USAGE_LOG` added to `bin/skill_forge/config.py` | `usage_log.py` was already present |
+
+Drift audit, same date: `self_loop.py` / `self_test.py` are **intentional
+genericized forks** — they diverged from the source repo on purpose and must not
+be blind-copied in either direction; merge semantically if ever needed.
+
+---
+
+# Port Notes — runner / goal_loop / execution (2026-06-20)
 
 Three safety/autonomy subsystems ported from the private `agent-os` repo into the
 shareable `agent-harness` repo on 2026-06-20, genericized. **Files only — no git

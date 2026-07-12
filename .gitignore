@@ -11,7 +11,9 @@ forge/report-latest.md
 # Secrets
 bin/secrets/*.txt
 bin/secrets/*.json
+bin/secrets/keyring.env
 !bin/secrets/README.md
+!bin/secrets/keyring.env.template
 
 # State files — per-machine, not portable
 bin/*-state.json

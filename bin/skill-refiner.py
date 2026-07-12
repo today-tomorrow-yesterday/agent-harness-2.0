@@ -28,6 +28,7 @@ from skill_forge.judge import classify_invocation
 from skill_forge.scoring import contribution_score, classify_action
 from skill_forge.report import render_report
 from skill_forge.evolution import append_event
+from skill_forge.usage_log import read_invocations
 
 
 def log(level: str, message: str) -> None:
@@ -71,6 +72,20 @@ def make_claude_invoker(timeout: int = 180):
 
 def score_skill(conn, skill, since, invoke_fn, verbose=False) -> dict:
     invs = find_invocations(conn, skill["name"], since=since)
+    # Merge the PostToolUse usage log (the reliable frequency source). Brain
+    # LIKE-detection misses most Skill-tool invocations (~7% recall vs the hook
+    # log); log entries carry session_id + ts, so the same after-window judge
+    # applies. Dedupe on (session_id, minute bucket) so double-detected calls
+    # score once.
+    seen = {(i["session_id"], (i["timestamp"] or "")[:16]) for i in invs}
+    for rec in read_invocations(config.USAGE_LOG, skill["name"], since):
+        key = (rec["session_id"], (rec["timestamp"] or "")[:16])
+        if key in seen:
+            continue
+        seen.add(key)
+        invs.append({"id": None, "session_id": rec["session_id"],
+                     "timestamp": rec["timestamp"]})
+    invs.sort(key=lambda r: r["timestamp"] or "")
     verdicts: list[str] = []
     for inv in invs:
         window = get_after_window(conn, inv["session_id"], inv["timestamp"],

@@ -12,6 +12,7 @@ REPO = Path(__file__).resolve().parents[2]
 BRAIN_DB = REPO / "claude-brain" / "claude-brain.db"
 SKILLS_DIR = REPO / "skills"          # canonical source skills (user-authored)
 FORGE_DIR = REPO / "forge"
+USAGE_LOG = FORGE_DIR / "skill-usage.jsonl"   # PostToolUse hook log (reliable frequency source)
 REPORT_PATH = FORGE_DIR / "report-latest.md"
 EVOLUTION_LOG = FORGE_DIR / "evolution.jsonl"
 LOG_PATH = REPO / "logs" / "skill-forge.log"
