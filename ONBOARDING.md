@@ -35,6 +35,30 @@ verify everything works. Answer the ~6 identity questions in your own words.
   (weekly planner / daily brief / security watcher) and **gbrain** (a local
   knowledge brain over your own docs).
 
+## Recommended: turn on the skill-shape guard
+
+Skills fail *silently*. Get the shape wrong — a bare `.md` instead of a directory, a missing
+frontmatter block, a byte-order mark ahead of the `---` — and nothing errors. The skill simply
+never loads, and you find out weeks later when invoking it does nothing. This has happened in this
+repo: one skill shipped unloadable because of an invisible BOM.
+
+One command registers a hook that refuses a malformed skill at the moment it is written, and tells
+you the exact path to use instead:
+
+```
+python bin/register_hook.py skill-shape-guard
+```
+
+Anything already on disk is covered by the matching test:
+
+```
+python -m pytest bin/tests/test_skill_conformance.py -q
+python bin/skill_policy.py          # prints the contract + audits your skills
+```
+
+The guard fails **open** — if it ever errors it allows the write rather than blocking your work —
+and `HARNESS_HOOKS_DISABLED=1` turns it off. See the `skill-authoring` skill for the full contract.
+
 ## Manual fallback
 
 If you'd rather run the installer yourself instead of the guided flow:
