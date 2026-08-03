@@ -1,4 +1,4 @@
-﻿---
+---
 name: session-reflect
 description: Self-noticing reflection — scans the current session's transcript for moments of correction, surprise, confirmed approaches, or novel standing guidance, drafts candidate memory entries (feedback rules, project facts, identity notes, ideas, anti-patterns), and asks you to approve each one before writing into memory/. The capture layer of the meta-learning loop. Use when you say "what did we learn today", "reflect on this session", "save what's important", "/session-reflect", or whenever you notice corrections piling up unsaved during a conversation.
 ---
