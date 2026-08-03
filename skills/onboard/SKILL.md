@@ -83,7 +83,19 @@ so it indexes whatever they created.
 ## 6. Summary
 
 Print a short "you're set up" recap: what's now active (memory, searchable brain,
-session capture), and the two optional next steps they can ask for later —
-**scheduled agents** (weekly planner / daily brief / security watcher) and
-**gbrain** (a local knowledge brain over their own docs). Both are separate
-opt-in setups.
+session capture), then offer the next steps.
+
+**Recommended, and worth doing now** — turn on the skill-shape guard:
+
+```
+python bin/register_hook.py skill-shape-guard
+```
+
+Skills fail *silently*: get the shape wrong and nothing errors, the skill just never loads. One
+shipped in this repo unloadable because of an invisible byte-order mark. The guard refuses a
+malformed skill at write time and prints the correct path. It fails **open**, so a guard bug can
+never block their work, and `HARNESS_HOOKS_DISABLED=1` turns it off. See `ONBOARDING.md`.
+
+**Optional, separate opt-in setups they can ask for later** — **scheduled agents** (weekly
+planner / daily brief / security watcher) and **gbrain** (a local knowledge brain over their own
+docs).

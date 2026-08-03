@@ -15,9 +15,12 @@ Configure email DNS records for $ARGUMENTS using the domain-suite-mcp server.
    - `sendgrid`
    - `mailgun`
    - `ses` (Amazon SES)
-   - `postmark`
    - `protonmail` (MX only)
    - `custom` (user provides their own values)
+
+   This list is the `mailProvider` enum that `setup_mx` actually accepts — anything outside it is
+   rejected by schema validation before the call runs. `postmark` was listed here until
+   2026-08-03 and is **not** supported; route it through `custom` with Postmark's own MX values.
 
 3. Set up records **in this order** (order matters for testing):
 

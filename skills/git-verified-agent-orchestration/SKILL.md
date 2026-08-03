@@ -1,6 +1,6 @@
 ---
 name: git-verified-agent-orchestration
-description: Delegate work to multiple AI subagents without trusting their self-reports. Use when orchestrating subagents on any task that produces a checkable artifact (code, research, docs) and you need the result to be verifiable rather than merely claimed. Each subagent works in an isolated git worktree; every unit of work ends as a real commit that gets independently verified and separately reviewed before the next one starts.
+description: "Delegate work to multiple AI subagents without trusting their self-reports, by making every unit of work a real git commit that is independently verified and separately reviewed before the next subagent starts. Triggers on: orchestrate subagents, verify agent work, swarm of agents, delegate to subagents, agent orchestration"
 ---
 
 **Use when:** delegating work to multiple AI agents (code, research, or anything that produces a checkable file) and you need to trust the result without personally reviewing every step.
@@ -36,6 +36,12 @@ Any shared, versioned file store works. A git repo is the obvious default since 
 
 **Merge only after all of it is green.**
 
+## Verify the thing, not a proxy for it
+
+The orchestrator's re-verification has to test what a user would actually do with the output, not just that the output exists and is wired up correctly.
+
+Real failure, 2026-08-02: a generated landing page was confirmed saved and correctly registered, and the check stopped there. Every link on the page 404'd. Both the orchestrator and the reviewer had verified the artifact's *wiring* and neither clicked a link. The lesson generalizes: "the artifact exists and points at the right place" is a proxy. "The artifact does its job when used" is the actual check.
+
 ## Why this beats a flat swarm
 
 A flat swarm (fire N agents at a goal, collect N reports, done) has no ground-truth layer. Every claim is trusted at face value, and scope isn't structurally enforced: an agent holding the full goal can decide, on its own, to do a piece it wasn't assigned.
@@ -53,6 +59,7 @@ This framework removes both failure modes by construction, not by asking agents 
 - [ ] One subagent at a time, narrow task only, no shared context between them
 - [ ] Subagent output is a real committed artifact, not a status message
 - [ ] Orchestrator independently re-verifies before trusting any "done"
+- [ ] Verification exercises the artifact the way a user would, not just its existence
 - [ ] A separate reviewer subagent checks the same artifact, told not to trust the self-report
 - [ ] Fixes are new commits, never rewrites
 - [ ] One final review over the whole accumulated result before it ships
