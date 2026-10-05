@@ -258,6 +258,15 @@ def test_scrub_secrets_masks_canonical_shapes():
     assert "ordinary words" in out
 
 
+def test_secret_patterns_come_from_the_canonical_module_when_it_exists():
+    canonical = hc.REPO / "bin" / "execution" / "secret_patterns.py"
+    if canonical.is_file():
+        from execution import secret_patterns
+        assert hc.SECRET_PATTERNS == tuple(secret_patterns.SECRET_PATTERNS)
+    else:
+        assert hc.SECRET_PATTERNS == hc._FALLBACK_SECRET_PATTERNS
+
+
 # --- claude_json ---------------------------------------------------------------------
 def _runner(stdout="", rc=0, stderr="", seen=None):
     def run(cmd, **kw):

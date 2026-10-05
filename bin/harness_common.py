@@ -188,15 +188,18 @@ def is_dry_run() -> bool:
 # =====================================================================================
 # Secret scrubbing — the canonical shape list
 # =====================================================================================
-# CANONICAL SHAPE LIST — the ONE definition of "what a secret looks like" for anything
-# that ships text off the box (alerts, outcome details, reports). Divergent copies are
-# how an egress path ends up weaker than a local guard. Add a shape HERE.
+# ONE definition of "what a secret looks like" for anything that ships text off the box
+# (alerts, outcome details, reports). Divergent copies are how an egress path ends up
+# weaker than a local guard.
 #
-# bin/execution/redaction.py keeps its own (smaller) pattern pack plus the registry of
-# exact secret values handed out by execution.secrets. scrub_secrets() applies THAT first
-# (so exact registered values are always removed) and then this list, so it is a strict
-# superset of both.
-SECRET_PATTERNS = (
+# The canonical list lives in bin/execution/secret_patterns.py where that module exists;
+# it is loaded from there by file path (no sys.path side effect on import). The tuple
+# below is the fallback for a tree that predates that module — keep the two identical,
+# and add new shapes to the canonical module.
+#
+# scrub_secrets() also applies execution.redaction.scrub first, so exact secret values
+# registered by execution.secrets are always removed too.
+_FALLBACK_SECRET_PATTERNS = (
     r"-----BEGIN[ A-Z]*PRIVATE KEY-----",   # PEM private key header
     r"Bearer\s+[A-Za-z0-9._\-]+",
     r"\bAKIA[0-9A-Z]{16}\b",                # AWS access-key id
@@ -213,6 +216,25 @@ SECRET_PATTERNS = (
     r"(?i:\b\w*(?:api[_-]?key|token|secret|password|passwd)\b\s*[=:]\s*"
     r"['\"]?[A-Za-z0-9_\-\.]{12,})",
 )
+
+
+def _load_secret_patterns() -> tuple:
+    canonical = REPO / "bin" / "execution" / "secret_patterns.py"
+    if canonical.is_file():
+        try:
+            import importlib.util  # noqa: PLC0415
+            spec = importlib.util.spec_from_file_location("_harness_secret_patterns", canonical)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            pats = tuple(getattr(mod, "SECRET_PATTERNS", ()))
+            if pats:
+                return pats
+        except Exception:  # noqa: BLE001 — never lose scrubbing to an import problem
+            pass
+    return _FALLBACK_SECRET_PATTERNS
+
+
+SECRET_PATTERNS = _load_secret_patterns()
 _SECRET_RE = re.compile("(" + "|".join(SECRET_PATTERNS) + ")")
 _MASK = "[REDACTED]"
 
