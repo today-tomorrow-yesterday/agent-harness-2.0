@@ -46,3 +46,14 @@ forge/test-medic-escalation.md
 logs/self-loop.log
 logs/self-loop-state.json
 logs/test-medic.log
+
+# Goal loop, seeds and runner state — per-machine, regenerated
+forge/runner.db
+forge/runner.db-wal
+forge/runner.db-shm
+forge/seedbank.json
+forge/STOP
+next-session.md
+next-session.archive.md
+agent-activity.md
+*.tmp
