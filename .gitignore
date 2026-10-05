@@ -64,3 +64,18 @@ agent-activity.md
 config/agent-tools.yaml
 forge/dispatch-ledger.jsonl
 captures/
+
+# Health-check state — per-machine, regenerated
+forge/outcomes/
+forge/alerts.log
+forge/alert-state.json
+forge/locks/
+forge/self-loop-latest.md
+forge/self-loop-heartbeat
+forge/golden-history.jsonl
+forge/rule-contradictions.md
+forge/rule-contradictions-cache.json
+forge/skill-versions/
+forge/auth-canary.json
+forge/eval_runs.jsonl
+tmp/

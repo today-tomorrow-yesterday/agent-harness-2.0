@@ -14,6 +14,7 @@ One line per skill in `skills/`. Details, prerequisites and the maintenance prog
 - **`onboard`** — once, when setting this harness up on a new machine.
 - **`goal-review`** — weekly, after the briefing lists goal questions, or whenever your goals change.
 - **`safety-review`** — after an unattended run reports paused actions waiting for a decision.
+- **`skill-canary`** — before promoting an edited skill to your installed profile, or to roll one back.
 - **`visual-explainer`** — when someone needs to understand something structural (a schema, a data flow, two or three design options, a before/after) and a prose doc would not land.
 - **`ux-psychology`** — when designing or critiquing an onboarding flow, paywall, pricing page or sign-up form, or when a screen looks fine but does not convert.
 - **`page-clone`** — when you need a whole web page captured (screenshot, offline clone, rendered DOM) as a visual spec or for a teardown.
