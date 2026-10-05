@@ -125,8 +125,11 @@ def _invoke_claude(prompt: str, timeout: int = 300) -> str | None:
     if not claude_path:
         log("ERROR", "claude CLI not found on PATH")
         return None
-    env = os.environ.copy()
-    env["CLAUDE_BRAIN_SKIP_HOOKS"] = "1"  # keep the planner's child session out of the brain
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from harness_common import clean_env
+    # clean_env: never forward a metered API key to the child, and mark it unattended.
+    # CLAUDE_BRAIN_SKIP_HOOKS keeps the planner's child session out of the brain.
+    env = clean_env(CLAUDE_BRAIN_SKIP_HOOKS="1")
     try:
         result = subprocess.run(
             [claude_path, "-p", "--no-session-persistence",

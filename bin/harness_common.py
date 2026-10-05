@@ -119,8 +119,15 @@ def clean_env(**overrides: str) -> dict[str, str]:
     """os.environ minus metered-billing keys, with optional overrides applied.
 
     Usage: subprocess.run(..., env=clean_env(CLAUDE_BRAIN_SKIP_HOOKS="1"))
+
+    Every caller is a HEADLESS `claude -p` spawn with no human watching, so the child
+    is marked HARNESS_UNATTENDED=1 by default. That is what arms the safety-queue hook
+    (outward or irreversible actions pause for review) and the pre-tool-guard's block
+    on unattended commit/push. Without it those protections never switch on for the
+    one kind of run they exist for. Pass HARNESS_UNATTENDED="0" to opt a spawn out.
     """
     env = {k: v for k, v in os.environ.items() if not _METERED_KEY_RE.search(k.upper())}
+    env.setdefault("HARNESS_UNATTENDED", "1")
     env.update(overrides)
     return env
 

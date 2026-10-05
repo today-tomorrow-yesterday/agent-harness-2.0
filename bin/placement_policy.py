@@ -40,6 +40,7 @@ REPO_ALLOWED: dict[str, str] = {
     "claude-brain": "transcript history + its MCP server and hooks",
     "config":       "example manifests (your own copies are gitignored)",
     "captures":     "page-clone output (gitignored)",
+    "tmp":          "disposable scratch space (gitignored; tmp_purge cleans it)",
     "docs":         "designs, plans, decisions",
     "forge":        "runtime state and job output",
     "logs":         "job and hook logs (gitignored)",
