@@ -12,6 +12,8 @@ One line per skill in `skills/`. Details, prerequisites and the maintenance prog
 - **`sync-agent-tools`** — after adding or editing a skill or MCP server that every Claude profile (or Codex / Gemini seat) should have, or when two sessions behave differently for no visible reason.
 - **`session-reflect`** — at the end of a session that contained corrections or newly confirmed ways of working, to turn them into durable memory.
 - **`onboard`** — once, when setting this harness up on a new machine.
+- **`goal-review`** — weekly, after the briefing lists goal questions, or whenever your goals change.
+- **`safety-review`** — after an unattended run reports paused actions waiting for a decision.
 - **`visual-explainer`** — when someone needs to understand something structural (a schema, a data flow, two or three design options, a before/after) and a prose doc would not land.
 - **`ux-psychology`** — when designing or critiquing an onboarding flow, paywall, pricing page or sign-up form, or when a screen looks fine but does not convert.
 - **`page-clone`** — when you need a whole web page captured (screenshot, offline clone, rendered DOM) as a visual spec or for a teardown.

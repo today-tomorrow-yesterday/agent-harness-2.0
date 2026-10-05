@@ -20,6 +20,8 @@ every profile identical with `sync-agent-tools`.
 | `sync-agent-tools` | One manifest (`config/agent-tools.example.yaml`) keeps MCP servers, skills and a shared instructions file identical across Claude profiles and Codex / Gemini seats; `bin/skill-sync-check.py` reports drift read-only. | Python, PyYAML, `claude` CLI |
 | `session-reflect` | Scan the current session for corrections and confirmed approaches and draft memory entries for approval. | the claude-brain database |
 | `onboard` | First-time setup of this harness on a new machine, including the memory interview. | Python |
+| `goal-review` | Review goal progress and answer the weekly questions the goal loop raised, then update `memory/goals.md`. | a filled-in `memory/goals.md` |
+| `safety-review` | Review and clear the queue of outward or irreversible actions that were paused during unattended runs. | the `safety-queue` hook |
 
 ## Design and communication
 

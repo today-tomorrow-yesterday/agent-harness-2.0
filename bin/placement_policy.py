@@ -38,6 +38,8 @@ ROOT = Path(__file__).resolve().parents[1]
 REPO_ALLOWED: dict[str, str] = {
     "bin":          "scripts, jobs and hooks -- the harness runtime",
     "claude-brain": "transcript history + its MCP server and hooks",
+    "config":       "example manifests (your own copies are gitignored)",
+    "captures":     "page-clone output (gitignored)",
     "docs":         "designs, plans, decisions",
     "forge":        "runtime state and job output",
     "logs":         "job and hook logs (gitignored)",
