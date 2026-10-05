@@ -7,6 +7,8 @@ claude-brain/logs/
 forge/skill-usage.jsonl
 forge/evolution.jsonl
 forge/report-latest.md
+# Scorecard snapshots quote your own messages (the repeat-correction manifest)
+forge/learning-scorecard/
 
 # Secrets
 bin/secrets/*.txt
