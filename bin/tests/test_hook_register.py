@@ -84,6 +84,72 @@ def test_hook_args_are_passed_and_updated_in_place(tmp_path):
     assert "matcher" not in data["hooks"]["Stop"][0]
 
 
+# --- review P2: an unchanged command must not short-circuit matcher/timeout updates ------------
+
+def _entries(settings: Path, event: str, name: str) -> list[dict]:
+    return [e for e in load(settings)["hooks"].get(event, [])
+            if any(f"hooks/{name}.py" in h["command"] for h in e["hooks"])]
+
+
+def test_rerun_with_new_timeout_updates_it(tmp_path):
+    s = tmp_path / "settings.json"
+    run(s, "pre-tool-guard")
+    r = run(s, "pre-tool-guard", "--timeout", "30")
+    assert r.returncode == 0 and "updated" in r.stdout
+    (entry,) = _entries(s, "PreToolUse", "pre-tool-guard")
+    assert entry["hooks"][0]["timeout"] == 30
+    run(s, "pre-tool-guard")                       # a plain re-run keeps the chosen timeout
+    assert _entries(s, "PreToolUse", "pre-tool-guard")[0]["hooks"][0]["timeout"] == 30
+
+
+def test_rerun_restores_a_narrowed_catalog_matcher(tmp_path):
+    """A guard narrowed to `Read` by hand never sees Bash; re-registering must repair that."""
+    s = tmp_path / "settings.json"
+    run(s, "pre-tool-guard")
+    data = load(s)
+    data["hooks"]["PreToolUse"][0]["matcher"] = "Read"
+    s.write_text(json.dumps(data), encoding="utf-8")
+    r = run(s, "pre-tool-guard")
+    assert r.returncode == 0 and "updated" in r.stdout
+    (entry,) = _entries(s, "PreToolUse", "pre-tool-guard")
+    assert entry["matcher"] == "Bash|PowerShell"
+
+
+def test_matcher_fix_leaves_other_hooks_in_a_shared_entry_alone(tmp_path):
+    s = tmp_path / "settings.json"
+    cmd = register_hook.hook_command("pre-tool-guard")
+    s.write_text(json.dumps({"hooks": {"PreToolUse": [{"matcher": "Read", "hooks": [
+        {"type": "command", "command": "other-hook", "timeout": 5},
+        {"type": "command", "command": cmd, "timeout": 10}]}]}}), encoding="utf-8")
+    run(s, "pre-tool-guard")
+    pre = load(s)["hooks"]["PreToolUse"]
+    assert pre[0] == {"matcher": "Read", "hooks": [
+        {"type": "command", "command": "other-hook", "timeout": 5}]}
+    (entry,) = _entries(s, "PreToolUse", "pre-tool-guard")
+    assert entry["matcher"] == "Bash|PowerShell"
+
+
+def test_duplicate_registrations_collapse_to_one(tmp_path):
+    s = tmp_path / "settings.json"
+    cmd = register_hook.hook_command("safety-queue")
+    dup = {"matcher": "Bash|PowerShell", "hooks": [{"type": "command", "command": cmd,
+                                                    "timeout": 10}]}
+    s.write_text(json.dumps({"hooks": {"PreToolUse": [dup, dup]}}), encoding="utf-8")
+    assert run(s, "safety-queue").returncode == 0
+    assert len(_entries(s, "PreToolUse", "safety-queue")) == 1
+
+
+def test_rerun_without_hook_args_keeps_the_configured_ones(tmp_path):
+    s = tmp_path / "settings.json"
+    run(s, "design-gate", "--hook-arg=--build-skills=ui-builder")
+    r = run(s, "--all")
+    assert r.returncode == 0
+    for event in ("PreToolUse", "Stop"):
+        (entry,) = _entries(s, event, "design-gate")
+        assert "--build-skills=ui-builder" in entry["hooks"][0]["command"]
+    assert "no --build-skills" not in r.stdout
+
+
 def test_unconfigured_design_gate_is_announced(tmp_path):
     r = run(tmp_path / "settings.json", "design-gate")
     assert "no --build-skills" in r.stdout

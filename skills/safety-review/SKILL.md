@@ -20,15 +20,30 @@ tells the model to move on. This skill is how the user works the resulting queue
   queued -- a review flow cannot approve them headless. If the user wants one, they run it.
 - **Not here (allowed):** ordinary file reads/writes, plain GETs and downloads, localhost traffic.
 
-## Files (source of truth)
+## Files and the one way to change them
 
 Paths are relative to the repository root. `HARNESS_SAFETY_DIR` overrides the directory.
 
 - `forge/safety/queue.json` -- JSON array of PENDING records
   `{id, ts, status, label, reason, command, cwd, session_id}`.
 - `forge/safety/history.json` -- append-only event log (`queued` / `approved` / `denied` /
-  `cleared`). Never rewrite history; only append.
+  `cleared`).
+- `forge/safety/.lock` -- held for every read-modify-write of the two files above.
 - Denials also add a standing line to `memory/feedback/safety_denials.md` so the lesson sticks.
+
+**Never edit `queue.json` or `history.json` by hand.** Unattended sessions may be appending to
+them at the same moment; a hand edit that does not hold the lock silently drops their entries.
+Every change goes through the review CLI, which takes the same lock as the hook:
+
+```
+python bin/hooks/safety-queue.py list
+python bin/hooks/safety-queue.py approve <id>
+python bin/hooks/safety-queue.py deny <id> --reason "<one line>"
+python bin/hooks/safety-queue.py clear
+```
+
+`approve` and `deny` print the removed record as JSON (exit 1 and `not found` if the id is not
+pending); `list` prints the pending records as JSON.
 
 ## Modes
 
@@ -36,8 +51,8 @@ Parse the arguments (or the user's phrasing) into a mode. Default to **list** wh
 
 ### `list` (default)
 
-Read `queue.json`. If it is missing or empty, say so plainly. Otherwise print each pending request
-as a compact block -- the id and the human reason first, then the exact command:
+Run `list`. If it returns `[]`, say so plainly. Otherwise print each pending request as a compact
+block -- the id and the human reason first, then the exact command:
 
 ```
 [HIGH]   q_4ce3aee47e  --  publishing a package to a registry
@@ -50,36 +65,31 @@ LOW = external HTTP write. End with the one ask: `approve <id> / deny <id> / cle
 
 ### `approve <id>`
 
-1. Find the record in `queue.json`. If it is not there, say so and stop.
-2. Append an `approved` event to `history.json` (keep `id`, `command`, `ts`, `session_id`).
-3. Remove the record from `queue.json` (atomic rewrite of the array).
-4. Report the exact command back, fenced and paste-ready, and state clearly that
-   **approval is not auto-run**. The hook already denied the original attempt and this skill does
-   NOT re-execute it. The user runs it themselves, or re-runs the job attended. That keeps the
+1. Run `approve <id>`. If it reports `not found`, say so and stop.
+2. Report the exact command from the printed record, fenced and paste-ready, and state clearly
+   that **approval is not auto-run**. The hook already denied the original attempt and this skill
+   does NOT re-execute it. The user runs it themselves, or re-runs the job attended. That keeps the
    invariant: nothing outward-facing fires without a person present.
 
 ### `deny <id>`
 
-1. Find the record. If it is missing, say so and stop.
-2. If no reason was given, ask for a one-line one ("why deny -- so it is not proposed again?").
-3. Append a `denied` event, with the reason, to `history.json`.
-4. Append a dated bullet to `memory/feedback/safety_denials.md` (create it with frontmatter
+1. If no reason was given, ask for a one-line one ("why deny -- so it is not proposed again?").
+2. Run `deny <id> --reason "<reason>"`. If it reports `not found`, say so and stop.
+3. Append a dated bullet to `memory/feedback/safety_denials.md` (create it with frontmatter
    `name: safety_denials`, `description: actions the user denied from the safety queue`,
    `type: feedback` if absent):
    `- <date> -- DENIED: <reason>. Command class: <label>. Do not propose again. (<id>)`
    If this created the file, add it to the `feedback/` section of `memory/MEMORY.md`.
-5. Remove the record from `queue.json`. Report: `Denied <id> -- logged; will not propose again.`
+4. Report: `Denied <id> -- logged; will not propose again.`
 
 ### `clear`
 
-Confirm first (show the pending count). On yes: append a `cleared` event per removed id to
-`history.json`, then reset `queue.json` to `[]`. Report how many were cleared. `clear` is **not**
-approval -- cleared items are dropped, not run.
+Confirm first (show the pending count from `list`). On yes, run `clear` and report how many were
+cleared. `clear` is **not** approval -- cleared items are dropped, not run.
 
 ## Invariants
 
-- **Modify the JSON arrays atomically:** load, mutate, write a temp file, replace. Never leave a
-  half-written `queue.json`; a corrupt queue could confuse a later run.
+- **Only the CLI changes the queue.** It holds the lock and writes atomically.
 - **History is append-only.** Every state change leaves a trail.
 - **Never auto-execute a queued command.** This desk records decisions; humans run outward actions.
 - **Never edit `settings.json` here.** Registering or removing the hook is done with

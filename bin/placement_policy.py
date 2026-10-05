@@ -109,6 +109,11 @@ def check_path(target: str | Path, *, is_dir: bool = False) -> str | None:
 
     `is_dir=True` means `target` itself is a directory being created (mkdir), so a single path
     component below the root already counts.
+
+    EVERY protected root that contains the target is checked, and any one of them can refuse.
+    Roots may nest (a policy root inside this repo, or a project root inside a protected
+    workspace): an allowed or existing entry in the OUTER root says nothing about the inner
+    root's own top level, so passing the outer check must not end the evaluation.
     """
     p = _norm(target)
     if p is None:
@@ -120,7 +125,7 @@ def check_path(target: str | Path, *, is_dir: bool = False) -> str | None:
             if top is None:
                 continue
             if top in allowed or (root / top).exists():
-                return None
+                continue                           # this root is satisfied; check the rest
             here = "this repository" if root == ROOT else str(root)
             fix = ("add it to REPO_ALLOWED in bin/placement_policy.py" if root == ROOT
                    else "add it to that root's list in your HARNESS_PLACEMENT_POLICY file")

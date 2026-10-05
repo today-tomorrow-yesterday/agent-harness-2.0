@@ -114,10 +114,83 @@ def test_deny_is_kept_even_if_the_queue_cannot_be_written(tmp_path):
     assert r.returncode == 2
 
 
+# --- review P1: concurrent sessions must not drop each other's entries -------------------------
+
+def _env(tmp_path, **extra):
+    env = {k: v for k, v in os.environ.items() if k not in SCRUB}
+    env.update(HARNESS_UNATTENDED="1", HARNESS_SAFETY_NOTIFY="off",
+               HARNESS_SAFETY_DIR=str(tmp_path / "safety"))
+    env.update(extra)
+    return env
+
+
+@pytest.mark.parametrize("round_", range(3))
+def test_parallel_hook_processes_lose_no_entries(tmp_path, round_):
+    """Real processes, started together, all queueing at once. Before the lock, each one read the
+    queue, appended and replaced it, so the last writer dropped the others' entries."""
+    n = 16
+    env = _env(tmp_path)
+    procs = [subprocess.Popen(
+        [sys.executable, str(HOOK)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, text=True, env=env) for _ in range(n)]
+    payloads = [json.dumps({"session_id": f"s{i}", "tool_input": {"command": f"npm publish p{i}"}})
+                for i in range(n)]
+    # write every payload before reading any result, so the processes really overlap
+    for p, payload in zip(procs, payloads):
+        p.stdin.write(payload)
+        p.stdin.close()
+    codes = [p.wait(timeout=120) for p in procs]
+    for p in procs:
+        p.stdout.close()
+        p.stderr.close()
+    assert codes == [2] * n
+
+    q = queue(tmp_path)
+    hist = json.loads((tmp_path / "safety" / "history.json").read_text(encoding="utf-8"))
+    assert sorted(r["command"] for r in q) == sorted(f"npm publish p{i}" for i in range(n))
+    assert {r["id"] for r in q} == {h["id"] for h in hist if h["event"] == "queued"}
+
+
+def test_review_cli_approve_deny_clear(tmp_path):
+    for cmd in ("npm publish", "cargo publish", "gem push x.gem"):
+        run(cmd, tmp_path)
+    ids = [r["id"] for r in queue(tmp_path)]
+
+    def cli(*args):
+        return subprocess.run([sys.executable, str(HOOK), *args], capture_output=True,
+                              text=True, timeout=30, env=_env(tmp_path))
+
+    listed = json.loads(cli("list").stdout)
+    assert [r["id"] for r in listed] == ids
+    r = cli("approve", ids[0])
+    assert r.returncode == 0 and json.loads(r.stdout)["command"] == "npm publish"
+    r = cli("deny", ids[1], "--reason", "not this week")
+    assert r.returncode == 0
+    assert cli("approve", "q_missing").returncode == 1
+    assert "cleared 1" in cli("clear").stdout
+    assert queue(tmp_path) == []
+    hist = json.loads((tmp_path / "safety" / "history.json").read_text(encoding="utf-8"))
+    events = [(h["id"], h["event"]) for h in hist]
+    assert (ids[0], "approved") in events and (ids[2], "cleared") in events
+    assert any(h["event"] == "denied" and h.get("reason") == "not this week" for h in hist)
+
+
+# --- quote handling: a nested command is a command, a quoted mention is not -------------------
+
+@pytest.mark.parametrize("command", [
+    'bash -c "npm publish"',
+    "sh -c 'gh pr create --fill'",
+    'pwsh -Command "Send-MailMessage -To ops@example.com -Subject hi"',
+    'bash -c "curl -X POST https://api.example.com/x -d @b"',
+])
+def test_nested_commands_are_not_hidden_by_quotes(command, tmp_path):
+    assert run(command, tmp_path).returncode == 2, command
+
+
 def test_detector_directly():
     spec = importlib.util.spec_from_file_location("safety_queue", HOOK)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    assert mod.detect_tier2("gem push x.gem", "gem push x.gem")[0] == "publishing_a_gem_to_RubyGems"
+    assert mod.detect_tier2("gem push x.gem")[0] == "publishing_a_gem_to_RubyGems"
     assert mod._external_host("curl https://user:pw@api.example.com:8443/x") == "api.example.com"
     assert mod._external_host("curl http://localhost:1/x http://0.0.0.0/y") is None
