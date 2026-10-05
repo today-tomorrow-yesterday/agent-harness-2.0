@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  visual-explainer template — skill `visual-explainer`
+  Self-contained: no build step, no CDN, no external fonts, no JS. Opens from file://.
+
+  HOW TO USE
+  1. Copy this file to its destination (repo docs/ for a project, a scratch dir for a one-off).
+  2. Set <title> and the <h1> / .sub head block.
+  3. Fill in the LEGEND — one row per colour you actually use. Delete unused rows.
+  4. Keep 3-6 .step cards, one idea each. Delete the rest.
+  5. Replace every REPLACE / placeholder value with real data.
+  6. Pre-ship: one highlight per grid · every tint carries a word in-row · no colour-only
+     meaning · nothing under 13.5px · no max-width · every colour has a legend row.
+  7. Write the file, then OPEN it in a browser:
+     Windows: start "" <path>   macOS: open <path>   Linux: xdg-open <path>
+
+  LIGHT MODE: change <html lang="en"> to <html lang="en" data-theme="light">. Nothing else.
+-->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REPLACE — the one thing this page makes legible</title>
+<style>
+  /* ============================================================
+     1. TOKENS — see references/design-system.md for what each MEANS
+     ============================================================ */
+  :root{
+    /* ground / depth ladder: page -> step card -> nested card; wells cut inward */
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c2330; --well:#0b0f14;
+    --line:#2d3748; --ink:#e6edf3; --dim:#9aa7b4; --zebra:#12171f;
+
+    /* VERDICT — reserved. never reused as an entity colour. */
+    --good:#3fb950;  /* correct / works / accepted   -> paired with ✓ */
+    --bad:#f85149;   /* wrong / breaks / rejected    -> paired with ✕ */
+    --warn:#d29922;  /* the load-bearing thing / the honest cost / the key column */
+    /* ON-TINT variants: a verdict glyph sitting on its OWN tint loses contrast, because the
+       tint pulls the background toward the text hue. Measured: ✕ #f85149 on a 15% red tint
+       = 4.35:1 (under AA). These step-up values restore it. Use for text, not for fills. */
+    --good-on:#56d364; --bad-on:#ff7b72; --warn-on:#e3b341;
+
+    /* ENTITY IDENTITY — one colour per CATEGORY. green + red deliberately absent. */
+    --e1:#a371f7;  /* violet */
+    --e2:#58a6ff;  /* blue   */
+    --e3:#f0883e;  /* orange */
+    --e4:#2dd4bf;  /* teal   */
+    --e5:#f778ba;  /* pink   */
+    --e6:#c9d1d9;  /* neutral slate — legacy / retired (pair with strikethrough) */
+
+    /* ink colours for text sitting ON a filled badge */
+    --on-good:#04210a; --on-bad:#210404; --on-warn:#1d1400;
+    --on-e1:#0f0518; --on-e2:#04121f; --on-e3:#1d0c00;
+    --on-e4:#00201c; --on-e5:#210310; --on-e6:#11151a;
+
+    /* tints — note the asymmetry: good 11%, bad 15% (tuned, not a typo) */
+    --tint-good:rgba(63,185,80,.11);
+    --tint-bad:rgba(248,81,73,.15);
+    --tint-warn:rgba(210,153,34,.09);
+    --tint-e1:rgba(163,113,247,.10);
+    --tint-e2:rgba(88,166,255,.10);
+    --tint-e3:rgba(240,136,62,.10);
+
+    /* type — MONO = data, SANS = explanation. never swap.
+       The emoji families are appended (not downloaded — system fonts) so a bare 🗄 / ⚙
+       gets COLOUR presentation instead of a narrow monochrome fallback. Verified in-browser:
+       without them, U+1F5C4 renders at 55px (tofu-ish symbol) instead of 88px (real emoji).
+       Keep them on --mono too, or markers inside table cells break. */
+    --emoji:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji";
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif,var(--emoji);
+    --mono:ui-monospace,Consolas,monospace,var(--emoji);
+    --t-title:40px; --t-step:26px; --t-lede:20px; --t-body:19px;
+    --t-note:18px;  --t-data:17px; --t-mono:16.5px; --t-label:13.5px;
+
+    /* spacing (4px base) + radius ladder (outer bigger than inner) */
+    --s1:8px; --s2:12px; --s3:16px; --s4:20px; --s5:24px; --s6:28px; --s7:40px;
+    --r-step:16px; --r-card:14px; --r-callout:12px; --r-box:11px; --r-chip:6px;
+    --indent:54px;  /* stepnum 40 + gap 14 — .note hangs under the TITLE */
+  }
+
+  /* LIGHT THEME — one attribute on <html>, no JS, no media query.
+     (A media query would silently flip the file on a light-mode OS.) */
+  html[data-theme="light"]{
+    --bg:#faf9f6; --panel:#ffffff; --panel2:#f2f4f7; --well:#f7f8fa;
+    --line:#d5dae1; --ink:#14171a; --dim:#5b6672; --zebra:#f6f7f9;
+    --good:#1a7f37; --bad:#cf222e; --warn:#9a6700;
+    --good-on:#0d4a1f; --bad-on:#8b0b20; --warn-on:#5c3d00;
+    --e1:#6639ba; --e2:#0550ae; --e3:#a04100; --e4:#0f766e; --e5:#a4234d; --e6:#57606a;
+    --on-good:#eaf6ec; --on-bad:#fdecee; --on-warn:#fff6e0;
+    --on-e1:#f3eefc; --on-e2:#eaf2fd; --on-e3:#fdf0e6;
+    --on-e4:#e6f6f4; --on-e5:#fdedf2; --on-e6:#f2f4f7;
+    --tint-good:rgba(26,127,55,.10); --tint-bad:rgba(207,34,46,.10);
+    --tint-warn:rgba(154,103,0,.10);
+    --tint-e1:rgba(102,57,186,.09); --tint-e2:rgba(5,80,174,.09);
+    --tint-e3:rgba(160,65,0,.09);
+  }
+
+  /* ============================================================
+     2. FRAME — no max-width, no centred column. side padding only.
+     ============================================================ */
+  *{box-sizing:border-box}
+  body{margin:0;padding:var(--s7) 32px 120px;background:var(--bg);color:var(--ink);
+       font:var(--t-body)/1.65 var(--sans)}
+  h1{font-size:var(--t-title);line-height:1.15;margin:0 0 var(--s1);letter-spacing:-.02em}
+  .sub{color:var(--dim);font-size:var(--t-lede);margin:0 0 var(--s5)}
+  .closing{color:var(--dim);font-size:var(--t-lede);margin:var(--s6) 0 0}
+
+  /* ---- 3. LEGEND (required) ---- */
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+          gap:var(--s1) var(--s5);background:var(--panel);border:1px solid var(--line);
+          border-radius:var(--r-card);padding:var(--s4) var(--s5);margin:0 0 var(--s7);
+          font-size:var(--t-note)}
+  .lg{display:flex;align-items:baseline;gap:10px;color:var(--dim)}
+  .tok{display:inline-block;font-family:var(--mono);font-size:15px;font-weight:700;
+       padding:1px 9px;border-radius:var(--r-chip);border:1px solid currentColor;
+       white-space:nowrap;flex:0 0 auto}
+  .tok.good{color:var(--good-on);background:var(--tint-good)}
+  .tok.bad{color:var(--bad-on);background:var(--tint-bad)}
+  .tok.warn{color:var(--warn-on);background:var(--tint-warn)}
+  .tok.e1{color:var(--e1);background:var(--tint-e1)}
+  .tok.e2{color:var(--e2);background:var(--tint-e2)}
+  .tok.e3{color:var(--e3);background:var(--tint-e3)}
+  .tok.e6{color:var(--e6)}
+  .mk{font-size:19px;line-height:1}
+
+  /* ---- 4. STEP CARD ---- */
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-step);
+        padding:var(--s6) 30px;margin:0 0 var(--s5)}
+  .stephead{display:flex;align-items:center;margin:0 0 6px}
+  .stepnum{display:inline-flex;align-items:center;justify-content:center;
+           width:40px;height:40px;border-radius:50%;margin-right:14px;flex:0 0 auto;
+           font-weight:800;font-size:var(--t-lede);
+           background:var(--e2);color:var(--on-e2)}
+  .stepnum.good{background:var(--good);color:var(--on-good)}
+  .stepnum.bad{background:var(--bad);color:var(--on-bad)}
+  .stepnum.warn{background:var(--warn);color:var(--on-warn)}
+  .stepnum.e1{background:var(--e1);color:var(--on-e1)}
+  .stepnum.e3{background:var(--e3);color:var(--on-e3)}
+  .stepnum.e4{background:var(--e4);color:var(--on-e4)}
+  .steptitle{font-size:var(--t-step);font-weight:700;letter-spacing:-.01em}
+  .note{color:var(--dim);margin:0 0 var(--s4) var(--indent);font-size:var(--t-note)}
+  .tail{margin:0}
+
+  /* ---- 5. EVIDENCE GRID ---- */
+  table{border-collapse:collapse;width:100%;margin:0 0 var(--s4);font-size:var(--t-data)}
+  caption{text-align:left;font-weight:700;font-size:var(--t-note);padding:0 0 9px}
+  caption .cnt{color:var(--dim);font-weight:400;font-size:var(--t-mono)}
+  th{background:var(--panel2);color:var(--dim);font-weight:600;text-align:left;
+     padding:var(--s1) var(--s2);border:1px solid var(--line);font-size:var(--t-label);
+     letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+  td{padding:var(--s1) var(--s2);border:1px solid var(--line);
+     font-family:var(--mono);font-size:var(--t-mono);white-space:nowrap}
+  td.prose{font-family:var(--sans);white-space:normal}
+  /* zebra sits on the TR; highlights sit on the TD. A td background paints ABOVE its
+     row's background regardless of specificity, so the highlight always wins. Putting the
+     zebra on `... td` instead would out-specify `tr.newrow td` and silently eat the
+     highlight on every even row — verified in-browser, don't "improve" this. */
+  tbody tr:nth-child(even){background:var(--zebra)}
+  tr.newrow td{background:var(--tint-good)}
+  tr.badrow td{background:var(--tint-bad)}
+  /* .keycol on the TH + every TD in that column = a vertical ribbon marking THE RULE.
+     outline (not border) so cell geometry doesn't shift and the column stays aligned. */
+  .keycol{outline:2px solid var(--warn);outline-offset:-2px}
+
+  /* ---- 6. KEY COMPOSITION STRIP / FLOW STRIP ---- */
+  .keybox{display:flex;gap:9px;flex-wrap:wrap;align-items:stretch;margin:14px 0 var(--s4)}
+  .keybox.tight{margin:10px 0 14px}
+  .keybox.flow{gap:11px}          /* arrows need a touch more air than plus signs */
+  .kb{border:2px solid var(--line);border-radius:var(--r-box);padding:11px var(--s3);
+      background:var(--well);font-family:var(--mono);font-size:var(--t-mono);text-align:center}
+  .kb small{display:block;font-family:var(--sans);font-size:var(--t-label);color:var(--dim);
+            margin-top:5px;letter-spacing:.03em}
+  .kb.fixed{border-color:var(--line);color:var(--dim)}     /* pinned — can't absorb a diff */
+  .kb.vary{border-color:var(--good);color:var(--good)}     /* free to change */
+  .kb.newk{border-color:var(--e2);color:var(--e2)}         /* added by this option */
+  .kb.gone{border-color:var(--e6);color:var(--e6);text-decoration:line-through}
+  .plus,.arrow{align-self:center;color:var(--dim);font-size:22px}
+  .arrow{font-size:24px}
+
+  /* ---- 7. OPTION CARDS (A/B) ---- */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+  @media(max-width:960px){.two{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:var(--r-card);padding:21px;
+        background:var(--panel2)}
+  .card h3{margin:0 0 13px;font-size:var(--t-lede)}
+
+  /* ---- 8. SEVERITY CALLOUT ---- */
+  .callout{border-left:5px solid var(--warn);background:var(--tint-warn);
+           padding:17px 21px;border-radius:0 var(--r-callout) var(--r-callout) 0;
+           margin:var(--s4) 0;font-size:var(--t-note)}
+  .callout.good{border-color:var(--good);background:var(--tint-good)}
+  .callout.bad{border-color:var(--bad);background:var(--tint-bad)}
+  .callout.e1{border-color:var(--e1);background:var(--tint-e1)}
+  .callout.e2{border-color:var(--e2);background:var(--tint-e2)}
+  .callout b{display:block;margin-bottom:5px;font-size:var(--t-body)}
+
+  /* ---- 9. SUPPORTING ---- */
+  code{font-family:var(--mono);background:var(--well);border:1px solid var(--line);
+       border-radius:var(--r-chip);padding:2px 7px;font-size:var(--t-mono)}
+  pre{background:var(--well);border:1px solid var(--line);border-radius:var(--r-callout);
+      padding:17px 19px;overflow-x:auto;font-size:var(--t-mono);line-height:1.5;
+      margin:0 0 var(--s3);font-family:var(--mono)}
+  .muted{color:var(--dim)}
+  /* ✓ U+2713 / ✕ U+2715 are TEXT glyphs, so CSS `color` applies. Never use ✅/❌ here —
+     those are colour emoji and ignore `color`, so they can't carry the verdict palette. */
+  .tick{color:var(--good-on);font-weight:800}
+  .cross{color:var(--bad-on);font-weight:800}
+  .varyc{color:var(--good-on);font-weight:800;font-family:var(--mono)} /* a free-to-vary id */
+  .e1c{color:var(--e1);font-weight:700} .e2c{color:var(--e2);font-weight:700}
+  .e3c{color:var(--e3);font-weight:700} .e4c{color:var(--e4);font-weight:700}
+  .e6c{color:var(--e6);font-weight:700}
+  td.e1,th.e1{color:var(--e1);font-weight:700} td.e2,th.e2{color:var(--e2);font-weight:700}
+  td.e3,th.e3{color:var(--e3);font-weight:700} td.e4,th.e4{color:var(--e4);font-weight:700}
+  td.e6{color:var(--e6);font-weight:700;text-decoration:line-through}
+</style>
+</head>
+<body>
+
+  <!-- ========== HEAD ========== -->
+  <h1>REPLACE — the one thing this page makes legible</h1>
+  <p class="sub">REPLACE — the qualifiers · scenario · scope, separated by middots</p>
+
+  <!-- ========== LEGEND (required — delete unused rows, never the block) ========== -->
+  <div class="legend">
+    <div class="lg"><span class="tok e1">entity A</span> REPLACE — what this category is</div>
+    <div class="lg"><span class="tok e2">entity B</span> REPLACE — one colour per CATEGORY</div>
+    <div class="lg"><span class="tok e3">entity C</span> REPLACE — max 4 + neutral</div>
+    <div class="lg"><span class="tok e6">retired</span> exists but not live (struck through)</div>
+    <div class="lg"><span class="tok good">✓ works</span> legal / correct outcome</div>
+    <div class="lg"><span class="tok bad">✕ breaks</span> rejected / data lost</div>
+    <div class="lg"><span class="tok warn">key</span> the column the rule keys on</div>
+    <div class="lg"><span class="mk">🗄</span>&nbsp;table (underscores)
+      &nbsp;<span class="mk">🌐</span>&nbsp;endpoint (slashes)
+      &nbsp;<span class="mk">⚙</span>&nbsp;stored proc</div>
+  </div>
+
+  <!-- ========== STEP 1 — context / why ========== -->
+  <div class="step">
+    <div class="stephead">
+      <span class="stepnum e1">1</span>
+      <span class="steptitle">REPLACE — set up the situation in one line</span>
+    </div>
+    <p class="note">REPLACE — one sentence of orientation. Hangs under the title, not the badge.</p>
+
+    <!-- OPTION CARDS also work as a "why A can, why B can't" contrast -->
+    <div class="two">
+      <div class="card">
+        <h3><span class="e1c">Case A</span> — REPLACE</h3>
+        <pre>31 prices rows   (Day 1 … Day 31)
+     × 30 customers
+ = 930 rows, pre-loaded</pre>
+        <p class="tail">REPLACE — one or two sentences. Arithmetic goes in the
+          <code>pre</code> block above, never in prose.</p>
+      </div>
+      <div class="card">
+        <h3><span class="e3c">Case B</span> — REPLACE</h3>
+        <pre>? prices rows
+     × 25 customers
+ = ??? — can't pre-load
+        what you can't count</pre>
+        <p class="tail">REPLACE — the contrast. Keep both cards structurally identical so the
+          eye diffs them instead of reading them.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== STEP 2 — what already exists / what's true today ========== -->
+  <div class="step">
+    <div class="stephead">
+      <span class="stepnum good">2</span>
+      <span class="steptitle">REPLACE — the part that already works</span>
+    </div>
+    <p class="note">REPLACE — cite the source of truth (live DB, file:line) in the caption.</p>
+
+    <table>
+      <caption>🗄 REPLACE_table <span class="cnt">— already exists · REPLACE how you know</span></caption>
+      <tr><th>id</th><th>name</th><th>type</th></tr>
+      <tr><td class="e3">c-207</td><td class="e3">Alex</td>
+          <td>2 <span class="muted">customer</span></td></tr>
+    </table>
+
+    <div class="callout good">
+      <b>✓ REPLACE — the verdict, as the first line</b>
+      REPLACE — the body is optional depth. The bold line must carry the whole message on its own.
+    </div>
+  </div>
+
+  <!-- ========== STEP 3 — the problem, SHOWN not asserted ========== -->
+  <div class="step">
+    <div class="stephead">
+      <span class="stepnum bad">3</span>
+      <span class="steptitle">REPLACE — the collision / the failure / the constraint</span>
+    </div>
+    <p class="note">REPLACE — name the rule. Only N columns matter.</p>
+
+    <!-- KEY COMPOSITION STRIP — makes an abstract rule a concrete object -->
+    <div class="keybox">
+      <div class="kb fixed">column_a<small>always 900</small></div>
+      <div class="plus">+</div>
+      <div class="kb vary">column_b<small>the only thing free to change</small></div>
+      <div class="plus">+</div>
+      <div class="kb fixed">column_c<small>always Alex — that's the point</small></div>
+    </div>
+
+    <p>REPLACE — say out loud which boxes are pinned and why, then state the consequence:
+      the only thing left that can make two writes different is
+      <span class="varyc">column_b</span>.</p>
+
+    <!-- EVIDENCE GRID — ONE highlighted row, verdict word IN the row -->
+    <table>
+      <caption>🗄 REPLACE_table <span class="cnt">— if both writes share one row</span></caption>
+      <tr><th>column_a</th><th class="keycol">column_b</th><th>column_c</th>
+          <th>payer</th><th>ref</th><th>verdict</th></tr>
+      <tr><td>900</td><td class="keycol">700</td><td class="e3">c-207 Alex</td>
+          <td class="e2">p-900 Sam</td><td>P-1</td><td class="tick">✓ written</td></tr>
+      <tr class="badrow"><td>900</td><td class="keycol">700</td><td class="e3">c-207 Alex</td>
+          <td class="e2">p-901 Dana</td><td>P-2</td><td class="cross">✕ duplicate key</td></tr>
+    </table>
+
+    <div class="callout bad">
+      <b>✕ REPLACE — why the obvious workaround doesn't work</b>
+      REPLACE — one short paragraph. Cards hold a title, one or two sentences, and a visual.
+      Three paragraphs means this should have been two steps.
+    </div>
+  </div>
+
+  <!-- ========== STEP 4 — the fix, SHOWN as rows ========== -->
+  <div class="step">
+    <div class="stephead">
+      <span class="stepnum good">4</span>
+      <span class="steptitle">REPLACE — the proposed resolution</span>
+    </div>
+    <p class="note">REPLACE — one line on what changes and what doesn't.</p>
+
+    <table>
+      <caption>🗄 REPLACE_table <span class="cnt">— what actually gets written</span></caption>
+      <tr><th>id</th><th>name</th><th>parent</th><th>price</th><th>qty</th><th>verdict</th></tr>
+      <tr><td class="e3">501</td><td class="e3">existing row <span class="muted">(unchanged)</span></td>
+          <td>900</td><td>null</td><td>0</td><td class="muted">— untouched</td></tr>
+      <tr class="newrow"><td>700</td><td>Alex — $50 payment</td><td>900</td><td>50</td><td>1</td>
+          <td class="tick">✓ minted</td></tr>
+      <tr class="newrow"><td>701</td><td>Alex — $50 payment</td><td>900</td><td>50</td><td>1</td>
+          <td class="tick">✓ minted</td></tr>
+    </table>
+    <p class="note" style="margin-left:0">Two tinted rows here is the one legitimate
+      exception: they are <em>the same fact</em> (one row per payment), not two competing points.
+      Two tints meaning two <em>different</em> things is the anti-pattern.</p>
+
+    <!-- FLOW STRIP — inline sequence, ~5 nodes max, every node marked -->
+    <div class="keybox flow">
+      <div class="kb newk">🌐 POST /v2/REPLACE<small>route</small></div>
+      <div class="arrow">→</div>
+      <div class="kb fixed">ReplaceService<small>service</small></div>
+      <div class="arrow">→</div>
+      <div class="kb vary">⚙ replace_proc<small>atomic</small></div>
+      <div class="arrow">→</div>
+      <div class="kb fixed">🗄 replace_table<small>row written</small></div>
+    </div>
+
+    <div class="callout good">
+      <b>✓ REPLACE — why this is now legal</b>
+      REPLACE — state the outcome in the reader's own numbers.
+    </div>
+    <div class="callout">
+      <b>The honest cost</b>
+      REPLACE — every option costs something. Name it here. NEVER close on an unqualified win;
+      naming the cost is part of why this format gets trusted.
+    </div>
+  </div>
+
+  <!-- ========== STEP 5 — the A/B comparison ========== -->
+  <div class="step">
+    <div class="stephead">
+      <span class="stepnum">5</span>
+      <span class="steptitle">REPLACE — Option B, side by side</span>
+    </div>
+    <p class="note">REPLACE — name the single axis they differ on.</p>
+
+    <div class="two">
+      <div class="card">
+        <h3><span class="tick">✓</span> A — REPLACE <span class="muted">(no DDL)</span></h3>
+        <div class="keybox tight">
+          <div class="kb fixed">column_a</div><div class="plus">+</div>
+          <div class="kb vary">column_b<small>700 → 701</small></div><div class="plus">+</div>
+          <div class="kb fixed">column_c</div>
+        </div>
+        <p class="tail">REPLACE — 2 writes → <b>2 new rows</b> + 2 child rows.</p>
+      </div>
+      <div class="card">
+        <h3><span class="tick">✓</span> B — REPLACE <span class="muted">(one ALTER)</span></h3>
+        <div class="keybox tight">
+          <div class="kb fixed">column_a</div><div class="plus">+</div>
+          <div class="kb fixed">column_b<small>700 both times</small></div><div class="plus">+</div>
+          <div class="kb fixed">column_c</div><div class="plus">+</div>
+          <div class="kb newk">column_d<small>P-1 vs P-2</small></div>
+        </div>
+        <p class="tail">REPLACE — 2 writes → <b>1 shared row</b> + 2 child rows.</p>
+      </div>
+    </div>
+
+    <pre>-- REPLACE — Option B, the entire change:
+ALTER TABLE replace_table DROP CONSTRAINT uc_replace;
+ALTER TABLE replace_table ADD  CONSTRAINT uc_replace
+  UNIQUE (column_a, column_b, column_c, column_d);</pre>
+
+    <div class="callout e1">
+      <b>REPLACE — what both options have in common</b>
+      REPLACE — if both are viable, both get ✓. Never rank with colour; ranking is ⭐.
+      They differ only in <em>what absorbs the difference</em>.
+    </div>
+  </div>
+
+  <!-- ========== STEP 6 — VERDICT TABLE ========== -->
+  <div class="step">
+    <div class="stephead">
+      <span class="stepnum">6</span>
+      <span class="steptitle">REPLACE — what the reports say either way</span>
+    </div>
+    <table>
+      <caption>REPLACE — the scenario <span class="cnt">— stated in the reader's numbers</span></caption>
+      <tr><th>Question</th><th>Answer</th><th>Right?</th></tr>
+      <tr><td class="prose">Total collected</td><td>$100</td><td class="tick">✓</td></tr>
+      <tr><td class="prose">Number of payers</td><td>2 <span class="muted">(Sam, Dana)</span></td>
+          <td class="tick">✓</td></tr>
+      <tr><td class="prose">Alex credited</td><td class="e3">$100 from 2 payers</td>
+          <td class="tick">✓</td></tr>
+      <tr><td class="prose">Writes counted</td><td>2</td>
+          <td class="tick">✓ <span class="muted">— nothing was pre-seeded</span></td></tr>
+      <tr class="badrow"><td class="prose">Placeholder rows created</td><td>0</td>
+          <td class="cross">✕ <span class="muted">was 8 before</span></td></tr>
+    </table>
+    <div class="callout good">
+      <b>✓ REPLACE — the closing verdict</b>
+      REPLACE — the one thing to remember.
+    </div>
+  </div>
+
+  <p class="closing">REPLACE — the final caveat / scope line. What is NOT changing.</p>
+
+</body>
+</html>
