@@ -22,6 +22,14 @@ _FIELD_KEYS = ("outcome", "success_signal", "status", "last_moved", "next_step",
 # inside a goal's prose is body content, NOT a new goal.
 _GOAL_HEADER_RE = re.compile(r"(?m)^##[ \t]+(G\d+)[ \t]*—[ \t]*(.*)$")
 _FIELD_LINE_RE = re.compile(r"^\s*-\s*([a-z_]+):\s*(.*)$")
+# The first top-level section the serializer owns. Everything above it (frontmatter,
+# a how-to note) is the file's PREAMBLE and is written back verbatim.
+_NORTH_STAR_RE = re.compile(r"(?m)^#[ \t]*North Star[ \t]*$")
+
+# A goals.md that still carries this marker is the unfilled template shipped with the
+# repo. The marker sits on the BOOTSTRAP block the user deletes when they fill the
+# file in, so the loop never assesses, researches or rewrites placeholder goals.
+TEMPLATE_MARKER = "goal-loop:template"
 
 
 def _parse_list(raw: str) -> list[str]:
@@ -63,6 +71,22 @@ def _new_goal(gid: str, title: str) -> dict:
             "research_notes": "", "open_questions": [], "_body": ""}
 
 
+def is_unfilled_template(text: str) -> bool:
+    """True while goals.md is still the shipped template (see TEMPLATE_MARKER)."""
+    return TEMPLATE_MARKER in (text or "")
+
+
+def _preamble(text: str, headers: list) -> str:
+    """Text above the first section the serializer owns (North Star or a goal)."""
+    cut = len(text)
+    m = _NORTH_STAR_RE.search(text)
+    if m:
+        cut = m.start()
+    if headers:
+        cut = min(cut, headers[0].start())
+    return text[:cut].strip("\n") if cut < len(text) else ""
+
+
 def parse_goals(text: str) -> dict:
     north = ""
     m = re.search(r"#\s*North Star\s*\n(.+?)(?:\n#|\Z)", text, re.S)
@@ -83,7 +107,7 @@ def parse_goals(text: str) -> dict:
             if lm and lm.group(1) in _FIELD_KEYS:
                 g[lm.group(1)] = _parse_value(lm.group(1), lm.group(2))
         goals.append(g)
-    return {"north_star": north, "goals": goals}
+    return {"north_star": north, "goals": goals, "preamble": _preamble(text, headers)}
 
 
 def _fmt(key: str, value) -> str:
@@ -154,7 +178,13 @@ def _canonical_body(g: dict) -> str:
 
 
 def serialize_goals(doc: dict) -> str:
-    out = [f"# North Star\n{doc.get('north_star', '').strip()}\n", "# Active Goals\n"]
+    out = []
+    preamble = (doc.get("preamble") or "").strip("\n")
+    if preamble:
+        # Frontmatter and any guidance above "# North Star" survive a rewrite; without
+        # this the first save silently dropped them.
+        out.append(preamble + "\n")
+    out += [f"# North Star\n{doc.get('north_star', '').strip()}\n", "# Active Goals\n"]
     for g in doc["goals"]:
         body = g.get("_body")
         body = _sync_body(body, g) if body else _canonical_body(g)

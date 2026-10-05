@@ -45,3 +45,60 @@ def test_denies_execution_code_subtree(tmp_path):
 def test_denies_path_escape(tmp_path):
     with pytest.raises(ValueError):
         WriteWorkspace(path="../escape.md", content="x", root=str(tmp_path)).run()
+
+
+# ------------------------------------------------------- guardrail paths are refused
+@pytest.mark.parametrize("path", [
+    "bin/hooks/some-guard.py",        # a hook that gates every shell command
+    "bin/hooks/nested/deep.py",       # whole subtree, not just the top level
+    "bin/secrets/keyring.env",
+    "bin/scheduler/jobs.py",          # registering a job = persistence
+    "bin/self_loop.py",               # the supervisor of autonomous work
+    "forge/STOP",                     # the kill-switch
+    "forge/runner.db",                # the audit log + approval queue
+    "CLAUDE.md",                      # the standing rules
+    "memory/MEMORY.md",
+])
+def test_denies_guardrail_paths(tmp_path, path):
+    with pytest.raises(PermissionError):
+        WriteWorkspace(path=path, content="import sys; sys.exit(0)", root=str(tmp_path)).run()
+    assert not (tmp_path / path).exists(), "a denied write must leave nothing behind"
+
+
+# ------------------------------------------------- deny-list anchored to the repo
+# Every deny-list entry is REPO-relative, but `root` is a caller-supplied field. A root
+# deeper than the repo used to shorten the checked path out of the list's reach while
+# containment still passed.
+@pytest.mark.parametrize("root_sub, path", [
+    ("bin", "hooks/some-guard.py"),
+    ("bin", "secrets/probe-does-not-exist.env"),
+    ("bin", "execution/policy.py"),
+    ("bin", "runner/events.py"),
+    ("forge", "STOP"),
+    ("forge", "execution_policy.json"),
+    ("memory", "user.md"),
+])
+def test_deny_list_is_anchored_to_the_repo_not_the_callers_root(root_sub, path):
+    from execution.actions.write_workspace import REPO
+    root = REPO / root_sub
+    target = root / path
+    before = target.read_bytes() if target.exists() else None
+    with pytest.raises(PermissionError, match="protected path"):
+        WriteWorkspace(path=path, content="# clobbered", root=str(root)).run()
+    after = target.read_bytes() if target.exists() else None
+    assert after == before, f"{path} was modified despite being protected"
+
+
+def test_root_relative_deny_still_applies_outside_the_repo(tmp_path):
+    with pytest.raises(PermissionError, match="protected path"):
+        WriteWorkspace(path="forge/STOP", content="x", root=str(tmp_path)).run()
+    assert not (tmp_path / "forge" / "STOP").exists()
+
+
+def test_a_second_write_never_overwrites_the_first_backup(tmp_path):
+    (tmp_path / "a.md").write_text("v1", encoding="utf-8")
+    WriteWorkspace(path="a.md", content="v2", root=str(tmp_path)).run()
+    out = WriteWorkspace(path="a.md", content="v3", root=str(tmp_path)).run()
+    assert (tmp_path / "a.md.bak").read_text(encoding="utf-8") == "v1"    # original kept
+    assert (tmp_path / "a.md.bak1").read_text(encoding="utf-8") == "v2"
+    assert out["backup"] == "a.md.bak1"

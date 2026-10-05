@@ -29,6 +29,17 @@ def run(job: str, steps: list[Callable[[], Any]], max_actions: int = 20,
     STOP-halted long job continues instead of restarting."""
     resuming = run_id is not None
     done = events.load_checkpoints(run_id, db_path=db_path) if resuming else {}
+    if resuming:
+        # A step marked 'started' with no output means the previous attempt died
+        # BETWEEN executing the step and persisting its result. Its side effect may be
+        # half-applied, so surface it (needs_attention) instead of silently repeating
+        # a commit / file write / Slack post.
+        for idx in events.load_incomplete(run_id, db_path=db_path):
+            events.log_event(run_id, f"step:{idx}", "warn",
+                             payload="step started but never checkpointed -- the previous run "
+                                     "died mid-step; its side effect may be partially applied. "
+                                     "Re-running.",
+                             needs_attention=True, job=job, db_path=db_path)
     if not resuming:
         run_id = events.start_run(job, db_path=db_path)
 
@@ -49,8 +60,16 @@ def run(job: str, steps: list[Callable[[], Any]], max_actions: int = 20,
                 continue
             guard.check()
             try:
+                events.begin_step(run_id, i, db_path=db_path)   # close the crash window
                 out = step()
-                events.save_checkpoint(run_id, i, out, db_path=db_path)
+                if not events.save_checkpoint(run_id, i, out, db_path=db_path):
+                    # Output is not JSON-serializable, so it was NOT checkpointed. The
+                    # step succeeded but cannot be resumed past -- say so, don't pretend.
+                    events.log_event(run_id, f"step:{i}", "warn",
+                                     payload="step succeeded but its output is not "
+                                             "JSON-serializable; no checkpoint written, so a "
+                                             "resume will re-run it",
+                                     needs_attention=True, job=job, db_path=db_path)
                 events.log_event(run_id, f"step:{i}", "ok", payload=_safe(out),
                                  job=job, db_path=db_path)
                 guard.record()
@@ -58,6 +77,12 @@ def run(job: str, steps: list[Callable[[], Any]], max_actions: int = 20,
             except Halted:
                 raise
             except Exception as e:  # noqa: BLE001 — record failure, keep going
+                if type(e).__name__ == "Halted":
+                    # The same Halted class can be imported under two module names
+                    # (`guard` here, `runner.guard` inside execution.execute). A step
+                    # that hit the kill-switch must stop the batch either way, not be
+                    # recorded as an ordinary step error while the batch continues.
+                    raise Halted(str(e)) from e
                 events.log_event(run_id, f"step:{i}", "error", payload=str(e),
                                  needs_attention=True, job=job, db_path=db_path)
                 guard.record()

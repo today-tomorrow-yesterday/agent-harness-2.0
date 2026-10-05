@@ -73,7 +73,9 @@ def main(argv=None) -> int:
     try:
         sys.path.insert(0, str(REPO / "bin"))
         from notify_slack import post_slack
-        post_slack(md, title=f"Agent activity ({today})")
+        # Routine traffic: the quiet digest channel when one is configured
+        # (falls back to the main webhook otherwise — see notify_slack).
+        post_slack(md, title=f"Agent activity ({today})", route="digest")
     except Exception:  # noqa: BLE001 — Slack is best-effort
         pass
     print(f"wrote {OUT}")
