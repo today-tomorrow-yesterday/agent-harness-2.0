@@ -84,6 +84,51 @@ def test_shell_denies_mkdir_of_new_toplevel(root, cmd, policy):
     assert code == 2, f"{cmd}: {err}"
 
 
+# --- review P2: a QUOTED mkdir target is still a target ----------------------------------------
+
+@pytest.mark.parametrize("cmd", [
+    'mkdir "{r}/new folder"',
+    "mkdir -p '{r}/new folder/sub'",
+    'New-Item -ItemType Directory -Path "{r}/new folder"',
+    'New-Item -ItemType Directory -Path "{r}" -Name "new folder"',
+    'New-Item -ItemType File -Path "{r}/new folder/notes.txt" -Force',
+    'bash -c "mkdir \'{r}/new folder\'"',
+])
+def test_quoted_mkdir_target_is_checked(root, cmd, policy):
+    code, err = run_hook(shell(cmd.format(r=root.as_posix())), policy)
+    assert code == 2, f"{cmd}: {err}"
+
+
+def test_new_item_name_inside_an_existing_dir_is_allowed(root, policy):
+    cmd = f'New-Item -ItemType Directory -Path "{root.as_posix()}/existing" -Name "new folder"'
+    assert run_hook(shell(cmd), policy)[0] == 0
+
+
+# --- review P2: nested protected roots -- every applicable root is checked ---------------------
+
+def test_inner_root_is_enforced_when_outer_root_allows(tmp_path):
+    outer = tmp_path / "outer"
+    inner = outer / "tools" / "app"            # "tools" is allowed in the outer root
+    inner.mkdir(parents=True)
+    pol = tmp_path / "nested.json"
+    pol.write_text(json.dumps({"include_repo": False, "roots": {
+        str(outer): ["tools"], str(inner): ["src"]}}), encoding="utf-8")
+    code, err = run_hook(write(inner / "scratch" / "x.md"), pol)
+    assert code == 2 and "scratch" in err, err
+    assert run_hook(write(inner / "src" / "x.md"), pol)[0] == 0
+
+
+def test_inner_root_is_enforced_when_outer_entry_exists(tmp_path):
+    outer = tmp_path / "outer"
+    inner = outer / "existing-project"
+    inner.mkdir(parents=True)
+    pol = tmp_path / "nested.json"
+    pol.write_text(json.dumps({"include_repo": False, "roots": {
+        str(outer): [], str(inner): ["src"]}}), encoding="utf-8")
+    assert run_hook(write(inner / "junk" / "x.md"), pol)[0] == 2
+    assert run_hook(shell(f'mkdir "{inner.as_posix()}/junk dir"'), pol)[0] == 2
+
+
 def test_relative_mkdir_resolves_against_the_cwd(root, policy):
     assert run_hook(shell("mkdir newdir"), policy, cwd=root)[0] == 2
     assert run_hook(shell("mkdir existing/newdir"), policy, cwd=root)[0] == 0

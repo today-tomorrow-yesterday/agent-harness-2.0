@@ -29,8 +29,9 @@ Safety properties, learned from doing this by hand:
   * writes to a .tmp, PARSES the temp file, and only then replaces the live config -- a
     half-written settings.json silently disables every hook at once
   * preserves the file's existing BOM state and never introduces one
-  * idempotent: an already-registered hook is left alone; re-registering with different
-    --hook-arg values updates its command line in place
+  * idempotent: re-running leaves a correct entry alone, and repairs one whose matcher, timeout
+    or command differs from what was asked (catalog matcher, --timeout, --hook-arg). A re-run
+    WITHOUT --hook-arg keeps the arguments given earlier; without --timeout keeps the timeout
   * refuses to register a hook script that does not exist, which would fail open forever
 """
 from __future__ import annotations
@@ -117,23 +118,41 @@ def available_hooks() -> list[str]:
     return sorted(p.stem for p in HOOK_DIR.glob("*-*.py"))
 
 
-def register(data: dict, name: str, event: str, matcher: str | None, command: str,
-             timeout: int) -> str:
-    """Mutate `data`. Returns 'added' | 'updated' | 'unchanged'."""
+DEFAULT_TIMEOUT = 10
+
+
+def register(data: dict, name: str, event: str, matcher: str | None, command: str | None,
+             timeout: int | None) -> str:
+    """Make `event` hold exactly one registration of `name`, with this matcher, command and
+    timeout. Mutates `data`; returns 'added' | 'updated' | 'unchanged'.
+
+    `command=None` keeps the existing command line (so a plain re-run does not wipe arguments
+    given earlier with --hook-arg); `timeout=None` keeps the existing timeout. The MATCHER is
+    always enforced: re-running is how a narrowed or edited matcher is restored to the catalog's.
+    An entry is only 'unchanged' if matcher, command and timeout all already agree.
+    """
     mk = marker(name)
-    for entry in data.get("hooks", {}).get(event, []):
-        for h in entry.get("hooks", []):
-            if mk in h.get("command", ""):
-                if h.get("command") == command:
-                    return "unchanged"
-                h["command"] = command
-                h["timeout"] = timeout
-                return "updated"
-    entry: dict = {"hooks": [{"type": "command", "command": command, "timeout": timeout}]}
+    entries = data.get("hooks", {}).get(event, [])
+    found = [(e, h) for e in entries for h in e.get("hooks", []) if mk in h.get("command", "")]
+    want_cmd = command or (found[0][1].get("command") if found else hook_command(name))
+    want_timeout = timeout if timeout is not None else (
+        found[0][1].get("timeout", DEFAULT_TIMEOUT) if found else DEFAULT_TIMEOUT)
+
+    if len(found) == 1:
+        entry, h = found[0]
+        if entry.get("matcher") == matcher and h.get("command") == want_cmd \
+                and h.get("timeout") == want_timeout:
+            return "unchanged"
+
+    # Drop every existing registration of this hook in this event (an entry may be shared with
+    # other hooks, so only our hook leaves it), then add one correct entry.
+    if found:
+        unregister(data, name, event)
+    new: dict = {"hooks": [{"type": "command", "command": want_cmd, "timeout": want_timeout}]}
     if matcher is not None:
-        entry = {"matcher": matcher, **entry}
-    data.setdefault("hooks", {}).setdefault(event, []).append(entry)
-    return "added"
+        new = {"matcher": matcher, **new}
+    data.setdefault("hooks", {}).setdefault(event, []).append(new)
+    return "updated" if found else "added"
 
 
 def unregister(data: dict, name: str, event: str) -> int:
@@ -162,7 +181,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--list", action="store_true", help="show hooks and their registration state")
     ap.add_argument("--event", help="override the catalog: register on this one event")
     ap.add_argument("--matcher", help="override the catalog's tool matcher")
-    ap.add_argument("--timeout", type=int, default=10)
+    ap.add_argument("--timeout", type=int, default=None,
+                    help=f"seconds (default {DEFAULT_TIMEOUT} for a new entry; an existing "
+                         "entry keeps its timeout unless this is given)")
     ap.add_argument("--hook-arg", action="append", default=[],
                     help="argument appended to the hook's command line (repeatable; use the "
                          "--hook-arg=VALUE form when VALUE starts with -)")
@@ -198,7 +219,8 @@ def main(argv: list[str] | None = None) -> int:
             plan = CATALOG.get(name) or [("PreToolUse", args.matcher or DEFAULT_MATCHER)]
             if args.matcher is not None:
                 plan = [(ev, args.matcher if m is not None else None) for ev, m in plan]
-        command = hook_command(name, args.hook_arg)
+        # None = keep the arguments an earlier --hook-arg registration gave this hook
+        command = hook_command(name, args.hook_arg) if args.hook_arg else None
 
         for event, matcher in plan:
             if args.remove:
@@ -211,7 +233,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  {name}: {event} {result}")
 
         if name == "design-gate" and not args.remove and not args.verify and \
-                not any(a.startswith("--build-skills=") for a in args.hook_arg) and \
+                not any("--build-skills=" in c for ev, _m in plan
+                        for c in commands(data, ev) if marker(name) in c) and \
                 not os.environ.get("DESIGN_GATE_BUILD_SKILLS"):
             print("  NOTE: design-gate has no --build-skills configured, so it will not enforce "
                   "anything until you set them (see docs/hooks.md).")

@@ -65,9 +65,196 @@ def tool_input(data: dict) -> dict:
 
 def strip_quoted(command: str) -> str:
     """Blank out quoted substrings so data (grep patterns, echo text, commit messages) cannot trip
-    command-shaped patterns. Deliberate quoting evasion is out of scope: these hooks guard against
-    accidents, not adversaries."""
+    command-shaped REGEX patterns.
+
+    Only safe for patterns that never need a quoted ARGUMENT: blanking `rm -rf "/old project"`
+    erases the very target a guard must see. Anything that inspects arguments uses
+    `segments()` instead, which keeps quoted arguments as real tokens and only treats the FIRST
+    word of a command segment as a command -- so a quoted mention inside `echo "..."` or a commit
+    message stays an argument of echo/git, never a command of its own."""
     return _QUOTED.sub('""', command)
+
+
+# ---- shell lexing ---------------------------------------------------------------------------
+#
+# A deliberately small, shell-neutral lexer (works for bash, sh, zsh, PowerShell and cmd input
+# well enough for guardrails). It splits a command line into SEGMENTS at unquoted ; | & and
+# newlines, and each segment into tokens with quotes removed. Backslash is literal except before
+# a quote inside double quotes, so Windows paths survive intact.
+
+_SEPARATORS = ";|&\n"
+_WRAPPERS = {"sudo", "doas", "command", "builtin", "exec", "nohup", "time", "env", "xargs",
+             "nice", "ionice", "stdbuf", "timeout"}
+_SHELLS_C = {"sh", "bash", "zsh", "dash", "ksh", "fish"}
+_PWSH = {"powershell", "powershell.exe", "pwsh", "pwsh.exe"}
+
+
+def lex(command: str) -> list[list[str]]:
+    """[[token, ...], ...] -- one list per command segment, quotes removed."""
+    segs: list[list[str]] = []
+    cur: list[str] = []
+    tok: list[str] = []
+    in_tok = False
+    quote = ""
+    i, n = 0, len(command)
+    while i < n:
+        c = command[i]
+        if quote:
+            if c == quote:
+                quote = ""
+            elif c == "\\" and quote == '"' and i + 1 < n and command[i + 1] in '"\\':
+                i += 1
+                tok.append(command[i])
+            else:
+                tok.append(c)
+        elif c in ("'", '"'):
+            quote, in_tok = c, True
+        elif c.isspace() and c != "\n":
+            if in_tok:
+                cur.append("".join(tok))
+                tok, in_tok = [], False
+        elif c in _SEPARATORS:
+            if in_tok:
+                cur.append("".join(tok))
+                tok, in_tok = [], False
+            if cur:
+                segs.append(cur)
+                cur = []
+        elif c in "()" and not in_tok:
+            pass                                    # subshell / grouping parens
+        else:
+            tok.append(c)
+            in_tok = True
+        i += 1
+    if in_tok:
+        cur.append("".join(tok))
+    if cur:
+        segs.append(cur)
+    return segs
+
+
+def _strip_head(seg: list[str]) -> list[str]:
+    """Drop leading VAR=value assignments and wrapper commands (sudo, env, xargs, ...) together
+    with their option flags, so the real command is first."""
+    i = 0
+    while i < len(seg):
+        t = seg[i]
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", t):
+            i += 1
+            continue
+        w = verb([t])
+        if w not in _WRAPPERS:
+            break
+        i += 1
+        while i < len(seg) and seg[i].startswith("-"):
+            takes_value = seg[i] in ("-u", "-g", "-s", "-k", "-n", "-I", "-L", "-P")
+            i += 2 if takes_value else 1           # sudo -u USER, xargs -I {}, timeout -s SIG
+        if w == "timeout" and i < len(seg) and re.fullmatch(r"[\d.]+[smhd]?", seg[i]):
+            i += 1                                 # timeout 30 cmd
+    return seg[i:]
+
+
+def segments(command: str, _depth: int = 0) -> list[list[str]]:
+    """Command segments with the real command first, INCLUDING commands nested as a string in
+    `bash -c "..."`, `pwsh -Command "..."`, `cmd /c "..."` and `eval "..."` (which ARE commands,
+    unlike a quoted mention in echo)."""
+    out: list[list[str]] = []
+    for seg in lex(command or ""):
+        seg = _strip_head(seg)
+        if not seg:
+            continue
+        out.append(seg)
+        if _depth >= 3:
+            continue
+        head = verb(seg)
+        nested: list[str] = []
+        if head in _SHELLS_C or head in _PWSH or head in ("cmd", "cmd.exe"):
+            for j, t in enumerate(seg[1:], start=1):
+                tl = t.lower()
+                if tl in ("-c", "-command", "/c", "/k") or (head in _SHELLS_C and
+                                                             re.fullmatch(r"-[a-z]*c", tl)):
+                    nested.append(" ".join(seg[j + 1:]) if head in ("cmd", "cmd.exe")
+                                  else (seg[j + 1] if j + 1 < len(seg) else ""))
+                    break
+        elif head == "eval":
+            nested.append(" ".join(seg[1:]))
+        for inner in nested:
+            out.extend(segments(inner, _depth + 1))
+    return out
+
+
+def verb(seg: list[str]) -> str:
+    """The command word of a segment, lower-cased, without directory."""
+    if not seg:
+        return ""
+    return re.split(r"[\\/]", seg[0])[-1].lower()
+
+
+def nested_texts(command: str) -> list[str]:
+    """The command plus every nested command string, for regex checks that use strip_quoted()."""
+    texts = [command or ""]
+    for seg in segments(command):
+        texts.append(" ".join(_requote(t) for t in seg))
+    return texts
+
+
+def _requote(t: str) -> str:
+    """A token that was a single word stays visible to regex checks (`rm -rf "/"` must still read
+    as a root delete); a multi-word or quote-bearing token is data and is blanked, exactly as
+    strip_quoted() would blank it."""
+    return '""' if (not t or any(ch.isspace() or ch in "\"'" for ch in t)) else t
+
+
+# ---- inter-process lock ---------------------------------------------------------------------
+
+class FileLock:
+    """Exclusive inter-process lock on `<path>`, stdlib only, Windows + POSIX.
+
+    POSIX uses fcntl.flock, Windows msvcrt.locking on byte 0 of the lock file. Both locks are
+    released by the OS if the holder dies, so a crashed hook can never wedge the queue.
+    Raises TimeoutError if the lock cannot be taken within `timeout` seconds.
+    """
+
+    def __init__(self, path: str | Path, timeout: float = 15.0):
+        self.path = Path(path)
+        self.timeout = timeout
+        self._fh = None
+
+    def __enter__(self):
+        import time
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._fh = open(self.path, "a+b")
+        deadline = time.monotonic() + self.timeout
+        while True:
+            try:
+                if os.name == "nt":
+                    import msvcrt
+                    self._fh.seek(0)
+                    msvcrt.locking(self._fh.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(self._fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return self
+            except OSError:
+                if time.monotonic() >= deadline:
+                    self._fh.close()
+                    self._fh = None
+                    raise TimeoutError(f"could not lock {self.path}")
+                time.sleep(0.02)
+
+    def __exit__(self, *exc):
+        try:
+            if os.name == "nt":
+                import msvcrt
+                self._fh.seek(0)
+                msvcrt.locking(self._fh.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
+        finally:
+            self._fh.close()
+            self._fh = None
+        return False
 
 
 def state_dir(name: str) -> Path:
