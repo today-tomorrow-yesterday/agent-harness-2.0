@@ -48,6 +48,7 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
 from pathlib import Path
 
@@ -68,6 +69,7 @@ SKILL_WINDOW_DAYS = 30
 RETIRE_AFTER_DAYS = 90
 MIN_MESSAGES = 30          # below this a rate is shown but not scored
 FLAT_BAND = 0.10           # under 10% relative change counts as flat
+STALE_RUN_HOURS = 6         # a run still 'running' after this was killed, not slow
 AUTOMATED_PROJECTS: tuple[str, ...] = ()   # brain project prefixes that are headless jobs, not you
 # Programs that list every skill by name (sync/inventory tools). Being named in one
 # of these is not a dependency, so they never keep a skill off the retire list.
@@ -233,9 +235,76 @@ def score_corrections(messages: list[dict], start: dt.datetime, end: dt.datetime
     }
 
 
-def _birth(stat) -> float:
-    # st_birthtime on Python 3.12+; st_ctime is creation time on Windows before that.
-    return getattr(stat, "st_birthtime", stat.st_ctime)
+def _birth(stat) -> float | None:
+    """Filesystem creation time, or None where the platform does not record one.
+
+    NEVER falls back to st_ctime: on Linux that is the last inode change, so editing
+    a file moves it, and every edited rule would be counted as a new one. Windows and
+    macOS expose st_birthtime; most Linux filesystems do not through os.stat.
+    """
+    return getattr(stat, "st_birthtime", None)
+
+
+def git_first_added(directory: Path) -> dict[str, float]:
+    """{path relative to `directory`: time it was first committed}, from git.
+
+    The creation signal for platforms with no birth time. Empty when the directory
+    is not in a git repo or git is unavailable — callers then treat creation as
+    unknown instead of guessing.
+    """
+    try:
+        res = subprocess.run(
+            ["git", "-C", str(directory), "log", "--diff-filter=A", "--format=%x00%at",
+             "--name-only", "--relative", "--", "."],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return {}
+    if res.returncode != 0:
+        return {}
+    first: dict[str, float] = {}
+    stamp = None
+    for line in res.stdout.splitlines():
+        if line.startswith("\x00"):
+            try:
+                stamp = float(line[1:])
+            except ValueError:
+                stamp = None
+        elif line.strip() and stamp is not None:
+            name = line.strip()
+            # git log runs newest-first; keep the EARLIEST add (a file can be re-added).
+            if name not in first or stamp < first[name]:
+                first[name] = stamp
+    return first
+
+
+class _Creation:
+    """Resolves when files under one directory were created: filesystem birth time
+    first, git's first-add time second, None (unknown) last. Asks git at most once,
+    and only if some file actually lacks a birth time."""
+
+    def __init__(self, directory: Path):
+        self.directory = Path(directory)
+        self._git: dict[str, float] | None = None
+        self.sources: set[str] = set()
+
+    def of(self, path: Path, stat) -> float | None:
+        born = _birth(stat)
+        if born is not None:
+            self.sources.add("filesystem")
+            return born
+        if self._git is None:
+            self._git = git_first_added(self.directory)
+        try:
+            rel = Path(path).resolve().relative_to(self.directory.resolve()).as_posix()
+        except ValueError:
+            rel = Path(path).name
+        born = self._git.get(rel)
+        self.sources.add("git" if born is not None else "unknown")
+        return born
+
+    @property
+    def source(self) -> str:
+        return "+".join(sorted(self.sources)) or "none"
 
 
 def collect_rules(feedback_dir: Path, start: dt.datetime, end: dt.datetime) -> dict:
@@ -244,22 +313,29 @@ def collect_rules(feedback_dir: Path, start: dt.datetime, end: dt.datetime) -> d
     An edit to an existing rule is usually an addendum after the rule was broken,
     so `amended` backs up the repeat-corrections number from a different source.
     mtime only keeps the LAST edit, so this is exact for the current week only.
+
+    `created_from` says where creation times came from. Where it includes "unknown"
+    (no filesystem birth time AND the file is not committed yet), a file touched this
+    week is listed as amended: calling it new would be a guess.
     """
-    out = {"new": [], "amended": [], "error": None}
+    out = {"new": [], "amended": [], "created_from": "none", "error": None}
     feedback_dir = Path(feedback_dir)
     if not feedback_dir.is_dir():
         out["error"] = f"feedback dir not found: {feedback_dir}"
         return out
     lo, hi = start.timestamp(), end.timestamp()
+    creation = _Creation(feedback_dir)
     for path in sorted(feedback_dir.glob("*.md")):
         try:
             stat = path.stat()
         except OSError:
             continue
-        if lo <= _birth(stat) < hi:
+        born = creation.of(path, stat)
+        if born is not None and lo <= born < hi:
             out["new"].append(path.name)
         elif lo <= stat.st_mtime < hi:
             out["amended"].append(path.name)
+    out["created_from"] = creation.source
     return out
 
 
@@ -363,11 +439,16 @@ def collect_skills(skills_dir: Path, usage_path: Path, asof: dt.datetime, progra
             last_used[key] = ts
     recent = asof - dt.timedelta(days=SKILL_WINDOW_DAYS)
     old = asof - dt.timedelta(days=RETIRE_AFTER_DAYS)
+    creation = _Creation(skills_dir)
     for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
         try:
-            born = dt.datetime.fromtimestamp(_birth(skill_md.stat()), dt.timezone.utc)
+            created = creation.of(skill_md, skill_md.stat())
         except OSError:
             continue
+        # Unknown creation time counts as "has always existed": the skill stays in the
+        # denominator and can become a retire candidate. The alternative (treating it
+        # as brand new) would hide every skill on a platform with no birth time.
+        born = dt.datetime.fromtimestamp(created or 0, dt.timezone.utc)
         if born >= asof:
             continue  # did not exist yet at `asof`
         name = skill_md.parent.name
@@ -403,7 +484,7 @@ def load_runs(runner_db: Path) -> dict:
         con = sqlite3.connect(f"file:{runner_db.as_posix()}?mode=ro", uri=True, timeout=30)
         try:
             rows = con.execute(
-                "select r.started_at, r.job, r.status, "
+                "select r.started_at, r.job, r.status, r.ended_at, "
                 "exists(select 1 from events e where e.run_id=r.run_id and e.status='error') "
                 "from runs r where r.started_at is not null").fetchall()
         finally:
@@ -411,15 +492,33 @@ def load_runs(runner_db: Path) -> dict:
     except sqlite3.Error as e:
         out["error"] = f"runner db unreadable: {type(e).__name__}: {e}"
         return out
-    for started_at, job, status, had_error in rows:
+    for started_at, job, status, ended_at, had_error in rows:
         failed = status in ("error", "halted") or bool(had_error)
         out["rows"].append({"ts": dt.datetime.fromtimestamp(started_at, dt.timezone.utc),
-                            "job": job or "?", "status": "error" if failed else (status or "?")})
+                            "job": job or "?", "status": "error" if failed else (status or "?"),
+                            # no outcome yet: still executing, or killed before end_run()
+                            "unfinished": not failed and ended_at is None and status == "running"})
     return out
 
 
 def score_jobs(rows: list[dict], start: dt.datetime, end: dt.datetime) -> dict:
-    inside = [r for r in rows if start <= r["ts"] < end]
+    """Error rate over runs that have an outcome.
+
+    A run still marked `running` has none yet, so it is left out — counting it would
+    add a "success" to the denominator and push the rate down. The exception is a run
+    that has been `running` for more than STALE_RUN_HOURS as of the window's end: it
+    was killed before it could record an outcome, and that is a failure.
+    """
+    stale_before = end - dt.timedelta(hours=STALE_RUN_HOURS)
+    inside = []
+    for r in rows:
+        if not (start <= r["ts"] < end):
+            continue
+        if r.get("unfinished"):
+            if r["ts"] >= stale_before:
+                continue                      # may simply still be running
+            r = {**r, "status": "error"}      # orphaned: never reached end_run()
+        inside.append(r)
     errors = [r for r in inside if r["status"] == "error"]
     by_job: dict[str, int] = {}
     for r in errors:
