@@ -54,3 +54,10 @@ def test_clean_env_never_forwards_a_metered_key(monkeypatch):
     assert env["CLAUDE_CODE_OAUTH_TOKEN"] == "subscription"  # the subscription login must pass
     assert env["PATH_LIKE_THING"] == "keep"
     assert env["CLAUDE_BRAIN_SKIP_HOOKS"] == "1"
+
+
+def test_clean_env_marks_headless_spawns_unattended(monkeypatch):
+    # Without this the safety-queue and the unattended commit/push block never arm.
+    monkeypatch.delenv("HARNESS_UNATTENDED", raising=False)
+    assert hc.clean_env()["HARNESS_UNATTENDED"] == "1"
+    assert hc.clean_env(HARNESS_UNATTENDED="0")["HARNESS_UNATTENDED"] == "0"   # explicit opt-out wins
