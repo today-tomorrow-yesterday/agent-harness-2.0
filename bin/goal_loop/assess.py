@@ -1,10 +1,22 @@
 """assess_progress: honest per-goal movement verdicts. Pure given gathered signals."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+_BIN = str(Path(__file__).resolve().parents[1])
+if _BIN not in sys.path:
+    sys.path.insert(0, _BIN)
+from goal_loop.goals_io import is_paused  # noqa: E402
+
 
 def assess_progress(goals: list[dict], signals: dict) -> list[dict]:
+    """One verdict per ACTIVE goal. A paused goal gets no verdict, so it gets no
+    weekly question either (questions are generated from verdicts)."""
     verdicts = []
     for g in goals:
+        if is_paused(g):
+            continue
         s = signals.get(g["id"], {})
         if s.get("blocker"):
             verdicts.append({"id": g["id"], "verdict": "blocked",

@@ -18,7 +18,7 @@ related:
 
 ## 1. Purpose
 
-Close agent-os's self-improvement loop at the **skill layer**. Today agent-os
+Close the harness's self-improvement loop at the **skill layer**. Today the harness
 self-improves at the *memory* layer (claude-brain + `session-reflect`), but
 skills are still authored manually except for the `session-reflect` skill-
 candidate step. Skill-Forge makes [NAME] **mine its own recurring work into new
@@ -44,7 +44,7 @@ the *destination* (Phase 2–3), not the starting point.
 
 ### Out of scope
 - A new `PostToolUse` usage-logging hook (evaluated and rejected — see §5).
-- Making agent-os a git repo (it deliberately is not; reversibility is
+- Making the install a git repo (the original deliberately was not; reversibility is
   filesystem-based — see §6).
 - Voice, messaging harness, always-on cloud runtime (separate gaps).
 
@@ -53,7 +53,7 @@ the *destination* (Phase 2–3), not the starting point.
 Two net-new components, both reading the brain; two existing systems extended.
 
 ```
-                          SKILL-FORGE  (Z:\agent-os\)
+                          SKILL-FORGE  ()
 
   Skill-Miner  (scheduled, Sun 09:30)         Skill-Refiner (scheduled, Sun 09:45)
   ─ DETECT recurring procedures (brain)       ─ SCORE each installed skill
@@ -73,8 +73,8 @@ Two net-new components, both reading the brain; two existing systems extended.
 
 | Component | New? | Job | Builds on |
 |---|---|---|---|
-| `Skill-Miner` | net-new | weekly: mine brain → draft candidates → queue | Farmer pattern, `claude -p`, parallel readers |
-| `Skill-Refiner` | net-new | weekly: score → autonomously revise/quarantine | Farmer pattern, filesystem versioning |
+| `Skill-Miner` | net-new | weekly: mine brain → draft candidates → queue | Scheduled-job pattern, `claude -p`, parallel readers |
+| `Skill-Refiner` | net-new | weekly: score → autonomously revise/quarantine | Scheduled-job pattern, filesystem versioning |
 | `forge-review` | extends | surface proposals + auto-action log for approval | Weekly-Planner / `notify_slack.py` |
 | install path | extends | approved candidate → both-profile install + scan | `session-reflect`, AgentShield-Watch |
 
@@ -85,12 +85,12 @@ human-approved.
 
 ## 4. File layout
 
-All under `Z:\agent-os\`, matching existing `bin/` + scheduled-task + log
+All under ``, matching existing `bin/` + scheduled-task + log
 conventions.
 
 ```
 bin\
-  skill-miner.py / .ps1        DETECT + DRAFT  (wrapper mirrors farmer-youtube.ps1)
+  skill-miner.py / .ps1        DETECT + DRAFT  (wrapper mirrors an existing scheduled-job wrapper)
   skill-refiner.py / .ps1      SCORE + autonomous ACT
   skill-forge-state.json       seen-procedures, last-scored, cooldowns, KILL SWITCH
   install-skill-forge.bat      registers both Scheduled Tasks
@@ -100,7 +100,7 @@ forge\
   versions\<skill>\<ts>\       pre-change snapshot (revert source)
   quarantine\<skill>\          retired skills (moved, not deleted)
   report-latest.md             newest weekly forge report
-skill-forge.log                append-only action log (matches farmer logs)
+skill-forge.log                append-only action log (matches scheduled job logs)
 skills\                        existing source skills (location unchanged)
 ```
 
@@ -161,11 +161,11 @@ paths, so frequency must union the hook with the brain's `<command-name>` signal
 and even then has a known blind spot:
 - **Typed slash commands** (`/route-inbox`) → captured by the brain's
   `<command-name>` lines, not the hook. Union both sources.
-- **Scheduled farmers** → a hard blind spot. `farmer-route.py` etc. do NOT invoke
+- **Scheduled scheduled jobs** → a hard blind spot. Headless scheduled jobs do NOT invoke
   the `route-inbox` Skill; they replicate the logic via a `claude -p` procedural
   prompt. So the daily/weekly automated routing of the roster generates **zero**
   skill invocations in either source. This usage is real but uncounted. A skill
-  known to be farmer-driven must be flagged so it is never scored as low-use
+  known to be scheduler-driven must be flagged so it is never scored as low-use
   (feeds the §6 maturity gate, condition (c)).
 
 **Alignment with how you actually works (2026-05-30):** you interacts by
@@ -182,13 +182,13 @@ that larger system. See [[complementary_division_of_labor]].
 Invariant for every autonomous action: **snapshot → act → scan → log →
 auto-rollback on failure.**
 
-agent-os is intentionally **not a git repo**, so reversibility is
+The original install was intentionally **not a git repo**, so reversibility is
 filesystem-based (snapshots + quarantine), not `git revert`.
 
 | Guardrail | Rule |
 |---|---|
 | **Evidence floor** 🔴 | Never autonomously revise/retire a skill until it has `trials ≥ Nₘᵢₙ` invocations (start `Nₘᵢₙ = 100` per Library Drift; tune down only if our brain volume can't reach it, accepting more risk). Retire when `trials ≥ Nₘᵢₙ AND ĉ(s) ≤ −0.10`. **Acting on thin evidence is proven to harm more than it helps** (arxiv 2605.19576, ablation A4). |
-| **Maturity gate** 🔴 | **0 tracked invocations is `no-data`, NOT a retire signal** (corrected 2026-05-30). The tracking hook is forward-only and warm-started 2026-05-30; a heavily-used skill (e.g. `route-inbox` serving a large roster) reads as zero until usage accumulates. A skill may be quarantined for non-use ONLY when ALL hold: (a) the tracking window has matured (≥ a configured warm-up, target ~2–4 weeks), (b) it still has 0 invocations across **both** signal sources (hook + brain `<command-name>`), AND (c) it is not a known scheduled/farmer-driven skill (those never invoke the Skill tool — see §5). Until (a), `no-data` is purely informational. |
+| **Maturity gate** 🔴 | **0 tracked invocations is `no-data`, NOT a retire signal** (corrected 2026-05-30). The tracking hook is forward-only and warm-started 2026-05-30; a heavily-used skill (e.g. `route-inbox` serving a large roster) reads as zero until usage accumulates. A skill may be quarantined for non-use ONLY when ALL hold: (a) the tracking window has matured (≥ a configured warm-up, target ~2–4 weeks), (b) it still has 0 invocations across **both** signal sources (hook + brain `<command-name>`), AND (c) it is not a known scheduled/scheduler-driven skill (those never invoke the Skill tool — see §5). Until (a), `no-data` is purely informational. |
 | **Bounded active-cap** | Hard cap on concurrently-active Forge-minted skills (start C ≈ 25–50). When a new install would exceed it, evict the lowest-contribution skill to quarantine. Prevents library drift via unbounded growth (the second load-bearing mechanism). |
 | **Circuit breaker** | Halt all autonomous action + alert if `hurt` verdicts exceed 30% of the library, or the library is collapsing (mass-retirement run). Global brake above per-skill limits. |
 | **Protected set** | Phase 1–2 autonomous revise/retire applies **only to Forge-minted skills**. Hand-authored skills get *proposals*, not auto-edits, until calibration is proven (opened in Phase 3). |

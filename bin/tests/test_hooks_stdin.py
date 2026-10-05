@@ -3,7 +3,7 @@
 Hooks run on every Claude Code lifecycle event; a hook that exits nonzero with a
 traceback on a weird payload degrades every session. The crash class is real:
 `json.loads("null" / "42" / "[]")` returns a non-dict, and a later `.get()`
-raises AttributeError (found live in two agent-os hooks, 2026-07-01/02).
+raises AttributeError (found live in two hooks, 2026-07-01/02).
 
 Drives each hook exactly as the harness does — subprocess, payload on stdin —
 and asserts exit 0 with no traceback. CLAUDE_BRAIN_SKIP_HOOKS is force-unset so

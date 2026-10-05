@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add an append-only `forge/evolution.jsonl` audit trail that records every change to any agent-os asset (memory files, skills, settings) with strategy, reason, and session context.
+**Goal:** Add an append-only `forge/evolution.jsonl` audit trail that records every change to any the harness asset (memory files, skills, settings) with strategy, reason, and session context.
 
 **Architecture:** Convention-based — a `skill_forge/evolution.py` helper module provides the `append_event()` write function; all writers (session-reflect, Skill-Forge, direct Claude edits) call it by convention rather than by hook. A standing feedback rule (`feedback/evolution_log_convention.md`) codifies the convention for direct edits.
 
@@ -14,14 +14,14 @@
 
 | Action | Path |
 |---|---|
-| Create | `Z:\agent-os\bin\skill_forge\evolution.py` |
-| Create | `Z:\agent-os\bin\tests\test_evolution.py` |
-| Modify | `Z:\agent-os\bin\skill_forge\config.py` |
-| Modify | `Z:\agent-os\bin\skill-refiner.py` |
-| Create | `Z:\agent-os\forge\evolution.jsonl` |
-| Create | `Z:\agent-os\memory\feedback\evolution_log_convention.md` |
-| Modify | `Z:\agent-os\memory\MEMORY.md` |
-| Modify | `Z:\agent-os\skills\session-reflect\SKILL.md` |
+| Create | `bin\skill_forge\evolution.py` |
+| Create | `bin\tests\test_evolution.py` |
+| Modify | `bin\skill_forge\config.py` |
+| Modify | `bin\skill-refiner.py` |
+| Create | `forge\evolution.jsonl` |
+| Create | `memory\feedback\evolution_log_convention.md` |
+| Modify | `memory\MEMORY.md` |
+| Modify | `skills\session-reflect\SKILL.md` |
 | Modify | `C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md` |
 | Modify | `C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md` |
 
@@ -30,11 +30,11 @@
 ## Task 1: Add `EVOLUTION_LOG` path to config
 
 **Files:**
-- Modify: `Z:\agent-os\bin\skill_forge\config.py`
+- Modify: `bin\skill_forge\config.py`
 
 - [ ] **Step 1: Add the constant after `REPORT_PATH`**
 
-In `Z:\agent-os\bin\skill_forge\config.py`, after line 14 (`REPORT_PATH = FORGE_DIR / "report-latest.md"`), add:
+In `bin\skill_forge\config.py`, after line 14 (`REPORT_PATH = FORGE_DIR / "report-latest.md"`), add:
 
 ```python
 EVOLUTION_LOG = FORGE_DIR / "evolution.jsonl"
@@ -43,17 +43,17 @@ EVOLUTION_LOG = FORGE_DIR / "evolution.jsonl"
 - [ ] **Step 2: Verify**
 
 ```powershell
-python -c "import sys; sys.path.insert(0,'Z:\\agent-os\\bin'); from skill_forge import config; print(config.EVOLUTION_LOG)"
+python -c "import sys; sys.path.insert(0,'bin'); from skill_forge import config; print(config.EVOLUTION_LOG)"
 ```
 
-Expected output: `Z:\agent-os\forge\evolution.jsonl`
+Expected output: `forge\evolution.jsonl`
 
 ---
 
 ## Task 2: Write failing tests for `evolution.py`
 
 **Files:**
-- Create: `Z:\agent-os\bin\tests\test_evolution.py`
+- Create: `bin\tests\test_evolution.py`
 
 - [ ] **Step 1: Create the test file**
 
@@ -126,7 +126,7 @@ def test_all_valid_strategies_accepted(tmp_path):
 - [ ] **Step 2: Run tests — expect FAIL (module not yet created)**
 
 ```powershell
-cd Z:\agent-os\bin; python -m pytest tests/test_evolution.py -v
+cd bin; python -m pytest tests/test_evolution.py -v
 ```
 
 Expected: `ModuleNotFoundError: No module named 'skill_forge.evolution'`
@@ -136,7 +136,7 @@ Expected: `ModuleNotFoundError: No module named 'skill_forge.evolution'`
 ## Task 3: Implement `evolution.py`
 
 **Files:**
-- Create: `Z:\agent-os\bin\skill_forge\evolution.py`
+- Create: `bin\skill_forge\evolution.py`
 
 - [ ] **Step 1: Create the module**
 
@@ -184,7 +184,7 @@ def append_event(
 - [ ] **Step 2: Run tests — expect all PASS**
 
 ```powershell
-cd Z:\agent-os\bin; python -m pytest tests/test_evolution.py -v
+cd bin; python -m pytest tests/test_evolution.py -v
 ```
 
 Expected: 6 tests pass, 0 failures.
@@ -192,7 +192,7 @@ Expected: 6 tests pass, 0 failures.
 - [ ] **Step 3: Run full test suite to check for regressions**
 
 ```powershell
-cd Z:\agent-os\bin; python -m pytest tests/ -v
+cd bin; python -m pytest tests/ -v
 ```
 
 Expected: all 38 existing tests + 6 new = 44 tests pass.
@@ -202,12 +202,12 @@ Expected: all 38 existing tests + 6 new = 44 tests pass.
 ## Task 4: Create `evolution.jsonl` with bootstrap entry
 
 **Files:**
-- Create: `Z:\agent-os\forge\evolution.jsonl`
+- Create: `forge\evolution.jsonl`
 
 - [ ] **Step 1: Write bootstrap entry via Python**
 
 ```powershell
-cd Z:\agent-os\bin
+cd bin
 python -c "
 import sys, datetime as dt
 sys.path.insert(0, '.')
@@ -217,7 +217,7 @@ append_event(
     strategy='innovate',
     asset='forge/evolution.jsonl',
     what='Created evolution audit trail',
-    why='Inspired by EvoMap/evolver EvolutionEvent concept; fills the changelog gap in agent-os',
+    why='Inspired by EvoMap/evolver EvolutionEvent concept; fills the changelog gap in the harness',
     session='bootstrap',
     log_path=config.EVOLUTION_LOG,
 )
@@ -225,12 +225,12 @@ print('written:', config.EVOLUTION_LOG)
 "
 ```
 
-Expected: `written: Z:\agent-os\forge\evolution.jsonl`
+Expected: `written: forge\evolution.jsonl`
 
 - [ ] **Step 2: Verify the file**
 
 ```powershell
-Get-Content Z:\agent-os\forge\evolution.jsonl
+Get-Content forge\evolution.jsonl
 ```
 
 Expected: one line of valid JSON with `"strategy": "innovate"` and `"asset": "forge/evolution.jsonl"`.
@@ -240,21 +240,21 @@ Expected: one line of valid JSON with `"strategy": "innovate"` and `"asset": "fo
 ## Task 5: Wire `skill-refiner.py` to log on report write
 
 **Files:**
-- Modify: `Z:\agent-os\bin\skill-refiner.py`
+- Modify: `bin\skill-refiner.py`
 
 Read lines 119–end of `skill-refiner.py` to see where the report is written before making this change.
 
 - [ ] **Step 1: Read the rest of `main()` in skill-refiner.py**
 
 ```powershell
-Get-Content Z:\agent-os\bin\skill-refiner.py | Select-Object -Skip 118
+Get-Content bin\skill-refiner.py | Select-Object -Skip 118
 ```
 
 Note the exact line where `render_report` is called and the report file is written.
 
 - [ ] **Step 2: Add the import at the top of the file (after existing imports)**
 
-In `Z:\agent-os\bin\skill-refiner.py`, after the `from skill_forge.report import render_report` line, add:
+In `bin\skill-refiner.py`, after the `from skill_forge.report import render_report` line, add:
 
 ```python
 from skill_forge.evolution import append_event
@@ -278,13 +278,13 @@ Find the block in `main()` where `render_report(rows)` is called and the report 
 - [ ] **Step 4: Smoke-test with `--skip-claude`**
 
 ```powershell
-cd Z:\agent-os\bin; python skill-refiner.py --skip-claude
+cd bin; python skill-refiner.py --skip-claude
 ```
 
 Expected: exits 0, no errors. Then verify:
 
 ```powershell
-Get-Content Z:\agent-os\forge\evolution.jsonl
+Get-Content forge\evolution.jsonl
 ```
 
 Expected: now 2 lines — the bootstrap entry + a `calibrate` entry for `forge/report-latest.md`.
@@ -294,24 +294,24 @@ Expected: now 2 lines — the bootstrap entry + a `calibrate` entry for `forge/r
 ## Task 6: Create the standing feedback rule
 
 **Files:**
-- Create: `Z:\agent-os\memory\feedback\evolution_log_convention.md`
+- Create: `memory\feedback\evolution_log_convention.md`
 
 - [ ] **Step 1: Write the feedback rule**
 
 ```markdown
 ---
 name: evolution_log_convention
-description: Standing rule — before writing or editing any agent-os asset (memory/, skills/, settings), append an evolution entry to forge/evolution.jsonl first.
+description: Standing rule — before writing or editing any the harness asset (memory/, skills/, settings), append an evolution entry to forge/evolution.jsonl first.
 type: feedback
 ---
 
 # Evolution Log Convention
 
-Before writing or editing any file under `Z:\agent-os\memory\`, `Z:\agent-os\skills\`, or either Claude profile's `settings.json`, append one entry to `Z:\agent-os\forge\evolution.jsonl` using the schema below.
+Before writing or editing any file under `memory\`, `skills\`, or either Claude profile's `settings.json`, append one entry to `forge\evolution.jsonl` using the schema below.
 
 **Schema:**
 ```json
-{"ts": "<ISO 8601>", "strategy": "<see below>", "asset": "<Z:\\agent-os\\-relative path>", "what": "<one sentence: what changed>", "why": "<one sentence: the reason>", "session": "<first 8 chars of session ID>"}
+{"ts": "<ISO 8601>", "strategy": "<see below>", "asset": "<-relative path>", "what": "<one sentence: what changed>", "why": "<one sentence: the reason>", "session": "<first 8 chars of session ID>"}
 ```
 
 **Strategies:**
@@ -326,7 +326,7 @@ Before writing or editing any file under `Z:\agent-os\memory\`, `Z:\agent-os\ski
 
 **Why:** The memory files record the current state of rules but not how they changed over time. The evolution log is the changelog layer — what broke, what was fixed, what drove each decision. Without it, the "why" of every rule is lost.
 
-**How to apply:** Any time Claude writes or edits a file in `memory/`, `skills/`, or a profile `settings.json` — whether inside session-reflect, responding to a direct "update this rule" request, or modifying a SKILL.md — write the evolution entry first, then write the file. Use python or the Write tool to append directly to `Z:\agent-os\forge\evolution.jsonl`.
+**How to apply:** Any time Claude writes or edits a file in `memory/`, `skills/`, or a profile `settings.json` — whether inside session-reflect, responding to a direct "update this rule" request, or modifying a SKILL.md — write the evolution entry first, then write the file. Use python or the Write tool to append directly to `forge\evolution.jsonl`.
 
 ## Append directly (no helper required)
 
@@ -340,7 +340,7 @@ entry = {
     "why": "one sentence",
     "session": "abc12345",
 }
-with open(r"Z:\agent-os\forge\evolution.jsonl", "a", encoding="utf-8") as f:
+with open(r"forge\evolution.jsonl", "a", encoding="utf-8") as f:
     f.write(json.dumps(entry) + "\n")
 ```
 
@@ -348,16 +348,16 @@ Or use `skill_forge.evolution.append_event()` when inside a Python script.
 
 ## Cross-references
 
-- [[projects/agent_os]] — agent-os architecture; `Z:\agent-os\forge\` context
+- [[projects/agent_os]] — the harness architecture; `forge\` context
 - [[projects/skill_forge]] — Skill-Forge; uses `append_event()` from `bin/skill_forge/evolution.py`
 - [[memory_routing]] — identity-level memory routing rule
-- [[never_commit_without_permission]] — agent-os is not a git repo; this log is local-only
+- [[never_commit_without_permission]] — the original install was not a git repo; this log is local-only
 ```
 
 - [ ] **Step 2: Verify file is readable**
 
 ```powershell
-Get-Content "Z:\agent-os\memory\feedback\evolution_log_convention.md" | Select-Object -First 5
+Get-Content "memory\feedback\evolution_log_convention.md" | Select-Object -First 5
 ```
 
 Expected: frontmatter with `name: evolution_log_convention`.
@@ -367,11 +367,11 @@ Expected: frontmatter with `name: evolution_log_convention`.
 ## Task 7: Update `MEMORY.md`
 
 **Files:**
-- Modify: `Z:\agent-os\memory\MEMORY.md`
+- Modify: `memory\MEMORY.md`
 
 - [ ] **Step 1: Add reference line under "Reference — tooling / setup"**
 
-In `Z:\agent-os\memory\MEMORY.md`, find the existing line:
+In `memory\MEMORY.md`, find the existing line:
 
 ```
 - [reference_frontend_design_stack.md](reference_frontend_design_stack.md) — UI/UX tooling stack ...
@@ -392,7 +392,7 @@ Also add the feedback rule to the Behavioral rules section. Find the last line i
 - [ ] **Step 2: Verify MEMORY.md**
 
 ```powershell
-Select-String "evolution" "Z:\agent-os\memory\MEMORY.md"
+Select-String "evolution" "memory\MEMORY.md"
 ```
 
 Expected: 2 matches — one in the Reference section, one in the Behavioral rules section.
@@ -402,11 +402,11 @@ Expected: 2 matches — one in the Reference section, one in the Behavioral rule
 ## Task 8: Extend session-reflect Step 5
 
 **Files:**
-- Modify: `Z:\agent-os\skills\session-reflect\SKILL.md`
+- Modify: `skills\session-reflect\SKILL.md`
 
 - [ ] **Step 1: Find the Step 5 section**
 
-In `Z:\agent-os\skills\session-reflect\SKILL.md`, locate the `### Step 5 — Write + index` section (currently starting around line 121).
+In `skills\session-reflect\SKILL.md`, locate the `### Step 5 — Write + index` section (currently starting around line 121).
 
 - [ ] **Step 2: Replace the Step 5 numbered list**
 
@@ -416,7 +416,7 @@ Find this text:
 For each approved candidate:
 
 1. **Write the file** to its target location with the full frontmatter + body
-2. **Update `Z:\agent-os\memory\MEMORY.md`** by adding the new entry under the correct section (`Behavioral rules`, `Active projects`, `Ideas`, or `Top-level`)
+2. **Update `memory\MEMORY.md`** by adding the new entry under the correct section (`Behavioral rules`, `Active projects`, `Ideas`, or `Top-level`)
 3. **Append, don't overwrite**, when the target is an existing file like `feedback/anti_patterns.md`, `ideas/_index.md`, or `user.md`
 ```
 
@@ -425,7 +425,7 @@ Replace with:
 ```
 For each approved candidate:
 
-0. **Append an evolution entry** to `Z:\agent-os\forge\evolution.jsonl` before writing the file. Use the inline Python snippet from [[evolution_log_convention]] or the Write tool to append directly. Infer strategy from the candidate category:
+0. **Append an evolution entry** to `forge\evolution.jsonl` before writing the file. Use the inline Python snippet from [[evolution_log_convention]] or the Write tool to append directly. Infer strategy from the candidate category:
 
    | candidate category | strategy |
    |---|---|
@@ -437,17 +437,17 @@ For each approved candidate:
    | Identity fact about you | `document` |
    | Anti-pattern / presentation rejection | `repair` |
 
-   The entry is shown alongside the candidate in the proposal step (Step 4) so you can correct the strategy before anything is written. `asset` = the path relative to `Z:\agent-os\` (e.g. `feedback/my_rule.md`). `session` = first 8 chars of the current session ID from brain context.
+   The entry is shown alongside the candidate in the proposal step (Step 4) so you can correct the strategy before anything is written. `asset` = the path relative to `` (e.g. `feedback/my_rule.md`). `session` = first 8 chars of the current session ID from brain context.
 
 1. **Write the file** to its target location with the full frontmatter + body
-2. **Update `Z:\agent-os\memory\MEMORY.md`** by adding the new entry under the correct section (`Behavioral rules`, `Active projects`, `Ideas`, or `Top-level`)
+2. **Update `memory\MEMORY.md`** by adding the new entry under the correct section (`Behavioral rules`, `Active projects`, `Ideas`, or `Top-level`)
 3. **Append, don't overwrite**, when the target is an existing file like `feedback/anti_patterns.md`, `ideas/_index.md`, or `user.md`
 ```
 
 - [ ] **Step 3: Verify the edit looks right**
 
 ```powershell
-Select-String "evolution" "Z:\agent-os\skills\session-reflect\SKILL.md"
+Select-String "evolution" "skills\session-reflect\SKILL.md"
 ```
 
 Expected: at least 2 matches referencing `evolution.jsonl` and `evolution_log_convention`.
@@ -465,19 +465,19 @@ Per [[parallel_subscriptions]], all three copies must be identical.
 - [ ] **Step 1: Copy canonical to <YourOrg> profile**
 
 ```powershell
-Copy-Item "Z:\agent-os\skills\session-reflect\SKILL.md" "C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md" -Force
+Copy-Item "skills\session-reflect\SKILL.md" "C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md" -Force
 ```
 
 - [ ] **Step 2: Copy canonical to personal profile**
 
 ```powershell
-Copy-Item "Z:\agent-os\skills\session-reflect\SKILL.md" "C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md" -Force
+Copy-Item "skills\session-reflect\SKILL.md" "C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md" -Force
 ```
 
 - [ ] **Step 3: Verify all three are identical**
 
 ```powershell
-$a = Get-FileHash "Z:\agent-os\skills\session-reflect\SKILL.md"
+$a = Get-FileHash "skills\session-reflect\SKILL.md"
 $b = Get-FileHash "C:\Users\<USERNAME>\.claude-<profile>\skills\session-reflect\SKILL.md"
 $c = Get-FileHash "C:\Users\<USERNAME>\.claude\skills\session-reflect\SKILL.md"
 if ($a.Hash -eq $b.Hash -and $b.Hash -eq $c.Hash) { "PASS: all three identical" } else { "FAIL: hash mismatch" }

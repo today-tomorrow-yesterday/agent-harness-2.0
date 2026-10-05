@@ -21,7 +21,7 @@ be blind-copied in either direction; merge semantically if ever needed.
 
 # Port Notes — runner / goal_loop / execution (2026-06-20)
 
-Three safety/autonomy subsystems ported from the private `agent-os` repo into the
+Three safety/autonomy subsystems ported from the private source repo into the
 shareable `agent-harness` repo on 2026-06-20, genericized. **Files only — no git
 operations were run.**
 
@@ -29,17 +29,17 @@ operations were run.**
 
 | Subsystem | Source | Dest | Files |
 |---|---|---|---|
-| **runner** (kill-switch + cost/action/time ceilings + audit DB + "while you were away" digest) | `Z:\agent-os\bin\runner\` | `bin/runner\` | `__init__.py`, `guard.py`, `events.py`, `run.py`, `stop.py`, `digest.py` |
-| **goal_loop** (weekly goal assessment: parse goals → gather signals → verdicts → questions → recommend → render) | `Z:\agent-os\bin\goal_loop\` | `bin/goal_loop\` | `__init__.py`, `assess.py`, `goals_io.py`, `questions.py`, `recommend.py`, `report.py`, `research.py`, `signals.py` |
-| **execution** (approval/risk/redaction/secrets policy layer; gated "hands") | `Z:\agent-os\bin\execution\` | `bin/execution\` | `__init__.py`, `approval.py`, `backends.py`, `cli.py`, `execute.py`, `policy.py`, `redaction.py`, `risk.py`, `secrets.py`, `store_login.py`, `actions/__init__.py`, `actions/read_web.py` |
-| **tests** | `Z:\agent-os\bin\tests\` | `bin/tests\` | `test_execution.py`, `test_runner.py`, `test_goal_loop.py` |
+| **runner** (kill-switch + cost/action/time ceilings + audit DB + "while you were away" digest) | `bin\runner\` | `bin/runner\` | `__init__.py`, `guard.py`, `events.py`, `run.py`, `stop.py`, `digest.py` |
+| **goal_loop** (weekly goal assessment: parse goals → gather signals → verdicts → questions → recommend → render) | `bin\goal_loop\` | `bin/goal_loop\` | `__init__.py`, `assess.py`, `goals_io.py`, `questions.py`, `recommend.py`, `report.py`, `research.py`, `signals.py` |
+| **execution** (approval/risk/redaction/secrets policy layer; gated "hands") | `bin\execution\` | `bin/execution\` | `__init__.py`, `approval.py`, `backends.py`, `cli.py`, `execute.py`, `policy.py`, `redaction.py`, `risk.py`, `secrets.py`, `store_login.py`, `actions/__init__.py`, `actions/read_web.py` |
+| **tests** | `bin\tests\` | `bin/tests\` | `test_execution.py`, `test_runner.py`, `test_goal_loop.py` |
 
 `.pyc` / `__pycache__` artifacts were not copied.
 
 ## Audit verdict: confirmed generic
 
 The 2026-06-20 drift audit was correct. None of the three subsystems import or
-reference the proprietary CLONE / farmers / production-engine / business-skills
+reference the source system's proprietary content / business
 stack. The core safety machinery stands alone. Every import resolves against the
 harness tree (`runner`, `execution`, `goal_loop` packages under `bin/`),
 stdlib, or optional third-party (`keyring`, `pytest`). The only cross-subsystem
@@ -55,8 +55,7 @@ Paths were **already** repo-relative in the source (`Path(__file__).resolve().pa
 fix. The remaining changes were identity/wording:
 
 ### runner
-- `digest.py` — docstring + headings: "what needs Tre", "so Tre reviews", "keeps
-  him ON the loop" → "what needs you" / "so you review" / "keeps you ON the loop".
+- `digest.py` — docstring + headings: owner-specific wording → "what needs you" / "so you review" / "keeps you ON the loop".
   Pure-function behavior unchanged.
 
 ### goal_loop
@@ -65,34 +64,33 @@ fix. The remaining changes were identity/wording:
   — a generic model id, kept as-is.)
 
 ### execution
-- `__init__.py` — "hands of agent-os" → "hands of the harness"; removed the
-  agent-os spec path (`docs/superpowers/specs/2026-06-19-...`).
-- `approval.py` — docstring "Tre resolves it later" → "the operator resolves it";
-  `resolve(..., by="tre")` default → `by="operator"`.
-- `backends.py` — removed agent-os-specific framing ("the Claude Code WSL2 sandbox
+- `__init__.py` — "hands of the harness" → "hands of the harness"; removed the
+  the harness spec path (`docs/superpowers/specs/2026-06-19-...`).
+- `approval.py` — docstring now reads "the operator resolves it";
+  `resolve(...)` default is `by="operator"`.
+- `backends.py` — removed the harness-specific framing ("the Claude Code WSL2 sandbox
   model … adopted via @anthropic-ai/sandbox-runtime"; the
   `docs/research/execution-layer-foundations.md` ref). Behavior (LocalBackend +
   ConfinedLocalBackend stub) unchanged.
-- `cli.py` — `--by tre` defaults → `--by operator`; usage examples updated.
-- `policy.py` — "an edit … = Tre's per-class sign-off" → "the operator's per-class
+- `cli.py` — `--by` defaults to `operator`; usage examples updated.
+- `policy.py` — wording is now "the operator's per-class
   sign-off". Default policy table unchanged.
-- `secrets.py` — docstring removed "Sol" reference; keyring service namespace
-  prefix changed from `agent-os/<service>` to a module constant
+- `secrets.py` — docstring made owner-neutral; keyring service namespace
+  prefix changed from `the harness/<service>` to a module constant
   `_SERVICE_NS = "agent-harness"` → `agent-harness/<service>` (see note below).
-- `store_login.py` — was the most coupled file: hardcoded to **Sol's Gmail vault**
-  ("Store a login in Sol's vault", fixed `gmail` service, prompts for a Gmail
-  address, referenced `store-sol-login.cmd`). **Reworked into a generic credential
+- `store_login.py` — was the most coupled file: hardcoded to **one owner's mail vault**
+  (fixed `gmail` service, prompts for a mail
+  address). **Reworked into a generic credential
   storer** that prompts for (or takes argv) `service` + `account` + hidden
   password/token. Same safe getpass behavior, same `execution.secrets.set_secret`
-  call. No `.cmd` launcher was ported (it was Sol-specific).
+  call. No `.cmd` launcher was ported (it was owner-specific).
 
 ### tests
-- `test_runner.py` — sample job name `"farmer"` → `"worker"` in the digest test
-  (cosmetic; "farmer" is CLONE-flavored). Logic identical.
-- `test_goal_loop.py` — sample goal data rewritten from CLONE-flavored
-  ("Break into TikTok business", `yt-ops` repo) to neutral ("Launch the public
+- `test_runner.py` — sample job name is the neutral `"worker"` in the digest test
+  (cosmetic). Logic identical.
+- `test_goal_loop.py` — sample goal data rewritten from the source's own goals to neutral ("Launch the public
   beta", `app-core` repo). All assertions preserved/adjusted to the new strings.
-- `test_execution.py` — `by="tre"` → `by="operator"` in the approval roundtrip.
+- `test_execution.py` — uses `by="operator"` in the approval roundtrip.
   Test doubles + assertions otherwise verbatim.
 
 ## Could NOT cleanly port / flags
@@ -100,14 +98,13 @@ fix. The remaining changes were identity/wording:
 Nothing had to be dropped or stubbed for proprietary coupling. Two items to be
 aware of:
 
-1. **`store_login.py` was Sol/Gmail-specific** (the only identity-coupled file in
+1. **`store_login.py` was owner/mail-specific** (the only identity-coupled file in
    the set). It was *genericized*, not dropped — the credential-storing behavior is
-   generic; only the Sol/Gmail framing was. Original at
-   `Z:\agent-os\bin\execution\store_login.py:1-39`. No `store-sol-login.cmd`
+   generic; only the owner/mail framing was. No owner-specific `.cmd`
    launcher exists in the harness (intentionally not ported).
 
 2. **keyring service-namespace change** (`secrets.py`): the source stored secrets
-   under `agent-os/<service>`; the port uses `agent-harness/<service>`. This is a
+   under a namespace named after the source project; the port uses `agent-harness/<service>`. This is a
    behavior change for *reading back already-stored* secrets, but in a fresh clone
    no secrets exist yet, and the namespace should not carry the source project's
    name. If you ever migrate a real vault, re-store under the new namespace.
@@ -120,13 +117,13 @@ Smoke-import from `bin/` passed for every ported module:
 `execution.{approval,backends,cli,execute,policy,redaction,risk,secrets}`,
 `execution.actions.read_web`. → `ALL IMPORTS OK`.
 
-No ported module imports an agent-os module that wasn't ported. `keyring` is
+No ported module imports a source-repo module that wasn't ported. `keyring` is
 present in this environment; `secrets.py` also degrades gracefully (imports even if
 keyring is missing, raising `SecretsUnavailable` only on use).
 
 ## How to run the tests
 
-From the harness root (`Z:\products\agent-harness`):
+From the harness root:
 
 ```
 python -m pytest bin/tests/test_execution.py -q
@@ -155,16 +152,16 @@ triggered, no scheduled task is registered.**
 # Port 2 — generic safety improvements (2026-06-21)
 
 A second sweep brought four **genuinely generic** improvements that landed in
-`agent-os` after the first port. Everything else that differs between the repos is
-the *intentional genericization* above (Tre/Sol → operator, `agent-os` → `agent-harness`)
+the source repo after the first port. Everything else that differs between the repos is
+the *intentional genericization* above (owner names → operator, source repo name → `agent-harness`)
 and was deliberately left untouched — porting those back would re-introduce identity
 into the public repo.
 
 | Improvement | Files | Why generic |
 |---|---|---|
 | **Slack egress secret-scrub** + GH-markdown→mrkdwn conversion + webhook validation (`https://hooks.slack.com/` prefix check, `SLACK_WEBHOOK_FILE` env override) | `bin/notify_slack.py` | every Slack post now passes through `execution.redaction.scrub` before leaving the box — a token in a traceback or a raw `runner.db` dump can't ship off-box. No identity coupling. |
-| **First gated mutation action** — `WriteWorkspace` (ships disabled in `DEFAULT_POLICY`, so it PARKS for approval; reversible `.bak`; self-protection deny-list refuses to write the policy/identity/execution code) | `bin/execution/actions/write_workspace.py` + `bin/tests/test_write_workspace.py` | `policy.py` already listed the `write_workspace` class; only the action file was missing. Deny-list targets the harness's own `memory/*.md` + `bin/{execution,runner}`. "Tre"→"operator" was the only wording change. |
-| **STOP file now self-documenting** — JSON `{ts, reason}`, `reason()` accessor, `engage(reason)`, and a best-effort Slack alert on engage/clear so a stopped fleet can't go unnoticed | `bin/runner/stop.py` | backward-compatible (guards still only check existence). The alert was rewired from `agentos_common.alert` (not present here) to `notify_slack.post_slack`. |
+| **First gated mutation action** — `WriteWorkspace` (ships disabled in `DEFAULT_POLICY`, so it PARKS for approval; reversible `.bak`; self-protection deny-list refuses to write the policy/identity/execution code) | `bin/execution/actions/write_workspace.py` + `bin/tests/test_write_workspace.py` | `policy.py` already listed the `write_workspace` class; only the action file was missing. Deny-list targets the harness's own `memory/*.md` + `bin/{execution,runner}`. "the operator"→"operator" was the only wording change. |
+| **STOP file now self-documenting** — JSON `{ts, reason}`, `reason()` accessor, `engage(reason)`, and a best-effort Slack alert on engage/clear so a stopped fleet can't go unnoticed | `bin/runner/stop.py` | backward-compatible (guards still only check existence). The alert was rewired from the source repo's shared alert helper (not present here) to `notify_slack.post_slack`. |
 | **git-call timeout** on the weekly signal gather | `bin/goal_loop/signals.py` | `timeout=30` so a locked repo can't hang the weekly brief. |
 
 **Validation:** smoke imports OK; `scrub` confirmed redacting `xoxb`/`Bearer sk-`/JWT
@@ -176,7 +173,7 @@ registry ships jobs). No real state touched.
 
 ## Port batch — 2026-07-02 (the self-maintenance chain)
 
-Ported from agent-os after its full-system hardening arc (262-test regression
+Ported from the harness after its full-system hardening arc (262-test regression
 fleet, autonomous inbox pipeline, three real production bugs found + fixed).
 Everything below is generic — no operator identity, repo-relative paths only.
 
@@ -184,7 +181,7 @@ Everything below is generic — no operator identity, repo-relative paths only.
 |---|---|---|
 | **Self-Test** — the harness tests itself daily: full `bin/tests` + brain health + gbrain probe → `self-test-report.md`; fresh-clone-safe (unset-up components SKIP, not FAIL) | `bin/self_test.py` + `jobs.py` entry (05:30) | verdict surfaced by the digest |
 | **Fleet-integrity guard** — REGISTRY-derived: every job's script exists + compiles; installed tasks not disabled + fired within cadence (Windows; skips gracefully pre-install / non-Windows) | `bin/tests/test_fleet_integrity.py` | derives from `jobs.py`, can't drift |
-| **Hook stdin hardening** — `isinstance(dict)` guard + 61-case smoke suite: no hook may crash on malformed stdin (`null`/`42`/`[]`/garbage) | `claude-brain/hooks/user-prompt-submit.py`, `bin/tests/test_hooks_stdin.py` | crash class found live in agent-os twice |
+| **Hook stdin hardening** — `isinstance(dict)` guard + 61-case smoke suite: no hook may crash on malformed stdin (`null`/`42`/`[]`/garbage) | `claude-brain/hooks/user-prompt-submit.py`, `bin/tests/test_hooks_stdin.py` | crash class found live in the harness twice |
 | **FIXED SHIPPED BUG:** `claude-brain/lib/paths.py` had a SyntaxError (`C:\Users\<USERNAME>` in a non-raw docstring → truncated `\U` escape) — brain_health + anything importing lib.paths was broken in every clone. Introduced by the genericization pass un-escaping the original's `\` | `claude-brain/lib/paths.py` (raw docstrings) | found BY the ported self-test on its first run |
 | **Test-Medic (opt-in)** — scheduled autonomous repair of a red self-test: repair contract + git-HEAD verification + deterministic re-verify; ships as a commented-out Job | `bin/test_medic.py`, README "trust model" section | the one component granting unattended write access — hence opt-in |
 | **Self-Loop** — fleet liveness auditor + mechanical healer: MISSING/DISABLED/NEVER_FIRED/STALE/FAILED classification, safe_rerun heals (bounded + 24h cooldown), deduped Slack escalation | `bin/self_loop.py`, `Job.safe_rerun` field | recency-based — result codes alone are blind to a task that stopped firing |

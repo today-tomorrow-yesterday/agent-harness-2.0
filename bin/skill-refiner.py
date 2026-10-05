@@ -1,7 +1,7 @@
-﻿"""skill-refiner.py — Skill-Forge Phase 0 (read-only signal validator).
+"""skill-refiner.py — Skill-Forge Phase 0 (read-only signal validator).
 
-Scores every skill in Z:\\agent-os\\skills\\ from claude-brain transcript
-history and writes Z:\\agent-os\\forge\\report-latest.md. MODIFIES NOTHING.
+Scores every skill in skills/ from claude-brain transcript history and writes
+forge/report-latest.md. MODIFIES NOTHING.
 
 Usage:
   python skill-refiner.py                 # full run (uses claude -p judge)
@@ -12,7 +12,6 @@ Usage:
 from __future__ import annotations
 import argparse
 import datetime as dt
-import os
 import shutil
 import sqlite3
 import subprocess
@@ -21,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # find skill_forge package
 
+from harness_common import clean_env, classify_claude_result
 from skill_forge import config
 from skill_forge.skills_inventory import list_skills
 from skill_forge.brain_query import find_invocations, get_after_window
@@ -40,18 +40,29 @@ def log(level: str, message: str) -> None:
     print(line, end="", file=sys.stderr)
 
 
+class SessionPoolExhausted(Exception):
+    """The claude session is rate-limited or unauthenticated — every further judge
+    call this run would fail the same way. Abort the run cleanly instead of grinding
+    through every skill until the scheduler's time limit kills the process."""
+    def __init__(self, status: str, detail: str | None):
+        super().__init__(f"{status}: {detail or ''}")
+        self.status, self.detail = status, detail
+
+
 def make_claude_invoker(timeout: int = 180):
     """Return invoke_fn(prompt)->str|None using `claude -p` (no tools, no hooks).
     Pattern copied from weekly-planner.py: subscription auth, fallback model,
-    CLAUDE_BRAIN_SKIP_HOOKS so the judge call isn't polluted/recaptured."""
+    CLAUDE_BRAIN_SKIP_HOOKS so the judge call isn't polluted/recaptured.
+
+    Raises SessionPoolExhausted on rate-limit/auth failure signatures — NOTE
+    `claude -p` writes those to STDOUT, not stderr (classify_claude_result reads both)."""
     claude_path = shutil.which("claude") or shutil.which("claude.exe") or shutil.which("claude.cmd")
     if not claude_path:
         log("ERROR", "claude CLI not found")
         return lambda prompt: None
 
     def invoke(prompt: str):
-        env = os.environ.copy()
-        env["CLAUDE_BRAIN_SKIP_HOOKS"] = "1"
+        env = clean_env(CLAUDE_BRAIN_SKIP_HOOKS="1")
         try:
             r = subprocess.run(
                 [claude_path, "-p", "--no-session-persistence",
@@ -63,7 +74,10 @@ def make_claude_invoker(timeout: int = 180):
             log("WARN", f"claude judge invocation failed: {type(e).__name__}: {e}")
             return None
         if r.returncode != 0:
-            log("WARN", f"claude judge non-zero: {r.stderr[:300]}")
+            status, detail = classify_claude_result(r.returncode, r.stdout or "", r.stderr or "")
+            if status in ("rate_limited", "auth_failed"):
+                raise SessionPoolExhausted(status, detail)
+            log("WARN", f"claude judge non-zero [{status}]: {(r.stdout or r.stderr or '')[:300]}")
             return None
         return r.stdout.strip()
 
@@ -130,6 +144,28 @@ def main() -> int:
     conn = sqlite3.connect(f"file:{config.BRAIN_DB}?mode=ro", uri=True)
     try:
         rows = [score_skill(conn, s, since, invoke_fn, args.verbose) for s in skills]
+    except SessionPoolExhausted as e:
+        # The session is closed (limit/auth) — skip THIS run cleanly and let the next
+        # scheduled slot retry. The previous report stays in place: a partial one
+        # would score every unjudged skill as if it had no evidence.
+        if e.status == "auth_failed":
+            # NOT a clean skip: waiting does not fix an expired login, so every
+            # later run would fail the same way while the scheduler recorded
+            # success and the report went quietly stale. Fail the run and say so.
+            log("ERROR", "claude login failed — the judge needs a human to re-authenticate "
+                         "(run `claude` and /login). Previous report left in place.")
+            try:
+                from notify_slack import post_slack
+                post_slack("Skill-Forge could not run: the Claude login has expired or is "
+                           "invalid. Re-authenticate (`claude`, then /login). The report "
+                           "is stale until then.", title="Skill-Forge needs re-auth")
+            except Exception as slack_err:  # noqa: BLE001
+                log("WARN", f"Slack notify skipped: {type(slack_err).__name__}: {slack_err}")
+            return 1
+        # Rate limit: transient, the next scheduled slot retries on its own.
+        log("WARN", f"claude session rate-limited — skipping this run; "
+                    f"previous report left in place. {e.detail or ''}")
+        return 0
     finally:
         conn.close()
 

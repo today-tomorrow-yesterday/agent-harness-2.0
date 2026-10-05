@@ -1,4 +1,4 @@
-﻿# Rehydrate the agent-os on a new machine
+# Rehydrate the harness on a new machine
 
 This repo is mostly self-contained. To bring it up on a fresh computer manually, follow this (the guided path is just opening it in Claude Code and saying "onboard me" — see ONBOARDING.md). Total time: under 30 minutes (most of it is the interactive claude-brain setup).
 
@@ -11,7 +11,7 @@ Inside the repo:
 - `claude-brain/` — claude-brain runtime + its SQLite DB at `claude-brain/claude-brain.db` (the precious file)
 - `docs/REHYDRATE.md` — this file
 
-Outside the agent-os folder:
+Outside the harness folder:
 
 - `~/.claude-<profile>\CLAUDE.md` — your identity / persona / rules, auto-loaded every session. **Carry this with you.**
 
@@ -28,7 +28,7 @@ These live in the OS environment of the new machine:
 
 ### 1. Copy the folder
 
-Get the entire `agent-os/` directory onto the new machine. Any method works:
+Get the entire harness directory onto the new machine. Any method works:
 - USB drive
 - `robocopy /MIR` from a network share
 - Cloud sync (Dropbox/OneDrive/Google Drive) of just this folder — note that the SQLite DB inside `claude-brain/` may need attention if multiple machines write to it concurrently
@@ -76,7 +76,7 @@ This pulls in PyYAML, mcp, sentence-transformers (~80MB model), and numpy. ~5 mi
 
 ### 5. Re-run brain-setup if hook paths changed
 
-If the agent-os path is different on the new machine, claude-brain's hooks in `~/.claude\settings.json` point at the old path. Either:
+If the harness path is different on the new machine, claude-brain's hooks in `~/.claude\settings.json` point at the old path. Either:
 
 **Option A — re-run the interactive setup** (rewrites hooks for the new path):
 ```powershell
@@ -86,7 +86,7 @@ python scripts\brain-setup.py
 
 Answer the prompts the same way you did the first time. Use the cheat sheet in your original install conversation.
 
-**Option B — hand-edit settings.json** (faster if you know what you're doing): open `~/.claude\settings.json` and rewrite the absolute paths in the `hooks.*.command` entries to point at the new agent-os location.
+**Option B — hand-edit settings.json** (faster if you know what you're doing): open `~/.claude\settings.json` and rewrite the absolute paths in the `hooks.*.command` entries to point at the new harness location.
 
 ### 6. Smoke test
 
@@ -116,13 +116,13 @@ If both work, the rehydrate succeeded.
 If you want git history of how `memory/` and `CLAUDE.md` evolve over time:
 
 ```powershell
-cd <agent-os path>
+cd <harness path>
 git init
 echo "claude-brain/" > .gitignore
 echo "claude-brain/claude-brain.db" >> .gitignore
 echo "claude-brain/logs/" >> .gitignore
 git add memory/ skills/ docs/ README.md .gitignore
-git commit -m "Initial agent-os snapshot"
+git commit -m "Initial harness snapshot"
 git remote add origin <your private repo URL>
 git push -u origin main
 ```
@@ -132,7 +132,7 @@ The `.gitignore` keeps the SQLite DB and the claude-brain submodule out of your 
 To version `CLAUDE.md` alongside `memory/`, you can symlink it or just copy after edits:
 
 ```powershell
-Copy-Item "$env:USERPROFILE\.claude-<profile>\CLAUDE.md" "<agent-os path>\CLAUDE.md.snapshot"
+Copy-Item "$env:USERPROFILE\.claude-<profile>\CLAUDE.md" "<harness path>\CLAUDE.md.snapshot"
 ```
 
 ## Portability principles applied

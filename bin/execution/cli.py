@@ -34,6 +34,8 @@ def _cmd_resolve(args, approved: bool) -> int:
     ok = approval.resolve(args.id, approved, by=args.by)
     verb = "approved" if approved else "rejected"
     print(f"#{args.id} {verb}." if ok else f"#{args.id} not pending (already resolved?).")
+    if ok and approved:
+        print("It runs once, the next time the job that asked for it runs.")
     return 0 if ok else 1
 
 

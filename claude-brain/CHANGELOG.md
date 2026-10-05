@@ -18,7 +18,7 @@ All notable changes to claude-brain.
 ## [2026-05-24] — Forked and extended
 
 - Detached from upstream `mikeadolan/claude-brain` (`.git` archived to `.git.upstream-archive/`). No remote is configured.
-- Vocabulary uses example project tags — customize in `lib/vocab.py`. Ships with generic examples (`webapp`, `research`, `content`) plus scaffold tags (`agent-os`, `claude-code`, `neurodivergence`, `meta-learning`, `ownership`); replaced upstream's memoir/family/health defaults.
+- Vocabulary uses example project tags — customize in `lib/vocab.py`. Ships with generic examples (`webapp`, `research`, `content`) plus scaffold tags (`harness`, `claude-code`, `meta-learning`); replaced upstream's memoir/family/health defaults.
 - Cross-platform fixes: cwd encoding handles Windows paths; multi-profile JSONL discovery (`.claude` + `.claude-<profile>`); detached subprocess uses Windows `DETACHED_PROCESS` instead of POSIX `start_new_session`.
 - Bug fixes: FTS recency weighting was inverted (older results ranked higher); `ingest_jsonl` now UPSERTs `sys_sessions` so `ended_at` and `message_count` populate on re-ingest; `write_exchange` uses `cursor.lastrowid` for `transcript_embeddings`.
 - Identity: removed mikeadolan-specific keywords (Johnny, Harlem, etc.); "Mike" hardcoded in `user-prompt-submit`'s frustration messages → "[NAME]".

@@ -4,6 +4,9 @@ RunGuard + a swappable backend.
 
     execute(action) -> {run_id, action, risk, decision, status, result, approval_id?}
 
+A parked action is resumed by calling execute() again with approved_id=<its row>:
+if the operator approved that exact action, it runs once and the approval is spent.
+
 status: 'done' (ran ok) | 'pending' (parked for approval) | 'refused' (NEVER) |
         'blocked' (egress denied) | 'error' (action raised).
 """
@@ -39,7 +42,7 @@ def _log(run_id, etype, status, payload, *, needs_attention=False,
 
 
 def execute(action, *, run_id=None, db_path=None, policy_cfg=None,
-            backend=None, guard=None, job="execution") -> dict:
+            backend=None, guard=None, job="execution", approved_id=None) -> dict:
     backend = backend or LocalBackend()
     own_run = run_id is None
     if own_run:
@@ -58,7 +61,23 @@ def execute(action, *, run_id=None, db_path=None, policy_cfg=None,
             events.end_run(run_id, "done", db_path=db_path)
         return {**base, "status": "refused", "result": None}
 
-    if decision.action == "PAUSE":
+    # RESUME: a parked action the operator has since approved runs once, on the
+    # approval it was given. Only a PAUSE can be resumed — NEVER was refused above
+    # and no approval overrides it. The approval must be for THIS action (same
+    # summary + class, which is what the operator read) and is spent atomically.
+    resumed = False
+    if decision.action == "PAUSE" and approved_id is not None:
+        row = approval.get(approved_id, db_path=db_path)
+        if (row and row["status"] == "approved" and row["summary"] == action.summary()
+                and row["action_class"] == action.action_class
+                and approval.consume(approved_id, db_path=db_path)):
+            resumed = True
+            base["decision"] = "APPROVED"
+            _log(run_id, "action:resumed", "ok",
+                 {"approval_id": approved_id, "action": base["action"],
+                  "approved_by": row.get("resolved_by")}, job=job, db_path=db_path)
+
+    if decision.action == "PAUSE" and not resumed:
         ap_id = approval.request(run_id, action.action_class, risk, action.summary(),
                                  payload={"action": base["action"]}, db_path=db_path)
         _log(run_id, "action:pending", "pending",

@@ -165,7 +165,11 @@ def main() -> int:
         with open(ARCHIVE_PATH, "a", encoding="utf-8") as a:
             a.write(f"\n\n---\n# Archived {ctx['today']}\n\n{prev}")
 
-    OUTPUT_PATH.write_text(out + "\n", encoding="utf-8")
+    # Atomic: write beside the target, then swap. A plain write_text() truncates
+    # first, so a scheduler kill mid-write would leave an empty or half briefing.
+    tmp = OUTPUT_PATH.with_suffix(OUTPUT_PATH.suffix + ".tmp")
+    tmp.write_text(out + "\n", encoding="utf-8")
+    os.replace(tmp, OUTPUT_PATH)
     log("INFO", f"wrote briefing to {OUTPUT_PATH}")
     return 0
 

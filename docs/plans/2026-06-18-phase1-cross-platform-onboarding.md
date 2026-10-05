@@ -393,7 +393,7 @@ git commit -m "feat(onboard): /onboard orchestrator skill"
 
 - [ ] **Step 2: Add to `README.md`** a "Get started" section: "Use this template" (GitHub) or `git clone`, then see `ONBOARDING.md`.
 
-- [ ] **Step 3: Repoint `claude-brain/install.sh`** message from the agent-os REHYDRATE reference to `ONBOARDING.md` (keep the `exit 1`).
+- [ ] **Step 3: Repoint `claude-brain/install.sh`** message from the REHYDRATE reference to `ONBOARDING.md` (keep the `exit 1`).
 
 - [ ] **Step 4: Commit**
 
