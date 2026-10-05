@@ -32,6 +32,7 @@ Plus:
 - 🛟 **Safety harness** (`bin/runner/`, `bin/execution/`) — kill-switch (STOP file), action/cost ceilings, an audit DB, and a default-deny approval gate wrapping any autonomous action
 - 🔒 **security-ops** (`security-ops/`, Windows) — optional read-only host-security monitor + one-time hardening + an on-demand `security-analyst` subagent over a vetted skill library
 - 🔄 **Skill-Forge** (`bin/skill_forge/`) — self-improving loop: mines your transcripts → scores skills → proposes improvements
+- 📈 **Learning scorecard** (`bin/learning_scorecard.py`) — five weekly numbers that check whether the harness is actually getting better: repeat corrections, correction rate, goals moved, skill hit rate, job error rate. No model calls; leads the weekly briefing
 - 📋 **Evolution trail** (`forge/evolution.jsonl`) — append-only changelog of every change to the system
 
 ---
@@ -153,6 +154,7 @@ agent-harness/
 │   ├── configure_claude.py ← register extra MCP servers (cross-platform)
 │   ├── skill_forge/        ← Skill-Forge Python package
 │   ├── weekly-planner.py   ← weekly "what's next" briefing from your memory
+│   ├── learning_scorecard.py ← weekly "is it getting better" card (LLM-free)
 │   ├── security_watch.py   ← flags unexpected changes to your Claude setup
 │   ├── runner/             ← kill-switch + action/cost ceilings + audit DB + digest
 │   ├── execution/          ← gated actions: risk + default-deny policy + approval + secrets

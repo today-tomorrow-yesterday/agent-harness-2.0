@@ -141,6 +141,18 @@ def _invoke_claude(prompt: str, timeout: int = 300) -> str | None:
     return result.stdout.strip()
 
 
+def run_learning_scorecard(dry_run: bool = False) -> str:
+    """Five numbers on whether the harness is getting better (see
+    learning_scorecard.py). LLM-free. Writes its weekly snapshot unless dry_run."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import learning_scorecard
+        return learning_scorecard.build_section(dry_run=dry_run)
+    except Exception as e:  # noqa: BLE001 - the scorecard must never break the briefing
+        log("WARN", f"learning scorecard failed, skipping: {type(e).__name__}: {e}")
+        return ""
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Weekly 'what's next' briefing from your memory.")
     ap.add_argument("--dry-run", action="store_true",
@@ -152,13 +164,20 @@ def main() -> int:
     log("INFO", f"weekly-planner: prompt ~{len(prompt):,} chars")
 
     if args.dry_run:
-        log("INFO", f"dry-run - would write briefing to {OUTPUT_PATH}")
+        card = run_learning_scorecard(dry_run=True)
+        log("INFO", f"dry-run - scorecard {len(card)} chars; would write briefing to {OUTPUT_PATH}")
         return 0
 
     out = _invoke_claude(prompt)
     if not out:
         log("ERROR", "no output from claude; leaving previous briefing in place")
         return 1
+
+    # The scorecard goes first: it is the shortest section and the one that says
+    # whether the harness is actually getting better.
+    card = run_learning_scorecard()
+    if card:
+        out = f"{card}\n\n---\n\n{out}"
 
     if OUTPUT_PATH.exists():  # archive the prior briefing
         prev = OUTPUT_PATH.read_text(encoding="utf-8", errors="replace")
