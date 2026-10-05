@@ -1,0 +1,128 @@
+# agent-tools manifest: ONE source of truth for the MCP servers and skills every agent "seat"
+# on this machine should have. Consumed by:
+#   python bin/sync-agent-tools.py --dry-run   # preview
+#   python bin/sync-agent-tools.py             # validate every skill, then apply to every seat
+#   python bin/skill-sync-check.py             # read-only drift report between seats
+#
+# HOW TO USE: copy this file to config/agent-tools.yaml (keep the copy out of version control;
+# it describes YOUR machine), edit the seats, then run the dry run.
+#
+# Paths: `~` and $ENV_VARS are expanded; relative paths resolve against the repo root.
+# Only the servers and skills named here are touched. Anything else in a seat is left alone.
+
+# ---------------------------------------------------------------------------------------------
+# Seats: every place an agent reads its configuration from. `enabled: false` keeps a seat
+# documented without touching it. Supported kinds: claude-code, codex, gemini.
+# ---------------------------------------------------------------------------------------------
+seats:
+  claude-default:
+    kind: claude-code
+    config_dir: ~/.claude              # the default Claude Code profile
+
+  claude-second:                       # a second subscription/profile, launched with
+    kind: claude-code                  # CLAUDE_CONFIG_DIR=~/.claude-second claude
+    config_dir: ~/.claude-second
+    enabled: false
+
+  codex:
+    kind: codex
+    config_file: ~/.codex/config.toml  # a marked block is managed; the rest is preserved
+    skills_dir: ~/.codex/skills
+    enabled: false
+
+  gemini:
+    kind: gemini                       # Gemini CLI / Antigravity
+    settings_file: ~/.gemini/settings.json
+    skills_dir: ~/.gemini/skills
+    enabled: false
+
+# ---------------------------------------------------------------------------------------------
+# Optional: one shared instructions file rendered into every seat's user-level instruction file.
+# Why a rendered copy instead of a reference: user-scope instruction files have not reliably
+# expanded `@path` imports, and symlinks need elevated rights on Windows. Each copy carries a
+# sha256 stamp of the source so drift is detectable. Delete this section if you do not want it.
+# ---------------------------------------------------------------------------------------------
+# contract:
+#   source: memory/AGENTS.md           # the ONE file you edit
+#   render: full                       # full = header + whole file; pointer = header + stamp only
+#   targets:
+#     claude-default:
+#       enabled: true
+#       file: ~/.claude/CLAUDE.md
+#       header: |
+#         # Claude Code (default profile)
+#         Generated mirror. Edit memory/AGENTS.md in the harness repo and re-run
+#         `python bin/sync-agent-tools.py --contract-only`.
+#     codex:
+#       enabled: false
+#       file: ~/.codex/AGENTS.md
+#       header: |
+#         # Codex seat
+
+# ---------------------------------------------------------------------------------------------
+# MCP servers that must be identical in every seat. Put secrets in your environment and
+# reference them as ${VAR}, never inline. Do not list a server that is credentialed to an
+# account that must not be reachable from every seat (e.g. a work account on a shared machine):
+# this manifest is global by design.
+# ---------------------------------------------------------------------------------------------
+mcp_servers:
+  domain-suite:                        # used by the domain-* skills
+    command: npx
+    args: ["-y", "domain-suite-mcp"]
+    env: {}
+  # example-with-secret:
+  #   command: npx
+  #   args: ["-y", "some-mcp-server"]
+  #   env:
+  #     SOME_API_KEY: ${SOME_API_KEY}
+
+# ---------------------------------------------------------------------------------------------
+# Skills that must be identical in every seat. `source` is the skill directory (or its SKILL.md);
+# the whole directory is mirrored, so references/ and helper scripts travel with it.
+# `codex_meta` feeds the agents/openai.yaml sidecar Codex expects; other seats ignore it.
+# ---------------------------------------------------------------------------------------------
+skills:
+  skill-authoring:
+    source: skills/skill-authoring
+  git-verified-agent-orchestration:
+    source: skills/git-verified-agent-orchestration
+    codex_meta:
+      display_name: "Git-Verified Agent Orchestration"
+      short_description: "Verify subagent work by commit, never by self-report"
+      default_prompt: "Orchestrate subagents so every unit of work is a real git commit that is independently verified and separately reviewed before the next one starts."
+  research-swarm:
+    source: skills/research-swarm
+  fable-discipline:
+    source: skills/fable-discipline
+  repo-vet:
+    source: skills/repo-vet
+  repo-steal:
+    source: skills/repo-steal
+  visual-explainer:
+    source: skills/visual-explainer
+  page-clone:
+    source: skills/page-clone
+  ux-psychology:
+    source: skills/ux-psychology
+  sync-agent-tools:
+    source: skills/sync-agent-tools
+  session-reflect:
+    source: skills/session-reflect
+  domain-check:
+    source: skills/domain-check
+  domain-register:
+    source: skills/domain-register
+  domain-dns-setup:
+    source: skills/domain-dns-setup
+  domain-email-setup:
+    source: skills/domain-email-setup
+  domain-full-setup:
+    source: skills/domain-full-setup
+
+# ---------------------------------------------------------------------------------------------
+# Read by skill-sync-check.py: skills that live in the repo's skills/ root but are deliberately
+# NOT installed anywhere. Each needs a reason, so an intentional decision never looks like a
+# defect and a defect never hides behind a shrug.
+# ---------------------------------------------------------------------------------------------
+not_installed_by_design:
+  onboard: "run once from the repo checkout; no need to install it into a profile"
