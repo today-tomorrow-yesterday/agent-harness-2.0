@@ -190,3 +190,17 @@ def test_fail_safe_on_garbage(project):
     r = subprocess.run([sys.executable, str(GUARD)], input="not json",
                        capture_output=True, text=True, timeout=30, cwd=str(project))
     assert r.returncode == 0
+
+
+# --- a quoted Windows path that ends in a backslash ---
+def test_lexer_reads_a_quoted_drive_root_as_one_argument():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "hook_common_under_test", Path(__file__).resolve().parents[1] / "hooks" / "_hook_common.py")
+    hc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hc)
+    bs = chr(92)
+    segs = hc.lex(f'Remove-Item -Recurse -Force "C:{bs}"; git status')
+    assert segs == [["Remove-Item", "-Recurse", "-Force", f"C:{bs}"], ["git", "status"]]
+    # bash-style escapes still work when the quotes balance
+    assert hc.lex(f'echo "say {bs}"hi{bs}""') == [["echo", 'say "hi"']]

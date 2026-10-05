@@ -90,7 +90,20 @@ _PWSH = {"powershell", "powershell.exe", "pwsh", "pwsh.exe"}
 
 
 def lex(command: str) -> list[list[str]]:
-    """[[token, ...], ...] -- one list per command segment, quotes removed."""
+    """[[token, ...], ...] -- one list per command segment, quotes removed.
+
+    Backslash-quote inside double quotes is an escape in bash but a literal backslash in
+    PowerShell and cmd ("C:\\" is a drive root there). If reading it as an escape leaves a
+    quote unterminated, the command is re-read with backslashes literal -- otherwise
+    `Remove-Item -Recurse "C:\\"` would swallow its own closing quote and the rest of the
+    line with it."""
+    segs, unterminated = _lex(command, escapes=True)
+    if unterminated:
+        segs, _ = _lex(command, escapes=False)
+    return segs
+
+
+def _lex(command: str, escapes: bool) -> tuple[list[list[str]], bool]:
     segs: list[list[str]] = []
     cur: list[str] = []
     tok: list[str] = []
@@ -102,7 +115,7 @@ def lex(command: str) -> list[list[str]]:
         if quote:
             if c == quote:
                 quote = ""
-            elif c == "\\" and quote == '"' and i + 1 < n and command[i + 1] in '"\\':
+            elif escapes and c == "\\" and quote == '"' and i + 1 < n and command[i + 1] in '"\\':
                 i += 1
                 tok.append(command[i])
             else:
@@ -130,7 +143,7 @@ def lex(command: str) -> list[list[str]]:
         cur.append("".join(tok))
     if cur:
         segs.append(cur)
-    return segs
+    return segs, bool(quote)
 
 
 def _strip_head(seg: list[str]) -> list[str]:
