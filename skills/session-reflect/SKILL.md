@@ -42,7 +42,7 @@ Claude drafts; you approve; the loop accumulates signal it can later compute on.
 | **Pre-project idea** | `ideas/<slug>.md` (new) + `memory/ideas/README.md` entry | you mentions a concept worth catalog-capturing |
 | **Presentation anti-pattern** | `memory/feedback/anti-patterns.md` (append section) | you rejects a format, style, or layout |
 | **Reference pointer** | `feedback/<system>_reference.md` (new) | New external system, dashboard, tool mentioned |
-| **Skill candidate** | new `skills/<name>/SKILL.md` (propose-then-scaffold) + install into your Claude profile(s) | A repeatable multi-step workflow was executed manually 2+ times (this session or recurring), or you say "make this a skill / automate this". The agent-os-native version of Hermes's autonomous skill creation — the autonomous-skill-creation pattern |
+| **Skill candidate** | new `skills/<name>/SKILL.md` (propose-then-scaffold) + install into your Claude profile(s) | A repeatable multi-step workflow was executed manually 2+ times (this session or recurring), or you say "make this a skill / automate this". The harness-native version of Hermes's autonomous skill creation — the autonomous-skill-creation pattern |
 
 ## The reflection process — 5 steps
 
@@ -187,7 +187,7 @@ Use `[[slug]]` syntax (matches the `name:` field in the frontmatter of the targe
 - **No modification of existing memory files without explicit confirmation.** Append-to-existing is acceptable (e.g., `anti_patterns.md`, `user.md`), but ask first when the file already exists and the candidate would change its contents.
 - **No broader-brain search by default.** Scope is the current session unless you explicitly names another session ID or date.
 - **No git operations** of any kind. Per [[never_commit_without_permission]]. The skill produces files; it does not touch version control.
-- **Proposes NEW skills, never silently rewrites existing ones.** When it detects a repeatable workflow (2+ manual runs), it may draft a **new** `skills/<name>/SKILL.md` candidate for your approval — the agent-os-native version of Hermes's autonomous skill creation (the autonomous-skill-creation pattern). On approval it scaffolds the skill and flags the both-profile install per your profile-install convention. It does NOT edit *existing* `SKILL.md` files without explicit confirmation.
+- **Proposes NEW skills, never silently rewrites existing ones.** When it detects a repeatable workflow (2+ manual runs), it may draft a **new** `skills/<name>/SKILL.md` candidate for your approval — the harness-native version of Hermes's autonomous skill creation (the autonomous-skill-creation pattern). On approval it scaffolds the skill and flags the both-profile install per your profile-install convention. It does NOT edit *existing* `SKILL.md` files without explicit confirmation.
 
 ## Reversibility
 

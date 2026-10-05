@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from skill_forge.scoring import contribution_score, classify_action
 
 
@@ -21,7 +21,7 @@ def test_inapplicable_excluded_from_trials():
 
 def test_classify_action_no_data_when_zero_trials():
     # zero tracked invocations is 'no-data', NOT a retire signal — a heavily-used
-    # but newly-tracked (or farmer-driven) skill must never read as dead/unused
+    # but newly-tracked (or scheduler-driven) skill must never read as dead/unused
     assert classify_action(trials=0, score=0.0, n_min=100, tau=0.10) == "no-data"
 
 

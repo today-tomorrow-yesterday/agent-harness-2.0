@@ -6,7 +6,7 @@ When you reorganize a drive/repo (rename a root folder, dissolve a directory,
 move a tool), the *code* moves in one commit — but references to the old paths
 hide everywhere: scripts, configs, docs, scheduled-task definitions, skill
 files, memory notes. You fix the ones you find; the ones you miss resurface
-weeks later as a farmer writing into a dead folder or a cockpit reading an
+weeks later as a scheduled job writing into a dead folder or a cockpit reading an
 empty root. Worse, agents and generators keep *re-introducing* old paths they
 learned from stale context.
 

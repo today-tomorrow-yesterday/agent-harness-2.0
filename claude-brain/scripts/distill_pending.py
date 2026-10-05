@@ -2,7 +2,7 @@
 """
 distill_pending.py - Find sessions lacking real notes and distill them.
 
-Phase 3 (2026-05-27): Farmer-Distill entry point. Picks the oldest N sessions
+Phase 3 (2026-05-27): scheduled distill entry point. Picks the oldest N sessions
 whose notes are NULL / empty / start with the "AUTO-GENERATED FALLBACK"
 sentinel and runs distill_session on each, with a small inter-session sleep
 to be friendly to the Claude subscription rate limit.

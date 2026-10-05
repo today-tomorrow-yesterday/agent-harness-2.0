@@ -1,14 +1,14 @@
 # Portable Distribution + Claude-Guided Onboarding — Design Spec
 
 **Date:** 2026-06-18
-**Status:** ✅ ALL PHASES COMPLETE. Phase 1 (`c519b8f`) · Phase 2 + curation (`f98f5cf`, `66b05a4`) · Phase 3 gbrain + Skill-Forge + final genericization (`27d52bf`). 67 tests pass; repo clean of author paths (`Z:\agent-os`/`Z:\Clone`) and identity/client data. **Remaining = real-machine VALIDATION only** (not build): the *nix scheduler apply/remove, gbrain_setup --apply, and the full /onboard flow were authored on Windows and need one run on a real macOS/Linux box (see docs/validate-phase1.md).
+**Status:** ✅ ALL PHASES COMPLETE. Phase 1 (`c519b8f`) · Phase 2 + curation (`f98f5cf`, `66b05a4`) · Phase 3 gbrain + Skill-Forge + final genericization (`27d52bf`). 67 tests pass; repo clean of author paths (`<repo>`/`Z:\Clone`) and identity/client data. **Remaining = real-machine VALIDATION only** (not build): the *nix scheduler apply/remove, gbrain_setup --apply, and the full /onboard flow were authored on Windows and need one run on a real macOS/Linux box (see docs/validate-phase1.md).
 **Goal:** Turn `agent-harness` from a Windows-centric personal scaffold into a **cross-platform, self-installing "Claude Code OS"** that a colleague clones, opens in Claude Code, and sets up by asking Claude to "onboard me" — adapting to macOS, Linux, or Windows.
 
 ---
 
 ## 1. Context
 
-`agent-harness` is the public/portable fork of a private `agent-os` system. It bundles four runtime layers: identity+rules (`CLAUDE.md`), source-of-truth markdown (`memory/`), searchable conversation history (`claude-brain/`, SQLite + MCP), and automation (`bin/` schedulers + skills + Skill-Forge). Today it assumes **Windows** (PowerShell scripts, Task Scheduler) and a single owner. The colleagues who will use it are on **mixed macOS / Linux / Windows** and each has (or will get) their own Claude Code subscription.
+`agent-harness` is the public/portable fork of a private source system. It bundles four runtime layers: identity+rules (`CLAUDE.md`), source-of-truth markdown (`memory/`), searchable conversation history (`claude-brain/`, SQLite + MCP), and automation (`bin/` schedulers + skills + Skill-Forge). Today it assumes **Windows** (PowerShell scripts, Task Scheduler) and a single owner. The colleagues who will use it are on **mixed macOS / Linux / Windows** and each has (or will get) their own Claude Code subscription.
 
 **Already cross-platform (leverage, don't rebuild):** `claude-brain` is pure-Python — hooks (`session-start/stop/...py`), `scripts/brain-setup.py`, and deps `PyYAML / mcp / sentence-transformers / numpy`. The old `claude-brain/install.sh` is deprecated.
 

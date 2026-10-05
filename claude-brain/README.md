@@ -1,4 +1,4 @@
-﻿# claude-brain
+# claude-brain
 
 **Forked in place from `mikeadolan/claude-brain` on 2026-05-24. Maintained as part of agent-harness.** See CHANGELOG for the fork notes.
 
@@ -100,7 +100,7 @@ The setup walks through projects, database, hooks, MCP, email, and a health chec
 
 ### Updating
 
-The brain checks for new commits on session start. The original update path (`git pull` against the upstream remote) does not apply to this fork; changes are managed locally inside `agent-os`.
+The brain checks for new commits on session start. The original update path (`git pull` against the upstream remote) does not apply to this fork; changes are managed locally inside `harness`.
 
 ### Working in a Project
 
@@ -198,14 +198,14 @@ Every message is tagged with its source (`claude_code`, `claude_ai`, `chatgpt`, 
 
 ### Tags and Topic Discovery
 
-Sessions are auto-tagged by topic during import (e.g., `agent-os`, `webapp`, `research`, `content`, `farmer`, `karpathy`). Browse your sessions by topic:
+Sessions are auto-tagged by topic during import (e.g., `harness`, `webapp`, `research`, `content`). Browse your sessions by topic:
 
 ```
 /brain-topics              # Show all tags with counts
-/brain-topics agent-os     # Show all sessions tagged 'agent-os'
+/brain-topics harness     # Show all sessions tagged 'harness'
 ```
 
-Edit tags anytime -- just tell Claude: "tag this session as research, farmer." For bulk tagging, use `/brain-tag-review` to generate a spreadsheet, edit tags, and update the database.
+Edit tags anytime -- just tell Claude: "tag this session as research, ingest." For bulk tagging, use `/brain-tag-review` to generate a spreadsheet, edit tags, and update the database.
 
 ---
 
@@ -430,4 +430,4 @@ Originally created by Mike Dolan (`mikeadolan/claude-brain`); the MIT license pe
 
 ## Contributing & Contact
 
-This fork is a personal tool inside `agent-os`. There is no public issue tracker or discussion forum for it. The upstream project at `mikeadolan/claude-brain` is the right destination for issues against the original codebase.
+This fork is bundled inside the harness. There is no public issue tracker or discussion forum for it. The upstream project at `mikeadolan/claude-brain` is the right destination for issues against the original codebase.

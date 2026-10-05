@@ -1,4 +1,4 @@
-﻿"""Contribution scoring and (report-only) action classification.
+"""Contribution scoring and (report-only) action classification.
 
 Score: c(s) = (helped - hurt) / trials, where trials = helped+hurt+neutral.
 'inapplicable' verdicts are excluded from trials (the window didn't show the
@@ -24,7 +24,7 @@ def classify_action(trials: int, score: float, n_min: int, tau: float) -> str:
     """Advisory label (Phase 0 reports only):
       'no-data'               -> 0 tracked invocations. NOT a retire signal. Means
                                  "nothing recorded yet" — during the tracking
-                                 warm-up, OR for skills driven by scheduled farmers
+                                 warm-up, OR for skills driven by scheduled jobs
                                  / typed slash commands that never hit the Skill
                                  tool, this says NOTHING about real usage. A genuine
                                  "unused" verdict needs a MATURED tracking window

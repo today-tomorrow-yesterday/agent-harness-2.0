@@ -4,7 +4,7 @@
 
 **Goal:** Build a read-only `skill-refiner` that scores every existing skill from the claude-brain transcript history (frequency + LLM-judged `helped/hurt/neutral/inapplicable` verdict) and writes a weekly report — plus an eval harness that measures the judge's precision against a hand-labeled sample. **No skill is modified.** This phase exists to prove the signal is trustworthy before any autonomy is enabled in later phases.
 
-**Architecture:** A small importable Python package `bin/skill_forge/` holds focused, unit-tested units (brain query, skill inventory, LLM judge, scoring, report). A flat CLI entrypoint `bin/skill-refiner.py` wires them, matching the existing farmer-script convention. The LLM judge takes an injected `invoke_fn` so all logic is testable without calling Claude. A separate `bin/skill-forge-eval.py` measures judge precision (the Phase-1 unlock gate).
+**Architecture:** A small importable Python package `bin/skill_forge/` holds focused, unit-tested units (brain query, skill inventory, LLM judge, scoring, report). A flat CLI entrypoint `bin/skill-refiner.py` wires them, matching the existing scheduled job-script convention. The LLM judge takes an injected `invoke_fn` so all logic is testable without calling Claude. A separate `bin/skill-forge-eval.py` measures judge precision (the Phase-1 unlock gate).
 
 **Tech Stack:** Python 3 (stdlib `sqlite3`, `argparse`, `subprocess`, `pathlib`), `pytest` for tests, `claude -p` headless via the user's subscription (pattern copied verbatim from `bin/weekly-planner.py`).
 
@@ -12,15 +12,15 @@
 
 ## Conventions for this plan
 
-- **No git.** `Z:\agent-os\` is intentionally **not** a git repo (`no_github_remote_for_agent_os`; agent-os isn't versioned). So there are **no commit steps**. Each task ends with a **Checkpoint**: run the full test suite green. Reversibility of the *product* (skills) is handled by Phase 2's filesystem snapshots, not by versioning this code.
-- **Run tests from** `Z:\agent-os\bin\` so `pytest` discovers `skill_forge/` and `tests/`. Install pytest once: `python -m pip install pytest`.
+- **No git.** The system this was first built in was **not** a git repo at the time. So there are **no commit steps**. Each task ends with a **Checkpoint**: run the full test suite green. Reversibility of the *product* (skills) is handled by Phase 2's filesystem snapshots, not by versioning this code.
+- **Run tests from** `bin\` so `pytest` discovers `skill_forge/` and `tests/`. Install pytest once: `python -m pip install pytest`.
 - **Phase 0 is read-only.** The refiner never writes to `skills/`, never installs, never quarantines. It only writes `forge/report-latest.md` and appends to `skill-forge.log`.
-- **All file paths are Windows absolute paths**, matching the existing farmers.
+- **All file paths are Windows absolute paths**, matching the existing scheduled jobs.
 
 ## File structure
 
 ```
-Z:\agent-os\bin\
+bin\
   skill_forge\                  ← NEW package (importable, unit-tested)
     __init__.py
     config.py                   ← paths + thresholds (Nmin, tau, window sizes)
@@ -38,11 +38,11 @@ Z:\agent-os\bin\
     test_judge.py
     test_scoring.py
     test_report.py
-Z:\agent-os\forge\
+forge\
   report-latest.md              ← written by skill-refiner (created at runtime)
   eval\
     labels.sample.jsonl         ← NEW hand-labeled gold set for the eval harness
-Z:\agent-os\skill-forge.log     ← append-only log (created at runtime)
+skill-forge.log     ← append-only log (created at runtime)
 ```
 
 ---
@@ -50,20 +50,20 @@ Z:\agent-os\skill-forge.log     ← append-only log (created at runtime)
 ### Task 1: Scaffold package, config, and test fixtures
 
 **Files:**
-- Create: `Z:\agent-os\bin\skill_forge\__init__.py`
-- Create: `Z:\agent-os\bin\skill_forge\config.py`
-- Create: `Z:\agent-os\bin\tests\conftest.py`
+- Create: `bin\skill_forge\__init__.py`
+- Create: `bin\skill_forge\config.py`
+- Create: `bin\tests\conftest.py`
 
 - [ ] **Step 1: Create the package marker**
 
-`Z:\agent-os\bin\skill_forge\__init__.py`:
+`bin\skill_forge\__init__.py`:
 ```python
 """Skill-Forge — self-improving skills loop. Phase 0: read-only signal validator."""
 ```
 
 - [ ] **Step 2: Write config.py**
 
-`Z:\agent-os\bin\skill_forge\config.py`:
+`bin\skill_forge\config.py`:
 ```python
 """Skill-Forge configuration: paths and lifecycle thresholds.
 
@@ -74,7 +74,7 @@ COMPUTES these; it never acts on them.
 from __future__ import annotations
 from pathlib import Path
 
-AGENT_OS = Path(r"Z:\agent-os")
+AGENT_OS = Path(__file__).resolve().parents[2]
 BRAIN_DB = AGENT_OS / "claude-brain" / "claude-brain.db"
 SKILLS_DIR = AGENT_OS / "skills"          # canonical source skills (user-authored)
 FORGE_DIR = AGENT_OS / "forge"
@@ -95,7 +95,7 @@ VERDICTS = ("helped", "hurt", "neutral", "inapplicable")
 
 - [ ] **Step 3: Write the pytest fixtures (temp brain DB + sample skills dir)**
 
-`Z:\agent-os\bin\tests\conftest.py`:
+`bin\tests\conftest.py`:
 ```python
 """Shared pytest fixtures: an in-memory-on-disk brain DB and a sample skills dir."""
 from __future__ import annotations
@@ -151,7 +151,7 @@ def sample_skills_dir(tmp_path):
 
 - [ ] **Step 4: Verify pytest collects the (empty) suite**
 
-Run: `python -m pytest Z:\agent-os\bin\tests -q`
+Run: `python -m pytest bin\tests -q`
 Expected: `no tests ran` (exit 5) — confirms collection works and conftest imports cleanly.
 
 - [ ] **Step 5: Checkpoint** — fixtures import without error (Step 4 shows no import traceback).
@@ -161,12 +161,12 @@ Expected: `no tests ran` (exit 5) — confirms collection works and conftest imp
 ### Task 2: Skill inventory (parse SKILL.md frontmatter)
 
 **Files:**
-- Create: `Z:\agent-os\bin\skill_forge\skills_inventory.py`
-- Test: `Z:\agent-os\bin\tests\test_skills_inventory.py`
+- Create: `bin\skill_forge\skills_inventory.py`
+- Test: `bin\tests\test_skills_inventory.py`
 
 - [ ] **Step 1: Write the failing test**
 
-`Z:\agent-os\bin\tests\test_skills_inventory.py`:
+`bin\tests\test_skills_inventory.py`:
 ```python
 from skill_forge.skills_inventory import list_skills
 
@@ -187,12 +187,12 @@ def test_empty_dir_returns_empty(tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `python -m pytest tests/test_skills_inventory.py -v` (from `Z:\agent-os\bin`)
+Run: `python -m pytest tests/test_skills_inventory.py -v` (from `bin`)
 Expected: FAIL — `ModuleNotFoundError: No module named 'skill_forge.skills_inventory'`
 
 - [ ] **Step 3: Write the implementation**
 
-`Z:\agent-os\bin\skill_forge\skills_inventory.py`:
+`bin\skill_forge\skills_inventory.py`:
 ```python
 """Enumerate skills from their SKILL.md frontmatter."""
 from __future__ import annotations
@@ -250,12 +250,12 @@ Expected: PASS (2 passed)
 ### Task 3: Brain query — find skill invocations
 
 **Files:**
-- Create: `Z:\agent-os\bin\skill_forge\brain_query.py`
-- Test: `Z:\agent-os\bin\tests\test_brain_query.py`
+- Create: `bin\skill_forge\brain_query.py`
+- Test: `bin\tests\test_brain_query.py`
 
 - [ ] **Step 1: Write the failing test**
 
-`Z:\agent-os\bin\tests\test_brain_query.py`:
+`bin\tests\test_brain_query.py`:
 ```python
 from skill_forge.brain_query import find_invocations
 
@@ -283,7 +283,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'skill_forge.brain_quer
 
 - [ ] **Step 3: Write the implementation**
 
-`Z:\agent-os\bin\skill_forge\brain_query.py`:
+`bin\skill_forge\brain_query.py`:
 ```python
 """Query the claude-brain transcript DB for skill invocations and their outcomes.
 
@@ -327,8 +327,8 @@ Expected: PASS (3 passed)
 ### Task 4: Brain query — the outcome window after an invocation
 
 **Files:**
-- Modify: `Z:\agent-os\bin\skill_forge\brain_query.py` (add `get_after_window`)
-- Test: `Z:\agent-os\bin\tests\test_brain_query.py` (add cases)
+- Modify: `bin\skill_forge\brain_query.py` (add `get_after_window`)
+- Test: `bin\tests\test_brain_query.py` (add cases)
 
 - [ ] **Step 1: Write the failing test (append to test_brain_query.py)**
 
@@ -387,12 +387,12 @@ Expected: PASS (5 passed)
 ### Task 5: Judge — prompt builder and verdict parser (pure functions)
 
 **Files:**
-- Create: `Z:\agent-os\bin\skill_forge\judge.py`
-- Test: `Z:\agent-os\bin\tests\test_judge.py`
+- Create: `bin\skill_forge\judge.py`
+- Test: `bin\tests\test_judge.py`
 
 - [ ] **Step 1: Write the failing test**
 
-`Z:\agent-os\bin\tests\test_judge.py`:
+`bin\tests\test_judge.py`:
 ```python
 import pytest
 from skill_forge.judge import build_judge_prompt, parse_verdict
@@ -430,7 +430,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'skill_forge.judge'`
 
 - [ ] **Step 3: Write the implementation**
 
-`Z:\agent-os\bin\skill_forge\judge.py`:
+`bin\skill_forge\judge.py`:
 ```python
 """LLM-as-judge: classify whether a skill invocation helped or hurt.
 
@@ -496,8 +496,8 @@ Expected: PASS (7 passed — `test_prompt...` + 6 parametrized `test_parse_verdi
 ### Task 6: Judge — `classify_invocation` with injected invoker
 
 **Files:**
-- Modify: `Z:\agent-os\bin\skill_forge\judge.py` (add `classify_invocation`)
-- Test: `Z:\agent-os\bin\tests\test_judge.py` (add cases)
+- Modify: `bin\skill_forge\judge.py` (add `classify_invocation`)
+- Test: `bin\tests\test_judge.py` (add cases)
 
 - [ ] **Step 1: Write the failing test (append to test_judge.py)**
 
@@ -557,12 +557,12 @@ Expected: PASS (9 passed)
 ### Task 7: Scoring — contribution score and (report-only) action classification
 
 **Files:**
-- Create: `Z:\agent-os\bin\skill_forge\scoring.py`
-- Test: `Z:\agent-os\bin\tests\test_scoring.py`
+- Create: `bin\skill_forge\scoring.py`
+- Test: `bin\tests\test_scoring.py`
 
 - [ ] **Step 1: Write the failing test**
 
-`Z:\agent-os\bin\tests\test_scoring.py`:
+`bin\tests\test_scoring.py`:
 ```python
 import pytest
 from skill_forge.scoring import contribution_score, classify_action
@@ -610,7 +610,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'skill_forge.scoring'`
 
 - [ ] **Step 3: Write the implementation**
 
-`Z:\agent-os\bin\skill_forge\scoring.py`:
+`bin\skill_forge\scoring.py`:
 ```python
 """Contribution scoring and (report-only) action classification.
 
@@ -662,12 +662,12 @@ Expected: PASS (10 passed)
 ### Task 8: Report renderer
 
 **Files:**
-- Create: `Z:\agent-os\bin\skill_forge\report.py`
-- Test: `Z:\agent-os\bin\tests\test_report.py`
+- Create: `bin\skill_forge\report.py`
+- Test: `bin\tests\test_report.py`
 
 - [ ] **Step 1: Write the failing test**
 
-`Z:\agent-os\bin\tests\test_report.py`:
+`bin\tests\test_report.py`:
 ```python
 from skill_forge.report import render_report
 
@@ -705,7 +705,7 @@ Expected: FAIL — `ModuleNotFoundError: No module named 'skill_forge.report'`
 
 - [ ] **Step 3: Write the implementation**
 
-`Z:\agent-os\bin\skill_forge\report.py`:
+`bin\skill_forge\report.py`:
 ```python
 """Render the weekly Skill-Forge report (Phase 0: read-only)."""
 from __future__ import annotations
@@ -746,18 +746,18 @@ Expected: PASS (2 passed)
 ### Task 9: CLI entrypoint `skill-refiner.py` (score-only, with `--skip-claude`)
 
 **Files:**
-- Create: `Z:\agent-os\bin\skill-refiner.py`
+- Create: `bin\skill-refiner.py`
 
 This wires the units. The real `claude -p` invoker is copied from `weekly-planner.py` (verbatim pattern). A `--skip-claude` flag substitutes a stub invoker that returns `"VERDICT: inapplicable"` so the full pipeline can be exercised offline (and in the next task's smoke test before spending subscription messages).
 
 - [ ] **Step 1: Write the entrypoint**
 
-`Z:\agent-os\bin\skill-refiner.py`:
+`bin\skill-refiner.py`:
 ```python
 """skill-refiner.py — Skill-Forge Phase 0 (read-only signal validator).
 
-Scores every skill in Z:\\agent-os\\skills\\ from claude-brain transcript
-history and writes Z:\\agent-os\\forge\\report-latest.md. MODIFIES NOTHING.
+Scores every skill in skills\\ from claude-brain transcript
+history and writes forge\\report-latest.md. MODIFIES NOTHING.
 
 Usage:
   python skill-refiner.py                 # full run (uses claude -p judge)
@@ -896,12 +896,12 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: Run the offline pipeline against the real brain (read-only, no subscription spend)**
 
-Run (from `Z:\agent-os\bin`): `python skill-refiner.py --skip-claude --verbose`
-Expected: exits 0; logs `scoring N skills`; writes `Z:\agent-os\forge\report-latest.md`. Every skill shows `action=dead` or `insufficient-evidence` (stub judge returns inapplicable → trials=0), proving the wiring and the read-only path without spending any messages.
+Run (from `bin`): `python skill-refiner.py --skip-claude --verbose`
+Expected: exits 0; logs `scoring N skills`; writes `forge\report-latest.md`. Every skill shows `action=dead` or `insufficient-evidence` (stub judge returns inapplicable → trials=0), proving the wiring and the read-only path without spending any messages.
 
 - [ ] **Step 3: Open the report and sanity-check**
 
-Run: `type Z:\agent-os\forge\report-latest.md`
+Run: `type forge\report-latest.md`
 Expected: the READ-ONLY header + a table listing your real skills (`route-inbox`, `session-reflect`, `watch`, etc.) with invocation counts pulled from the brain.
 
 - [ ] **Step 4: Checkpoint** — report file exists and lists real skills; `python -m pytest tests -q` still green.
@@ -914,29 +914,29 @@ Expected: the READ-ONLY header + a table listing your real skills (`route-inbox`
 
 - [ ] **Step 1: Run the real judge against a short lookback**
 
-Run (from `Z:\agent-os\bin`): `python skill-refiner.py --lookback-days 21 --verbose`
+Run (from `bin`): `python skill-refiner.py --lookback-days 21 --verbose`
 Expected: exits 0. For skills with recent invocations, the log shows non-zero `trials` and a real `score`. Subscription cost is bounded (one short `claude -p` call per invocation found in the last 21 days; the log prints how many).
 
 - [ ] **Step 2: Read the report and eyeball 3–5 verdicts against your memory**
 
-Run: `type Z:\agent-os\forge\report-latest.md`
+Run: `type forge\report-latest.md`
 Manually confirm: skills you know you used successfully are not flagged `retire-candidate`; anything flagged is plausibly a real problem. This is a gut-check before the formal precision measurement in Task 11.
 
-- [ ] **Step 3: Checkpoint** — a real judged report exists; no skill files were modified (`git`-free — verify by checking `skills/` mtimes are unchanged, e.g. `dir Z:\agent-os\skills /s /t:w`).
+- [ ] **Step 3: Checkpoint** — a real judged report exists; no skill files were modified (`git`-free — verify by checking `skills/` mtimes are unchanged, e.g. `dir skills /s /t:w`).
 
 ---
 
 ### Task 11: Eval harness — measure judge precision (the Phase-1 unlock gate)
 
 **Files:**
-- Create: `Z:\agent-os\forge\eval\labels.sample.jsonl`
-- Create: `Z:\agent-os\bin\skill-forge-eval.py`
+- Create: `forge\eval\labels.sample.jsonl`
+- Create: `bin\skill-forge-eval.py`
 
 The decision the whole loop hinges on: **is the judge's `hurt` verdict trustworthy enough to ever act on?** Research says implicit-correction detection runs ~55–60% precision in general (arxiv 2507.23158), so we must measure *our* judge on *our* transcripts. Gate: **≥80% precision on the `hurt` class** before Phase 2 autonomy is built.
 
 - [ ] **Step 1: Hand-label a gold sample**
 
-Create `Z:\agent-os\forge\eval\labels.sample.jsonl` — one JSON object per line, each a real outcome window you label by hand. Start with ~30 (aim for ~10 genuine `hurt` cases so precision is measurable). Format:
+Create `forge\eval\labels.sample.jsonl` — one JSON object per line, each a real outcome window you label by hand. Start with ~30 (aim for ~10 genuine `hurt` cases so precision is measurable). Format:
 ```json
 {"skill": "route-inbox", "description": "Route inbox content.", "gold": "hurt", "window": [{"role": "assistant", "content": "Routed to alice."}, {"role": "user", "content": "no, that should be bob"}]}
 {"skill": "watch", "description": "Watch a video.", "gold": "helped", "window": [{"role": "assistant", "content": "Here's the summary."}, {"role": "user", "content": "great, thanks"}]}
@@ -945,7 +945,7 @@ Create `Z:\agent-os\forge\eval\labels.sample.jsonl` — one JSON object per line
 
 - [ ] **Step 2: Write the eval harness**
 
-`Z:\agent-os\bin\skill-forge-eval.py`:
+`bin\skill-forge-eval.py`:
 ```python
 """skill-forge-eval.py — measure the judge's precision on a hand-labeled set.
 
@@ -1017,12 +1017,12 @@ if __name__ == "__main__":
 
 - [ ] **Step 3: Run the eval**
 
-Run (from `Z:\agent-os\bin`): `python skill-forge-eval.py`
+Run (from `bin`): `python skill-forge-eval.py`
 Expected: prints overall accuracy + `HURT precision/recall` + a `PASS`/`FAIL` gate line. The number itself is the deliverable — it tells us whether Phase 2 autonomy is safe to build, or whether the judge prompt needs iteration first.
 
 - [ ] **Step 4: Record the result in the spec**
 
-Append the measured precision and date to `Z:\agent-os\docs\specs\2026-05-29-skill-forge-design.md` §10 (the "classifier precision target" open question). If `FAIL`, the Phase 1 plan's first task is judge-prompt iteration; if `PASS`, Phase 1 (the Miner) and Phase 2 (scoped autonomy) are cleared to plan.
+Append the measured precision and date to `docs\specs\2026-05-29-skill-forge-design.md` §10 (the "classifier precision target" open question). If `FAIL`, the Phase 1 plan's first task is judge-prompt iteration; if `PASS`, Phase 1 (the Miner) and Phase 2 (scoped autonomy) are cleared to plan.
 
 - [ ] **Step 5: Checkpoint** — `python -m pytest tests -q` green; eval prints a gate verdict.
 

@@ -1,6 +1,6 @@
-﻿# CLAUDE-BRAIN: HOW TO USE YOUR BRAIN
+# CLAUDE-BRAIN: HOW TO USE YOUR BRAIN
 
-**For:** contributor's fork of claude-brain inside `agent-os`. Originally written for the upstream `mikeadolan/claude-brain` project; adapted for in-place use.
+**For:** the claude-brain copy bundled inside this harness. Originally written for the upstream `mikeadolan/claude-brain` project; adapted for in-place use.
 
 ---
 
@@ -22,7 +22,7 @@
 
 ---
 
-> **Note:** Examples in this guide reference example projects -- `agent-os`,
+> **Note:** Examples in this guide reference example projects -- `harness`,
 > `webapp`, `research`, `content` -- alongside generic prefixes
 > like `app` or `gen` where the original upstream phrasing is preserved. Your project
 > prefixes are defined in `config.yaml`.
@@ -58,14 +58,14 @@ get answers from your own history. Here are real things you can ask:
 **Simple keyword searches:**
 ```
 "Search the brain for prompt caching"
-"Find sessions about source farmers"
-"Look up the agent-os memory routing rule"
+"Find sessions about source ingestion"
+"Look up the harness memory routing rule"
 ```
 
 **Complex natural language queries:**
 ```
 "What did we work on two days ago around 2pm?"
-"Show me every decision we made about agent-os memory"
+"Show me every decision we made about harness memory"
 "Find conversations where I was frustrated - what went wrong?"
 "Compare my most productive sessions to my worst ones"
 "What's the full history of the webapp project from the beginning?"
@@ -174,16 +174,16 @@ There are three ways to search, from easiest to most specific:
 Type a question in plain English. Claude automatically picks the right brain tool.
 
 ```
-"What did we discuss about the agent-os memory routing rule?"
+"What did we discuss about the harness memory routing rule?"
 "Show me recent sessions for the research project"
 "What was decided about the never-commit-without-permission policy?"
 "What happened two days ago in the afternoon?"
-"Find conversations where the farmer subagent failed"
+"Find conversations where the ingest subagent failed"
 ```
 
 If Claude answers from its own context instead of checking the brain, be explicit:
 ```
-"Search the brain for everything about the agent-os memory setup"
+"Search the brain for everything about the harness memory setup"
 "Use the brain tools to find all sessions about route-inbox"
 "Check the brain - what project facts do we have for webapp?"
 ```
@@ -205,7 +205,7 @@ Type these yourself for instant, specific results. All 14 brain commands:
 | `/brain-questionnaire` | Fill out or update your profile | Name, preferences, goals, working style |
 | `/brain-setup` | Re-run setup to add projects or fix config | Safe to re-run anytime |
 | `/brain-export` | Save brain data to text files | Exports profile, decisions, or search results |
-| `/brain-topics` | Browse sessions by tag | Shows tag counts, drill into "agent-os", "webapp", "research", etc. |
+| `/brain-topics` | Browse sessions by tag | Shows tag counts, drill into "harness", "webapp", "research", etc. |
 | `/brain-tag-review` | Batch tag review via spreadsheet | Generates xlsx, you edit tags, then update DB |
 | `/brain-consistency` | Automated consistency check | Verifies all counts, paths, data integrity |
 
@@ -278,9 +278,9 @@ ask better questions.
 **Example prompts:**
 ```
 "Search transcripts for 'prompt caching cache_control'"
-"Find everything we discussed about the farmer subagent in the research project"
+"Find everything we discussed about the ingest subagent in the research project"
 "What have we talked about recently regarding video shot prompts?"
-"Search the brain for 'agent-os memory routing'"
+"Search the brain for 'harness memory routing'"
 ```
 
 **How the search works:**
@@ -316,8 +316,8 @@ projects, run `/brain-status` or check `config.yaml`.
 ```
 "What skills are defined for the research project?"
 "Look up the feature list for the webapp project"
-"What's the status of the agent-os deliverables?"
-"What do we know about the farmer-youtube subagent in the research project?"
+"What's the status of the harness deliverables?"
+"What do we know about the ingest subagent in the research project?"
 "What's the current setup for the gen project?"
 ```
 
@@ -325,8 +325,8 @@ projects, run `/brain-status` or check `config.yaml`.
 
 | Project | Categories | Example |
 |---------|-----------|---------|
-| agent-os | rule, brief, status | Standing rules, project briefs |
-| research | skill, farmer, expert, status | research notes, farmer scripts |
+| harness | rule, brief, status | Standing rules, project briefs |
+| research | skill, ingest, expert, status | research notes, ingest scripts |
 | webapp | feature, architecture, status | Webapp project facts |
 | gen | setup | Machine config, tools |
 
@@ -341,7 +341,7 @@ projects, run `/brain-status` or check `config.yaml`.
 
 **Example prompts:**
 ```
-"What decisions did we make about the agent-os memory layout?"
+"What decisions did we make about the harness memory layout?"
 "Look up the decision about never-commit-without-permission"
 "What was decided about the inbox routing workflow?"
 "Find all decisions about video generation modes"
@@ -381,7 +381,7 @@ Decisions accumulate as you work. Searches both description and rationale fields
 ---
 
 ### get_recent_summaries(project?, count?)
-**What:** Returns session notes. Currently written by the model via the explicit "end session" protocol — NOT yet fully automatic. The `session-end.py` hook writes only a templated fallback placeholder (marked `AUTO-GENERATED FALLBACK`) when no real notes exist. The 2026-05-27 Phase 3 build adds a scheduled `Farmer-Distill` task that backfills real notes via headless `claude -p`.
+**What:** Returns session notes. Currently written by the model via the explicit "end session" protocol — NOT yet fully automatic. The `session-end.py` hook writes only a templated fallback placeholder (marked `AUTO-GENERATED FALLBACK`) when no real notes exist. The 2026-05-27 Phase 3 build adds a scheduled distill task that backfills real notes via headless `claude -p`.
 **When Claude uses it:** Loading context at session start, or when you ask for recaps.
 **Parameters:**
 - `project` - filter to one project (optional)
@@ -556,7 +556,7 @@ Here are example queries you can type in Claude Code and what happens behind the
 ### Semantic Search (by meaning)
 ```
 "Search semantically for ways we reduced token cost"
-  -> Claude calls search_semantic("reduced token cost", project="agent-os")
+  -> Claude calls search_semantic("reduced token cost", project="harness")
   -> Finds "cache_control breakpoint", "prompt caching hit rate", "system block reuse"
      even though "token cost" never appears in those messages
 
@@ -577,7 +577,7 @@ Here are example queries you can type in Claude Code and what happens behind the
   -> Claude can then use get_session() to read the full transcript
 
 "Which project has the most frustrated sessions?"
-  -> Claude queries quality_tags across all sessions, grouped by project (agent-os, webapp, research, ...)
+  -> Claude queries quality_tags across all sessions, grouped by project (harness, webapp, research, ...)
 
 "Compare the patterns in my best vs worst sessions"
   -> Claude queries both ends of the quality_score spectrum
@@ -598,8 +598,8 @@ Here are example queries you can type in Claude Code and what happens behind the
 
 ### Searching Past Conversations
 ```
-"What did we discuss about setting up the agent-os memory index?"
-  -> Claude calls search_transcripts("agent-os memory index", project="agent-os")
+"What did we discuss about setting up the harness memory index?"
+  -> Claude calls search_transcripts("harness memory index", project="harness")
   -> Returns matching transcript snippets with dates
 
 "Find everything about the route-inbox skill"
@@ -621,19 +621,19 @@ Here are example queries you can type in Claude Code and what happens behind the
   -> Claude calls lookup_fact(project="webapp", category="feature")
   -> Returns feature list with status
 
-"What deliverables were created for agent-os?"
-  -> Claude calls lookup_fact(project="agent-os", category="brief")
+"What deliverables were created for harness?"
+  -> Claude calls lookup_fact(project="harness", category="brief")
   -> Returns project briefs, standing rules, memory routing docs
 ```
 
 ### Decisions
 ```
 "What was the decision about memory routing?"
-  -> Claude calls lookup_decision(project="agent-os", topic="memory routing")
+  -> Claude calls lookup_decision(project="harness", topic="memory routing")
   -> Returns the locked decision with rationale
 
 "Look up all decisions about commit policy"
-  -> Claude calls lookup_decision(project="agent-os", topic="commit")
+  -> Claude calls lookup_decision(project="harness", topic="commit")
   -> Returns the never-commit-without-permission decision and related rationale
 ```
 
@@ -652,7 +652,7 @@ Here are example queries you can type in Claude Code and what happens behind the
 ```
 "Search all projects for anything about MCP servers"
   -> Claude calls search_transcripts("MCP server") (no project filter)
-  -> Returns results from agent-os, webapp, research, and any other project that discussed it
+  -> Returns results from harness, webapp, research, and any other project that discussed it
 
 "Give me the full status of the brain"
   -> Claude calls get_status()
@@ -737,12 +737,12 @@ python3 scripts/import_gemini.py --import imports/gemini-export/ --map imports/g
 
 ### 7.4 Tags and Topic Discovery
 
-Every import auto-suggests tags based on conversation content (e.g., `agent-os`, `webapp`, `research`, `content`, `farmer`). You review and edit tags in the xlsx before importing.
+Every import auto-suggests tags based on conversation content (e.g., `harness`, `webapp`, `research`, `content`). You review and edit tags in the xlsx before importing.
 
 **Browse by topic:**
 ```
 /brain-topics              # Show all tags with session counts
-/brain-topics agent-os     # Show all sessions tagged 'agent-os'
+/brain-topics harness     # Show all sessions tagged 'harness'
 /brain-topics --project research # Tags for one project only
 ```
 
@@ -753,7 +753,7 @@ Every import auto-suggests tags based on conversation content (e.g., `agent-os`,
 Edit the spreadsheet, then run the update command shown in the output.
 
 **Inline tag editing** (for fixing one session):
-Just tell Claude: "tag this session as agent-os, meta-learning" or "change the tags on yesterday's session to research, farmer." Claude finds the session and updates it directly. No commands needed.
+Just tell Claude: "tag this session as harness, meta-learning" or "change the tags on yesterday's session to research, ingest." Claude finds the session and updates it directly. No commands needed.
 
 ---
 
@@ -949,7 +949,7 @@ This is the core workflow. Once a project is set up (see "Adding a New Project" 
 
 ```bash
 # 1. Navigate to your project folder
-cd /path/to/claude-brain/agent-os/
+cd /path/to/claude-brain/harness/
 
 # 2. Launch Claude Code
 claude
@@ -960,7 +960,7 @@ claude
 **From a code editor (VS Code, Zed, Cursor, etc.):**
 
 1. Open your editor
-2. Open the project folder (File > Open Folder, then pick `claude-brain/agent-os/`)
+2. Open the project folder (File > Open Folder, then pick `claude-brain/harness/`)
 3. Open the built-in terminal (usually Ctrl+` or View > Terminal)
 4. Type `claude` and press Enter
 5. The brain is live. Start working.
@@ -1030,7 +1030,7 @@ python3 scripts/brain-setup.py
 
 | Field | Rule | Example |
 |-------|------|---------|
-| Folder name | Lowercase, hyphens only | `agent-os`, `content` |
+| Folder name | Lowercase, hyphens only | `harness`, `content` |
 | Prefix | Lowercase, 2-3 characters | `aos`, `cc`, `gen` |
 | Label | Plain English, any format | `Agent OS`, `Cinematic Content` |
 
@@ -1082,17 +1082,17 @@ If you prefer to add a project without the script:
 1. **Edit `config.yaml`** -- add entries under `projects:` and `jsonl_project_mapping:`:
    ```yaml
    projects:
-     - folder_name: "agent-os"
+     - folder_name: "harness"
        prefix: "aos"
        label: "Agent OS"
 
    jsonl_project_mapping:
-     "agent-os": "aos"
+     "harness": "hrn"
    ```
 
 2. **Create the folder** inside your claude-brain directory:
    ```bash
-   mkdir agent-os
+   mkdir harness
    ```
 
 3. **Create a CLAUDE.md** inside the new folder -- copy from an existing project
@@ -1129,7 +1129,7 @@ If you prefer to add a project without the script:
 ### "Search returns no results"
 - **Check status:** `python3 scripts/status.py` - are there messages in the DB?
 - **Check FTS5:** The search uses keywords, not exact phrases. Try fewer/different words.
-- **Check project filter:** If you said "search research for X" but the data is in agent-os,
+- **Check project filter:** If you said "search research for X" but the data is in harness,
   you won't find it. Try without a project filter.
 - **Tip:** Short prompts (<15 chars) are skipped by the user-prompt-submit hook.
 
@@ -1152,7 +1152,7 @@ If you prefer to add a project without the script:
 
 ## 11.5. UPDATING CLAUDE-BRAIN
 
-This fork is detached from upstream (`.git` archived to `.git.upstream-archive/`). The original update mechanism -- a `git pull` against `mikeadolan/claude-brain` -- no longer applies. Changes are made locally inside `agent-os` and tracked there.
+This fork is detached from upstream (`.git` archived to `.git.upstream-archive/`). The original update mechanism -- a `git pull` against `mikeadolan/claude-brain` -- no longer applies. Changes are made locally inside `harness` and tracked there.
 
 If a Python dependency is added, run `pip3 install -r requirements.txt` against the same Python interpreter your hooks and MCP server use.
 
@@ -1210,4 +1210,4 @@ If a Python dependency is added, run `pip3 install -r requirements.txt` against 
 
 ## Questions, Bugs, and Feature Requests
 
-This fork lives inside `agent-os` and has no public issue tracker. The upstream project at `mikeadolan/claude-brain` retains the original GitHub issues and discussions for the pre-fork codebase.
+This fork lives inside the harness and has no public issue tracker. The upstream project at `mikeadolan/claude-brain` retains the original GitHub issues and discussions for the pre-fork codebase.

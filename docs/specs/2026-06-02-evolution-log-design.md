@@ -2,19 +2,19 @@
 
 **Date:** 2026-06-02
 **Status:** Approved
-**Inspired by:** [EvoMap/evolver](https://github.com/EvoMap/evolver) — the EvolutionEvent audit-trail concept, adapted to agent-os conventions. (The GEP framework itself is not used; only the changelog idea.)
+**Inspired by:** [EvoMap/evolver](https://github.com/EvoMap/evolver) — the EvolutionEvent audit-trail concept, adapted to the harness conventions. (The GEP framework itself is not used; only the changelog idea.)
 
 ---
 
 ## Problem
 
-agent-os memory files record the *current state* of rules, projects, and identity facts, but there is no record of *how things changed over time* — what broke, what was fixed, what drove the decision. After a repair like the `[voice]` ASCII sentinel fix, the feedback file records the rule but not the incident, the date, or the reasoning chain. The brain has transcript history, but it requires natural-language search and doesn't surface structured evolution signal.
+the harness memory files record the *current state* of rules, projects, and identity facts, but there is no record of *how things changed over time* — what broke, what was fixed, what drove the decision. After a repair like the `[voice]` ASCII sentinel fix, the feedback file records the rule but not the incident, the date, or the reasoning chain. The brain has transcript history, but it requires natural-language search and doesn't surface structured evolution signal.
 
 ---
 
 ## Solution
 
-An append-only JSONL file — `Z:\agent-os\forge\evolution.jsonl` — that logs one entry per change to any agent-os asset (memory files, skills, settings). Each entry captures: when, what asset, what changed, why, what strategy drove it, and which session it came from.
+An append-only JSONL file — `forge\evolution.jsonl` — that logs one entry per change to any the harness asset (memory files, skills, settings). Each entry captures: when, what asset, what changed, why, what strategy drove it, and which session it came from.
 
 This is a **convention**, not an enforced system. Writers follow the convention; there is no validator or hook.
 
@@ -23,7 +23,7 @@ This is a **convention**, not an enforced system. Writers follow the convention;
 ## File
 
 ```
-Z:\agent-os\forge\evolution.jsonl
+forge\evolution.jsonl
 ```
 
 Alongside `skill-usage.jsonl`. Append-only. Never truncated or rewritten — only appended to.
@@ -51,7 +51,7 @@ One JSON object per line:
 |---|---|---|
 | `ts` | ISO 8601 string | Timestamp of the write |
 | `strategy` | enum (see below) | What kind of evolution drove this change |
-| `asset` | string | Path relative to `Z:\agent-os\` (e.g. `feedback/rule.md`, `skills/route-inbox/SKILL.md`, `settings`) |
+| `asset` | string | Path relative to `` (e.g. `feedback/rule.md`, `skills/route-inbox/SKILL.md`, `settings`) |
 | `what` | string | One sentence: what changed |
 | `why` | string | One sentence: why — the incident, signal, or reason |
 | `session` | string | First 8 chars of the session ID (from brain context or `$CLAUDE_SESSION_ID`) |
@@ -60,7 +60,7 @@ One JSON object per line:
 
 ## Strategies
 
-Adapted from Evolver's preset vocabulary to agent-os semantics:
+Adapted from Evolver's preset vocabulary to the harness semantics:
 
 | strategy | when to use |
 |---|---|
@@ -103,7 +103,7 @@ Claude picks the strategy; the entry is shown alongside the memory candidate in 
 
 ### Direct Claude edits (standing convention)
 
-When Claude writes or edits any file under `Z:\agent-os\memory\` or `Z:\agent-os\skills\` outside of session-reflect (e.g. responding to "update this rule" directly in conversation), it appends an evolution entry **before** making the edit. This is enforced via a feedback rule (`feedback/evolution_log_convention.md`), not a hook.
+When Claude writes or edits any file under `memory\` or `skills\` outside of session-reflect (e.g. responding to "update this rule" directly in conversation), it appends an evolution entry **before** making the edit. This is enforced via a feedback rule (`feedback/evolution_log_convention.md`), not a hook.
 
 ---
 
@@ -113,10 +113,10 @@ No dedicated viewer in Phase 1. Use:
 
 ```powershell
 # last 20 entries, formatted
-Get-Content Z:\agent-os\forge\evolution.jsonl -Tail 20 | ForEach-Object { $_ | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"{d['ts'][:10]}  [{d['strategy']:10}]  {d['asset']}\")" }
+Get-Content forge\evolution.jsonl -Tail 20 | ForEach-Object { $_ | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"{d['ts'][:10]}  [{d['strategy']:10}]  {d['asset']}\")" }
 
 # all repairs
-Get-Content Z:\agent-os\forge\evolution.jsonl | python3 -c "import sys,json; [print(json.dumps(json.loads(l), indent=2)) for l in sys.stdin if json.loads(l)['strategy']=='repair']"
+Get-Content forge\evolution.jsonl | python3 -c "import sys,json; [print(json.dumps(json.loads(l), indent=2)) for l in sys.stdin if json.loads(l)['strategy']=='repair']"
 ```
 
 Skill-Forge Phase 3+ may add structured queries against this file (e.g. "show all changes to skill X over time").
@@ -128,7 +128,7 @@ Skill-Forge Phase 3+ may add structured queries against this file (e.g. "show al
 - Not a code patcher (like Evolver's full GEP system) — entries are human/LLM-readable logs, not executable patches
 - Not enforced by a hook — convention-based; relies on Claude following the standing rule
 - Not a replacement for the brain — the brain has full transcript context; this has structured signal optimized for querying
-- Not versioned/committed — agent-os is not a git repo; the log is local-only
+- Not versioned/committed — the original install was not a git repo; the log is local-only
 
 ---
 
@@ -138,7 +138,7 @@ Skill-Forge Phase 3+ may add structured queries against this file (e.g. "show al
 2. **Skill-Forge** — three call sites in `bin/skill_forge/` + `bin/skill-refiner.py`
 3. **MEMORY.md** — add a reference line under "Reference — tooling / setup"
 4. **feedback/evolution_log_convention.md** — standing rule for direct Claude edits
-5. **`Z:\agent-os\skills\_index.md`** — no change needed (this isn't a skill)
+5. **`skills\_index.md`** — no change needed (this isn't a skill)
 
 ---
 
