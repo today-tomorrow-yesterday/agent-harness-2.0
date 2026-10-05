@@ -144,3 +144,105 @@ def test_digest_renders_runs_and_attention():
 def test_digest_empty():
     md = digest.build_digest([], [], "2026-06-19")
     assert "No autonomous runs" in md
+
+
+# --- crash window + strict checkpoints ---
+def test_save_checkpoint_refuses_to_fake_an_unserializable_output(tmp_path):
+    db = tmp_path / "runner.db"
+    rid = events.start_run("j", db_path=db)
+    assert events.save_checkpoint(rid, 0, object(), db_path=db) is False
+    assert events.load_checkpoints(rid, db_path=db) == {}          # nothing to skip past
+    assert events.load_incomplete(rid, db_path=db) == [0]          # but it is visible
+
+
+def test_a_step_that_started_but_never_checkpointed_is_flagged_and_rerun(tmp_path):
+    db = tmp_path / "runner.db"
+    rid = events.start_run("crashjob", db_path=db)
+    events.save_checkpoint(rid, 0, "A", db_path=db)
+    events.begin_step(rid, 1, db_path=db)        # step 1 started... process died here
+    calls = []
+    res = run_mod.run("crashjob", [lambda: "never", lambda: (calls.append("B"), "B")[1]],
+                      run_id=rid, db_path=db, stop_file=tmp_path / "nope")
+    assert calls == ["B"] and res["results"] == ["A", "B"]
+    warn = [e for e in events.get_events(rid, db_path=db)
+            if e["event_type"] == "step:1" and e["status"] == "warn"]
+    assert warn and warn[0]["needs_attention"] == 1
+    assert events.load_incomplete(rid, db_path=db) == []           # now completed
+
+
+def test_run_flags_a_step_whose_output_cannot_be_checkpointed(tmp_path):
+    db = tmp_path / "runner.db"
+    res = run_mod.run("objjob", [lambda: object()], db_path=db, stop_file=tmp_path / "nope")
+    assert res["status"] == "done"
+    evs = events.get_events(res["run_id"], db_path=db)
+    assert any(e["status"] == "warn" and e["needs_attention"] for e in evs)
+
+
+def test_legacy_checkpoint_rows_without_status_still_count_as_done(tmp_path):
+    import sqlite3
+    db = tmp_path / "runner.db"
+    rid = events.start_run("j", db_path=db)
+    with sqlite3.connect(db) as c:   # a row written before the status column existed
+        c.execute("INSERT INTO checkpoints(run_id, step_index, output, ts) VALUES (?,?,?,?)",
+                  (rid, 0, '"old"', 1))
+    assert events.load_checkpoints(rid, db_path=db) == {0: "old"}
+    assert events.load_incomplete(rid, db_path=db) == []
+
+
+def test_a_halt_raised_under_another_module_name_still_stops_the_batch(tmp_path):
+    """execution.execute raises runner.guard.Halted; run.py imports the same class as
+    guard.Halted. Either must stop the batch, not count as an ordinary step error."""
+    db = tmp_path / "runner.db"
+
+    class Halted(Exception):     # same name, different class object
+        pass
+
+    def stop_step():
+        raise Halted("STOP file present (post-action)")
+
+    ran = []
+    res = run_mod.run("haltjob", [stop_step, lambda: ran.append(1)], db_path=db,
+                      stop_file=tmp_path / "nope")
+    assert res["status"] == "halted" and "post-action" in res["halt_reason"]
+    assert ran == []
+
+
+def test_events_close_every_connection(tmp_path, monkeypatch):
+    db = tmp_path / "runner.db"
+    opened, closed = [], []
+    real = events._conn
+
+    class _Proxy:
+        def __init__(self, inner):
+            object.__setattr__(self, "_inner", inner)
+
+        def __getattr__(self, k):
+            return getattr(self._inner, k)
+
+        def __setattr__(self, k, v):
+            setattr(self._inner, k, v)
+
+        def __enter__(self):
+            self._inner.__enter__()
+            return self
+
+        def __exit__(self, *a):
+            return self._inner.__exit__(*a)
+
+        def close(self):
+            closed.append(1)
+            return self._inner.close()
+
+    def counting(db_path=None):
+        opened.append(1)
+        return _Proxy(real(db_path))
+
+    monkeypatch.setattr(events, "_conn", counting)
+    rid = events.start_run("j", db_path=db)
+    events.log_event(rid, "e", db_path=db)
+    events.begin_step(rid, 0, db_path=db)
+    events.save_checkpoint(rid, 0, 1, db_path=db)
+    events.load_checkpoints(rid, db_path=db)
+    events.end_run(rid, "done", db_path=db)
+    events.fetch_since(0, db_path=db)
+    assert opened and len(opened) == len(closed)

@@ -9,6 +9,8 @@ forge/evolution.jsonl
 forge/report-latest.md
 # Scorecard snapshots quote your own messages (the repeat-correction manifest)
 forge/learning-scorecard/
+# Safety queue — actions paused during unattended runs, awaiting review
+forge/safety/
 
 # Secrets
 bin/secrets/*.txt
@@ -46,3 +48,19 @@ forge/test-medic-escalation.md
 logs/self-loop.log
 logs/self-loop-state.json
 logs/test-medic.log
+
+# Goal loop, seeds and runner state — per-machine, regenerated
+forge/runner.db
+forge/runner.db-wal
+forge/runner.db-shm
+forge/seedbank.json
+forge/STOP
+next-session.md
+next-session.archive.md
+agent-activity.md
+*.tmp
+
+# Per-user copies and tool output
+config/agent-tools.yaml
+forge/dispatch-ledger.jsonl
+captures/
