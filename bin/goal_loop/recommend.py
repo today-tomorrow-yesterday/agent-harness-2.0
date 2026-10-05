@@ -1,6 +1,14 @@
 """recommend_actions: per-goal next-step recs, flagging real-world actions for approval. Pure."""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+_BIN = str(Path(__file__).resolve().parents[1])
+if _BIN not in sys.path:
+    sys.path.insert(0, _BIN)
+from goal_loop.goals_io import is_paused  # noqa: E402
+
 # keywords implying an irreversible / outward-facing / ToS-bound real-world action
 _APPROVAL_KEYWORDS = ("create account", "create a ", "sign up", "post", "publish",
                       "deploy", "send", "buy", "purchase", "register", "link them",
@@ -10,6 +18,8 @@ _APPROVAL_KEYWORDS = ("create account", "create a ", "sign up", "post", "publish
 def recommend_actions(goals: list[dict], verdicts: list[dict]) -> list[dict]:
     recs = []
     for g in goals:
+        if is_paused(g):
+            continue  # a paused goal has no next step to recommend
         step = (g.get("next_step") or "").strip()
         if not step:
             continue

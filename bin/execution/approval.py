@@ -1,7 +1,11 @@
 """Durable approval queue: when policy says PAUSE, the action is parked to disk
 (an `approvals` row in runner.db) and survives restarts. The operator resolves it
-later via the CLI; a resumed run re-invokes the action. Additive table — no changes
-to the runner's existing runs/events/checkpoints.
+later via the CLI. Approving does not run anything by itself: the job that parked the
+action calls execute() again with approved_id=<row id>, the action runs once, and
+the row moves approved -> executed. Additive table — no changes to the runner's
+existing runs/events/checkpoints.
+
+status: pending -> approved | rejected;  approved -> executed (spent).
 """
 from __future__ import annotations
 
@@ -57,6 +61,31 @@ def pending(db_path=None) -> list[dict]:
         c.row_factory = sqlite3.Row
         rows = c.execute("SELECT * FROM approvals WHERE status='pending' ORDER BY id").fetchall()
         return [dict(r) for r in rows]
+
+
+def latest_for(summary: str, action_class: str, db_path=None) -> dict | None:
+    """The most recent approval row for this exact action, any status.
+
+    `summary` is the identity of a parked action: it is what the operator read when
+    deciding, so an approval covers the action with that summary and no other.
+    """
+    import sqlite3
+    with _conn(db_path) as c:
+        c.row_factory = sqlite3.Row
+        r = c.execute(
+            "SELECT * FROM approvals WHERE summary=? AND action_class=? ORDER BY id DESC LIMIT 1",
+            (summary, action_class)).fetchone()
+        return dict(r) if r else None
+
+
+def consume(approval_id: int, db_path=None) -> bool:
+    """Spend an approval: approved -> executed. True only for the caller that made
+    the transition, so one approval authorizes exactly one run even if two jobs race."""
+    with _conn(db_path) as c:
+        cur = c.execute(
+            "UPDATE approvals SET status='executed' WHERE id=? AND status='approved'",
+            (approval_id,))
+        return cur.rowcount > 0
 
 
 def resolve(approval_id: int, approved: bool, by: str = "operator", db_path=None) -> bool:

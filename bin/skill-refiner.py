@@ -148,7 +148,22 @@ def main() -> int:
         # The session is closed (limit/auth) — skip THIS run cleanly and let the next
         # scheduled slot retry. The previous report stays in place: a partial one
         # would score every unjudged skill as if it had no evidence.
-        log("WARN", f"claude session unavailable ({e.status}) — skipping this run; "
+        if e.status == "auth_failed":
+            # NOT a clean skip: waiting does not fix an expired login, so every
+            # later run would fail the same way while the scheduler recorded
+            # success and the report went quietly stale. Fail the run and say so.
+            log("ERROR", "claude login failed — the judge needs a human to re-authenticate "
+                         "(run `claude` and /login). Previous report left in place.")
+            try:
+                from notify_slack import post_slack
+                post_slack("Skill-Forge could not run: the Claude login has expired or is "
+                           "invalid. Re-authenticate (`claude`, then /login). The report "
+                           "is stale until then.", title="Skill-Forge needs re-auth")
+            except Exception as slack_err:  # noqa: BLE001
+                log("WARN", f"Slack notify skipped: {type(slack_err).__name__}: {slack_err}")
+            return 1
+        # Rate limit: transient, the next scheduled slot retries on its own.
+        log("WARN", f"claude session rate-limited — skipping this run; "
                     f"previous report left in place. {e.detail or ''}")
         return 0
     finally:

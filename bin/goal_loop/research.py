@@ -34,6 +34,7 @@ Q_CLOSE = "======= END UNTRUSTED WEB CONTENT"
 if _BIN not in sys.path:
     sys.path.insert(0, _BIN)
 from harness_common import defang_untrusted as _defang  # noqa: E402
+from goal_loop.goals_io import is_paused  # noqa: E402
 
 
 def quarantine(text: str) -> str:
@@ -54,7 +55,8 @@ def clip_quarantined(text: str, max_chars: int) -> str:
 
 
 def select_for_research(goals: list[dict], cap: int = 2) -> list[dict]:
-    picked = [g for g in goals if "research" in (g.get("next_step") or "").lower()]
+    picked = [g for g in goals if not is_paused(g)
+              and "research" in (g.get("next_step") or "").lower()]
     return picked[:cap]
 
 
@@ -68,9 +70,21 @@ def run_research(question: str, timeout: int = 600, *, db_path=None,
         sys.path.insert(0, _BIN)
     try:
         from execution.actions.research_web import ResearchWeb
+        from execution import approval
         from execution.execute import execute
         action = ResearchWeb(question=question, timeout=timeout, fetcher=fetcher)
-        res = execute(action, db_path=db_path, job="goal-research-fetch")
+        # A risky question PARKS for approval. Look for the decision on an earlier
+        # ask before asking again — otherwise approving does nothing (no run ever
+        # picks it up) and every weekly run queues a duplicate of the same question.
+        prior = approval.latest_for(action.summary(), action.action_class, db_path=db_path)
+        approved_id = None
+        if prior:
+            if prior["status"] in ("pending", "rejected"):
+                return None  # still waiting, or the operator said no: don't re-ask
+            if prior["status"] == "approved":
+                approved_id = prior["id"]
+        res = execute(action, db_path=db_path, job="goal-research-fetch",
+                      approved_id=approved_id)
     except Exception:
         return None  # gate unavailable/broken -> skip research, never fetch ungated
     return quarantine(res["result"]) if res["status"] == "done" else None
