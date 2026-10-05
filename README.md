@@ -26,10 +26,13 @@ Three runtime layers stacked together:
 
 Plus:
 
-- ⚡ **Skills** (`skills/`) — reusable slash commands: `/onboard`, `/session-reflect`, plus the `/domain-*` suite (check/register/DNS/email — needs the open-source `domain-suite-mcp`)
+- ⚡ **Skills** (`skills/`) — 20 reusable slash commands: setup (`/onboard`, `/goal-review`, `/session-reflect`), research and vetting (`/research-swarm`, `/repo-vet`, `/repo-steal`), working discipline (`/fable-discipline`, `/git-verified-agent-orchestration`), design (`/visual-explainer`, `/ux-psychology`, `/page-clone`), upkeep (`/skill-authoring`, `/skill-canary`, `/sync-agent-tools`, `/safety-review`), plus the `/domain-*` suite. When to use each: [`docs/skills.md`](docs/skills.md)
 - 🔑 **Agent keyring** (`bin/api.py` + gitignored `bin/secrets/keyring.env`) — call your keyed APIs (YouTube, Gemini, Sketchfab, ...) from any session; keys are injected at request time and **redacted from every output**, so credentials never touch a transcript. `bin/gen_image.py` rides on it for image generation with reference-conditioning.
 - 🤖 **Scheduled agents** (`bin/scheduler/`) — weekly planner, security watcher, brain-embed, daily digest, scheduled **cross-platform** (cron / launchd / Task Scheduler) — running while you sleep
 - 🛟 **Safety harness** (`bin/runner/`, `bin/execution/`) — kill-switch (STOP file), action/cost ceilings, an audit DB, and a default-deny approval gate wrapping any autonomous action
+- 🪝 **Safety hooks** (`bin/hooks/`) — block destructive shell and git commands, pause outward or irreversible actions during unattended runs, gate frontend edits behind design skills, and surface the right skill for a prompt. Off until you enable them: `python bin/register_hook.py --all`. Details: [`docs/hooks.md`](docs/hooks.md)
+- 🩺 **Health checks** (`bin/self_loop.py`, `bin/conformance_check.py`, `bin/fleet_status.py`, ...) — the install checks itself: jobs that exited 0 but failed, outcomes that stopped updating, scheduler drift, rule contradictions. A check that cannot read its source says "unknown", never "pass". Details: [`docs/health.md`](docs/health.md)
+- 🎯 **Goal loop** (`bin/goal_loop/`, `memory/goals.md`) — weekly progress, questions and next steps for your goals, plus idea seeds. Off until you fill in `memory/goals.md`. Details: [`docs/goal-loop.md`](docs/goal-loop.md)
 - 🔒 **security-ops** (`security-ops/`, Windows) — optional read-only host-security monitor + one-time hardening + an on-demand `security-analyst` subagent over a vetted skill library
 - 🔄 **Skill-Forge** (`bin/skill_forge/`) — self-improving loop: mines your transcripts → scores skills → proposes improvements
 - 📈 **Learning scorecard** (`bin/learning_scorecard.py`) — five weekly numbers that check whether the harness is actually getting better: repeat corrections, correction rate, goals moved, skill hit rate, job error rate. No model calls; leads the weekly briefing
@@ -55,7 +58,7 @@ Plus:
 |---|---|
 | `memory/user.md` | Who you are — role, projects, goals, setup |
 | `memory/soul.md` | How Claude should talk to you |
-| `memory/sol.md` | A name and identity for your Claude instance *(optional)* |
+| `memory/agent.md` | A name and identity for your Claude instance *(optional)* |
 | `memory/frame.md` | Your operating philosophy *(optional)* |
 | `memory/feedback/*.md` | Your behavioral rules — corrections and confirmations |
 | `memory/projects/*.md` | Your active project briefs |
@@ -140,13 +143,14 @@ agent-harness/
 │   ├── MEMORY.md           ← canonical index (update when adding files)
 │   ├── user.md             ← who you are [BOOTSTRAP]
 │   ├── soul.md             ← how Claude talks to you [BOOTSTRAP]
-│   ├── sol.md              ← Claude instance identity [optional]
+│   ├── agent.md            ← Claude instance identity [optional]
 │   ├── frame.md            ← operating philosophy [optional]
 │   ├── feedback/           ← standing behavioral rules
 │   ├── projects/           ← active project briefs
 │   ├── ideas/              ← pre-project concepts
 │   └── archive/            ← superseded files (kept for history)
-├── skills/
+│   ├── goals.md            ← your goals, read by the weekly goal loop [BOOTSTRAP]
+├── skills/                 ← 20 skills; index in skills/_index.md
 │   ├── onboard/            ← guided first-time setup (/onboard)
 │   └── session-reflect/    ← end-of-session memory capture skill
 ├── bin/
@@ -158,7 +162,12 @@ agent-harness/
 │   ├── security_watch.py   ← flags unexpected changes to your Claude setup
 │   ├── runner/             ← kill-switch + action/cost ceilings + audit DB + digest
 │   ├── execution/          ← gated actions: risk + default-deny policy + approval + secrets
-│   └── goal_loop/          ← weekly goal assessment from your own signals
+│   ├── goal_loop/          ← weekly goal assessment + idea seeds
+│   ├── hooks/              ← safety hooks (enable with register_hook.py)
+│   ├── harness_common.py   ← shared helpers: outcomes, alerts, locks, scrubbing
+│   ├── self_loop.py        ← finds and re-runs failed jobs
+│   ├── conformance_check.py ← health assertions for any install
+│   └── sync-agent-tools.py ← keep skills + MCP servers in sync across profiles
 ├── security-ops/           ← optional Windows host-security module [self-contained]
 ├── forge/
 │   ├── skill-usage.jsonl   ← per-invocation skill log [gitignored]
@@ -166,6 +175,10 @@ agent-harness/
 ├── claude-brain/           ← transcript memory engine (MIT, see credits)
 └── docs/
     ├── REHYDRATE.md        ← cross-machine setup guide
+    ├── hooks.md            ← what each hook blocks and how to enable it
+    ├── health.md           ← what each health check does and how to run it
+    ├── goal-loop.md        ← the weekly goal loop and idea seeds
+    ├── skills.md           ← when to use each skill
     ├── specs/              ← design specifications
     └── plans/              ← implementation plans
 ```

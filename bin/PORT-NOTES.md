@@ -1,5 +1,28 @@
 # Port Notes
 
+## 2026-10-05 port — catch-up with the source system
+
+Ported from the private source repo, owner-neutral (no personal identity, no keys,
+no machine paths). Each area went in as its own pull request with tests.
+
+| Area | Where | Notes |
+|---|---|---|
+| **Goal loop fixes** | `bin/goal_loop/` | atomic, body-preserving `goals.md` I/O; paused goals; fetched web text fenced as untrusted |
+| **Learning scorecard** | `bin/learning_scorecard.py` | five weekly numbers; reads job runs from `forge/runner.db`; no model calls |
+| **Safety hooks** | `bin/hooks/`, `bin/register_hook.py`, `docs/hooks.md` | `pre-tool-guard`, `safety-queue`, `design-gate`, `placement-guard`, `capability-gate`. Not ported: `evidence-log` (nothing read its log), `inject-contract` (needs a renderer this repo lacks) |
+| **Goal loop wiring + seeds** | `bin/weekly-planner.py`, `bin/goal_loop/seeds.py`, `memory/goals.md` | the loop now runs from the planner; off while `goals.md` is the shipped template |
+| **Execution + runner hardening** | `bin/execution/`, `bin/runner/` | per-call audit event, post-action kill-switch check, approvals that resume once, secrets scrubbed before storage, fail-closed policy |
+| **Skills** | `skills/`, `docs/skills.md` | `research-swarm`, `repo-vet`, `repo-steal`, `fable-discipline`, `visual-explainer`, `ux-psychology`, `page-clone`, `sync-agent-tools`, `goal-review`, `safety-review`, `skill-canary` |
+| **Memory + sync tools** | `bin/memory-index-split.py`, `bin/memory-garden.py`, `bin/skill_deps.py`, `bin/sync-agent-tools.py` | `sync-agent-tools` is manifest-driven; copy `config/agent-tools.example.yaml` |
+| **Health checks** | `bin/harness_common.py`, `bin/conformance_check.py`, `bin/fleet_status.py`, `bin/scheduler/introspect.py`, `docs/health.md` | outcome recording, alert ledger, scheduler introspection on all three OSes; `self_loop` / `self_test` / `test_medic` merged semantically, not overwritten |
+
+Deliberately left out: anything tied to the source owner's own projects, content
+pipelines or machine layout.
+
+`memory/sol.md` was renamed `memory/agent.md` in the same pass.
+
+---
+
 ## 2026-07-12 port — agent keyring / gen_image / orchestrator-worker doc / domain skills / refiner delta
 
 Ported from the private source repo, genericized (no personal identity, no keys,

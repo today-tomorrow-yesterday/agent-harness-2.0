@@ -16,7 +16,7 @@
   - `MEMORY.md` — canonical index; **start here**
   - `user.md` — who you are
   - `soul.md` — how Claude talks to you
-  - `sol.md` — Claude instance identity (optional)
+  - `agent.md` — Claude instance identity (optional)
   - `frame.md` — shared operating framework (optional)
   - `feedback/` — standing behavioral rules
   - `projects/` — active project briefs
@@ -44,7 +44,7 @@ Write identity-level facts (who you are, standing rules, project context) to `me
 
 1. Fill out `memory/user.md` (bootstrap questions are inside)
 2. Fill out `memory/soul.md`
-3. Optionally fill out `memory/sol.md` and `memory/frame.md`
+3. Optionally fill out `memory/agent.md` and `memory/frame.md`
 4. Run `claude-brain`'s `brain-setup.py` to register transcript hooks
 5. Add your first project brief in `memory/projects/`
 6. Install skills into your Claude profile(s) via the `skills/` directory
