@@ -6,6 +6,8 @@ from __future__ import annotations
 import datetime as dt
 import types
 
+import pytest
+
 import harness_common as hc
 import self_loop as sl
 from _health_fixtures import PINNED, hc_env, iso  # noqa: F401
@@ -16,6 +18,11 @@ NOW = dt.datetime.fromtimestamp(PINNED, dt.timezone.utc)
 REG = [Job("alpha", ["bin/a.py"], "daily", "08:00", safe_rerun=True),
        Job("beta", ["bin/b.py"], "daily", "08:00", safe_rerun=False),
        Job("self-loop", ["bin/self_loop.py"], "daily", "06:30")]
+
+
+@pytest.fixture(autouse=True)
+def _hermetic_log(tmp_path, monkeypatch):
+    monkeypatch.setattr(sl, "LOG_PATH", tmp_path / "self-loop.log")
 
 
 def inst(jid, hours_ago=None, result=0, state="Ready", next_in_h=None):
