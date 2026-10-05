@@ -32,7 +32,7 @@ _DENY_FILES = (
     "forge/execution_policy.json",
     "forge/STOP",            # the kill-switch — a confined write must never clobber it
     "forge/runner.db",       # the audit log + approval queue
-    "memory/user.md", "memory/sol.md", "memory/frame.md", "memory/soul.md",
+    "memory/user.md", "memory/agent.md", "memory/frame.md", "memory/soul.md",
     "memory/MEMORY.md",      # the memory index every session starts from
     "CLAUDE.md", "AGENTS.md",  # the standing rules loaded into every session
     "scheduled-tasks.md",    # the local scheduler record

@@ -369,7 +369,7 @@ git commit -m "fix(core): remove Windows-only path/interpreter assumptions"
   2. **Deps:** `python -m pip install -r claude-brain/requirements.txt`. Note the ~80 MB `sentence-transformers` model downloads on first search.
   3. **Init brain:** `python claude-brain/scripts/brain-setup.py`.
   4. **Wire MCP + hooks:** call `python bin/configure_claude.py add-mcp --name brain-server --command <sys.executable> --arg claude-brain/mcp/server.py` then `add-hook` for each event the brain uses (read the hook filenames in `claude-brain/hooks/` and register the ones the core requires). Use `--dry-run` first, show the user, then apply.
-  5. **Identity interview:** for each BOOTSTRAP file (`memory/user.md`, `memory/soul.md`, optional `memory/sol.md`/`frame.md`, `memory/feedback/*`, `memory/projects/*`), ask the embedded questions one at a time, then write the file in the user's words and remove the BOOTSTRAP block.
+  5. **Identity interview:** for each BOOTSTRAP file (`memory/user.md`, `memory/soul.md`, optional `memory/agent.md`/`frame.md`, `memory/feedback/*`, `memory/projects/*`), ask the embedded questions one at a time, then write the file in the user's words and remove the BOOTSTRAP block.
   6. **Verify:** restart-or-note the MCP; run a `claude-brain` keyword search probe; confirm `CLAUDE.md` loads; print a "you're set up — here's what you can do" summary.
 
 - [ ] **Step 2: Smoke-check** the skill file parses (valid frontmatter, no broken links): open it, confirm `name`/`description` present.

@@ -59,7 +59,7 @@ write each in *their own words*, then delete that file's BOOTSTRAP block:
 
 1. `memory/user.md` — who they are, role, projects, north star.
 2. `memory/soul.md` — how they want Claude to talk to them.
-3. `memory/sol.md` (optional) — a name/identity for their Claude instance.
+3. `memory/agent.md` (optional) — a name/identity for their Claude instance.
 4. `memory/frame.md` (optional) — their operating philosophy.
 5. `memory/feedback/*.md` — standing behavioral rules (start with the example).
 6. `memory/projects/*.md` — one brief per active project.

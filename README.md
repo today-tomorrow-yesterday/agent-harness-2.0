@@ -55,7 +55,7 @@ Plus:
 |---|---|
 | `memory/user.md` | Who you are — role, projects, goals, setup |
 | `memory/soul.md` | How Claude should talk to you |
-| `memory/sol.md` | A name and identity for your Claude instance *(optional)* |
+| `memory/agent.md` | A name and identity for your Claude instance *(optional)* |
 | `memory/frame.md` | Your operating philosophy *(optional)* |
 | `memory/feedback/*.md` | Your behavioral rules — corrections and confirmations |
 | `memory/projects/*.md` | Your active project briefs |
@@ -140,7 +140,7 @@ agent-harness/
 │   ├── MEMORY.md           ← canonical index (update when adding files)
 │   ├── user.md             ← who you are [BOOTSTRAP]
 │   ├── soul.md             ← how Claude talks to you [BOOTSTRAP]
-│   ├── sol.md              ← Claude instance identity [optional]
+│   ├── agent.md            ← Claude instance identity [optional]
 │   ├── frame.md            ← operating philosophy [optional]
 │   ├── feedback/           ← standing behavioral rules
 │   ├── projects/           ← active project briefs

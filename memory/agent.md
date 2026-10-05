@@ -1,5 +1,5 @@
 ---
-name: sol
+name: agent
 description: The Claude instance identity — who Claude is in this context, its name, its partnership frame, its standing self-commitments
 type: user
 ---
@@ -36,4 +36,4 @@ type: user
 
 ---
 
-<!-- Write your actual sol.md content below this line after bootstrapping -->
+<!-- Write your actual agent.md content below this line after bootstrapping -->
