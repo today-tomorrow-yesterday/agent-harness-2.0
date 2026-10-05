@@ -13,7 +13,24 @@ _ORDER = {lvl: i for i, lvl in enumerate(LEVELS)}
 
 
 def _max(a: str, b: str) -> str:
+    """Max-severity of two NORMALIZED levels (see _normalize_hint)."""
     return a if _ORDER.get(a, 0) >= _ORDER.get(b, 0) else b
+
+
+def _normalize_hint(raw) -> tuple[str, str | None]:
+    """Map a self-declared risk token onto LEVELS. Returns (level, unrecognized_token).
+
+    Fail-CLOSED: anything that is not LOW/MED/HIGH (after trimming and upper-casing)
+    scores HIGH. An earlier version scored it LOW, silently: `_ORDER.get(tok, 0)` put
+    an unknown token such as "high" (lowercase) or "CRITICAL" at index 0, tied with the
+    LOW floor, and the floor won. A token the scorer cannot read is a token it cannot
+    trust, and the module promise is that an action can never talk its risk DOWN. The
+    discarded token is surfaced as a reason so it appears in the audit event.
+    """
+    tok = str(raw or "").strip().upper()
+    if tok in _ORDER:
+        return tok, None
+    return "HIGH", (str(raw).strip() or "(empty)")
 
 
 # Deterministic floor: (compiled pattern, forced-level, reason). Matched against
@@ -49,9 +66,11 @@ def score_action(action) -> Risk:
         if pat.search(text):
             floor = _max(floor, lvl)
             reasons.append(f"floor:{why}")
-    self_hint = getattr(action, "self_risk", "LOW") or "LOW"
+    self_hint, unrecognized = _normalize_hint(getattr(action, "self_risk", "LOW"))
+    if unrecognized is not None:
+        reasons.append(f"self-hint:unrecognized {unrecognized!r} -> HIGH (fail-closed)")
     level = _max(floor, self_hint)
-    if level == self_hint and self_hint != floor:
+    if unrecognized is None and level == self_hint and self_hint != floor:
         reasons.append(f"self-hint:{self_hint}")
     return Risk(level=level, blast_radius=getattr(action, "blast_radius", "unrestricted"),
                 reasons=reasons)

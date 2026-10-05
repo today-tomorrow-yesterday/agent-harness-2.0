@@ -9,6 +9,7 @@
 - [soul.md](soul.md) — How Claude talks to you — tone, format, vocabulary, what to avoid *(bootstrap required)*
 - [sol.md](sol.md) — Your Claude instance identity and name *(optional — delete if you don't want this)*
 - [frame.md](frame.md) — The shared philosophical/operational framework *(optional)*
+- [goals.md](goals.md) — Your current goals, assessed weekly by the Goal Loop *(optional — the loop stays off until you fill it in; see docs/goal-loop.md)*
 
 ## Behavioral rules — `feedback/`
 

@@ -30,13 +30,27 @@ class Decision:
     reason: str
 
 
+# Fail-CLOSED fallback: if the guardrail file exists but is unreadable or corrupt,
+# we must NOT fall back to the permissive default — that would silently re-enable
+# autonomy the operator may have switched off. Every class is locked to NEVER.
+LOCKED_POLICY: dict[str, dict] = {
+    cls: {"enabled": False, "LOW": "NEVER", "MED": "NEVER", "HIGH": "NEVER"}
+    for cls in DEFAULT_POLICY
+}
+
+
 def load_policy(path=None) -> dict:
+    """The policy file if present; DEFAULT_POLICY if absent; LOCKED_POLICY if the
+    file is present but cannot be read or parsed (fail closed, never open)."""
     p = Path(path or POLICY_PATH)
     if p.exists():
         try:
-            return json.loads(p.read_text(encoding="utf-8"))
+            cfg = json.loads(p.read_text(encoding="utf-8"))
         except (ValueError, OSError):
-            pass
+            return LOCKED_POLICY
+        if not isinstance(cfg, dict):
+            return LOCKED_POLICY      # valid JSON but not a policy table
+        return cfg
     return DEFAULT_POLICY
 
 
