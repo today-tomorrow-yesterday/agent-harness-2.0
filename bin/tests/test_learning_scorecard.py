@@ -9,6 +9,7 @@ import datetime as dt
 import json
 import os
 import sqlite3
+import subprocess
 import sys
 from pathlib import Path
 
@@ -192,7 +193,7 @@ def test_collect_rules_separates_edited_from_untouched(tmp_path):
     os.utime(edited, (born + 200, born + 200))
     os.utime(untouched, (born - 500, born - 500))
     out = ls.collect_rules(tmp_path, start, end)
-    assert out == {"new": [], "amended": ["edited.md"], "error": None}
+    assert out == {"new": [], "amended": ["edited.md"], "created_from": "filesystem", "error": None}
 
 
 def test_collect_rules_counts_a_file_born_in_the_window_as_new(tmp_path):
@@ -390,6 +391,107 @@ def test_load_runs_counts_a_run_with_a_failed_action_as_failed(tmp_path):
     assert {r["job"]: r["status"] for r in out["rows"] if r["job"] != "self-loop"} == {
         "weekly-planner": "done", "goal-research-fetch": "error"}
     assert sorted(r["status"] for r in out["rows"] if r["job"] == "self-loop") == ["error", "paused"]
+
+
+def test_a_run_still_in_progress_is_not_counted_as_a_success(tmp_path):
+    db = tmp_path / "runner.db"
+    done = int(_at(2).timestamp())
+    _make_runner_db(db, [
+        ("r1", "ingest", "done", done, done),
+        ("r2", "ingest", "error", done, done),
+        ("r3", "ingest", "running", int(_at(1 / 24).timestamp()), None),   # started an hour ago
+    ])
+    start, end = ls.window(ASOF, 7)
+    out = ls.score_jobs(ls.load_runs(db)["rows"], start, end)
+    assert (out["runs"], out["errors"], out["error_rate"]) == (2, 1, 50.0)
+
+
+def test_a_run_that_never_finished_is_a_failure(tmp_path):
+    db = tmp_path / "runner.db"
+    done = int(_at(2).timestamp())
+    _make_runner_db(db, [
+        ("r1", "ingest", "done", done, done),
+        ("r2", "nightly", "running", int(_at(3).timestamp()), None),   # 3 days "running": killed
+    ])
+    start, end = ls.window(ASOF, 7)
+    out = ls.score_jobs(ls.load_runs(db)["rows"], start, end)
+    assert (out["runs"], out["errors"]) == (2, 1)
+    assert out["errors_by_job"] == {"nightly": 1}
+
+
+# --------------------------------------------------------------------------- #
+# Creation time without a filesystem birth time (most Linux filesystems)
+# --------------------------------------------------------------------------- #
+class _NoBirthStat:
+    """os.stat_result as Linux reports it: ctime moves on every edit, no birth time."""
+    def __init__(self, mtime):
+        self.st_mtime = mtime
+        self.st_ctime = mtime
+
+
+def test_birth_never_falls_back_to_ctime():
+    assert ls._birth(_NoBirthStat(1_700_000_000)) is None
+
+
+def _git(cwd, *args):
+    subprocess.run(["git", "-C", str(cwd), *args], check=True, capture_output=True, text=True,
+                   env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
+                        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"})
+
+
+def _commit(repo, name, when: dt.datetime, text):
+    (repo / name).parent.mkdir(parents=True, exist_ok=True)
+    (repo / name).write_text(text, encoding="utf-8")
+    stamp = when.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    subprocess.run(["git", "-C", str(repo), "add", name], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-q", "-m", f"add {name}"], check=True,
+                   capture_output=True,
+                   env={**os.environ, "GIT_AUTHOR_DATE": stamp, "GIT_COMMITTER_DATE": stamp,
+                        "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
+                        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"})
+
+
+def test_git_first_added_keeps_the_first_commit_not_the_last_edit(tmp_path):
+    _git(tmp_path, "init", "-q")
+    _commit(tmp_path, "feedback/old.md", _at(60), "v1")
+    _commit(tmp_path, "feedback/old.md", _at(2), "v2 edited this week")
+    _commit(tmp_path, "feedback/fresh.md", _at(1), "v1")
+    added = ls.git_first_added(tmp_path / "feedback")
+    assert added["old.md"] == _at(60).timestamp()
+    assert added["fresh.md"] == _at(1).timestamp()
+
+
+def test_git_first_added_outside_a_repo_is_empty(tmp_path):
+    assert ls.git_first_added(tmp_path) == {}
+
+
+def test_an_edited_rule_is_amended_not_new_when_there_is_no_birth_time(tmp_path, monkeypatch):
+    _git(tmp_path, "init", "-q")
+    rules = tmp_path / "feedback"
+    _commit(tmp_path, "feedback/old.md", _at(60), "v1")
+    _commit(tmp_path, "feedback/fresh.md", _at(1), "v1")
+    (rules / "uncommitted.md").write_text("draft", encoding="utf-8")
+    edited_at = _at(2).timestamp()
+    for name in ("old.md", "fresh.md", "uncommitted.md"):
+        os.utime(rules / name, (edited_at, edited_at))
+    monkeypatch.setattr(ls, "_birth", lambda stat: None)   # behave like a no-birthtime filesystem
+    start, end = ls.window(ASOF, 7)
+    out = ls.collect_rules(rules, start, end)
+    assert out["new"] == ["fresh.md"]
+    # old.md was edited this week; uncommitted.md has no creation signal at all, and
+    # calling it new would be a guess.
+    assert out["amended"] == ["old.md", "uncommitted.md"]
+    assert out["created_from"] == "git+unknown"
+
+
+def test_skills_stay_in_the_count_when_creation_time_is_unknown(tmp_path, monkeypatch):
+    skills = tmp_path / "skills"
+    _skill(skills, "never-used")
+    (tmp_path / "u.jsonl").write_text("", encoding="utf-8")
+    monkeypatch.setattr(ls, "_birth", lambda stat: None)
+    out = ls.collect_skills(skills, tmp_path / "u.jsonl", ASOF)
+    assert out["total"] == 1
+    assert out["retire_candidates"] == ["never-used"]
 
 
 def test_load_runs_missing_db_is_honest_empty(tmp_path):
