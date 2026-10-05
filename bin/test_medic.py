@@ -25,6 +25,11 @@ CYCLE (one attempt per scheduled run — anti-thrash by design):
 
 Also honors the global kill-switch (forge/STOP) and backs off cleanly on a
 rate-limit (retries at the next scheduled slot, never hammers a closed window).
+The headless call runs on the SUBSCRIPTION: harness_common.clean_env strips any
+metered API key from the child environment, and harness_common.classify_claude_result
+is the one shared reading of its outcome. Notifications go through the shared state
+gate: a still-red result pages once and stays silent while chronic; a verified fix
+clears the condition and posts one green line.
 
 Enable by uncommenting the "test-medic" Job in bin/scheduler/jobs.py.
 Usage: python bin/test_medic.py [--dry-run]   (--dry-run: diagnose only, no claude call)
@@ -46,8 +51,10 @@ SELFTEST_REPORT = REPO / "self-test-report.md"
 
 CLAUDE_TIMEOUT_S = 25 * 60
 
+JOB_ID = "test-medic"
+
 sys.path.insert(0, str(REPO / "bin"))
-from runner.stop import is_engaged  # noqa: E402  (kill-switch: forge/STOP)
+import harness_common as hc  # noqa: E402
 
 
 def log(level: str, message: str) -> None:
@@ -56,22 +63,6 @@ def log(level: str, message: str) -> None:
     with open(LOG_PATH, "a", encoding="utf-8") as f:
         f.write(f"{ts} [{level}] {message}\n")
     print(f"{ts} [{level}] {message}", file=sys.stderr)
-
-
-def classify_claude_result(returncode: int, stdout: str = "", stderr: str = "") -> str:
-    """Classify a `claude -p` outcome: ok | auth_failed | rate_limited |
-    model_unavailable | error. Only inspects output when the call FAILED —
-    a successful answer may itself mention 'rate limit'."""
-    if returncode == 0:
-        return "ok"
-    blob = f"{stdout}\n{stderr}".lower()
-    if "401" in blob and ("auth" in blob or "credential" in blob):
-        return "auth_failed"
-    if "rate limit" in blob or "usage limit" in blob or "session limit" in blob or "spend limit" in blob:
-        return "rate_limited"
-    if "overloaded" in blob or "unavailable" in blob:
-        return "model_unavailable"
-    return "error"
 
 
 def run_self_test() -> tuple[bool, str]:
@@ -134,18 +125,23 @@ PROCESS:
         result = subprocess.run(
             [claude_path, "-p",
              "--no-session-persistence",
+             # sibling-sweep: ok shell-grant-without-untrusted-rule — the medic must run
+             # pytest to iterate; its only input is this repo's own test output, and the
+             # deterministic re-verify + HEAD check below are the gate, not the model.
              "--allowed-tools", "Read Write Edit Glob Grep Bash",
              "--dangerously-skip-permissions"],
             input=prompt,
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             cwd=str(REPO), timeout=CLAUDE_TIMEOUT_S,
+            env=hc.clean_env(CLAUDE_BRAIN_SKIP_HOOKS="1"),
         )
     except subprocess.TimeoutExpired:
         return ("timeout", f"claude timed out after {CLAUDE_TIMEOUT_S}s")
     except Exception as e:
         return ("error", f"claude launch failed: {e}")
 
-    status = classify_claude_result(result.returncode, result.stdout or "", result.stderr or "")
+    status, _detail = hc.classify_claude_result(result.returncode, result.stdout or "",
+                                                result.stderr or "")
     return (status, (result.stdout or result.stderr or "").strip()[-3000:])
 
 
@@ -159,12 +155,19 @@ def write_report(outcome: str, sections: list[tuple[str, str]]) -> None:
     REPORT.write_text("\n".join(lines), encoding="utf-8")
 
 
-def notify(msg: str) -> None:
-    try:
-        from notify_slack import post_slack
-        post_slack(msg)
-    except Exception:
-        pass
+def notify_broken(msg: str) -> None:
+    """Red, through the shared state gate: pages once on OK->BROKEN, then silent while the
+    same condition persists (a medic scheduled several times a week would otherwise post
+    the same red every run)."""
+    hc.alert(JOB_ID, msg, lambda m: log("INFO", m))
+
+
+def notify_fixed(msg: str) -> None:
+    """Green: clear the standing condition, and say so once."""
+    if hc.resolve_conditions([JOB_ID]):
+        hc.alert_recovered(JOB_ID, msg, lambda m: log("INFO", m))
+    elif not hc.is_dry_run():
+        hc._post(msg, title="test-medic")
 
 
 def main() -> int:
@@ -176,9 +179,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Autonomous repair for a red self-test (opt-in).")
     ap.add_argument("--dry-run", action="store_true", help="diagnose only; no claude call")
     args = ap.parse_args()
+    # A diagnose-only run must not page anyone or overwrite the last real outcome.
+    hc.set_dry_run(args.dry_run, "test_medic.py --dry-run")
 
-    if is_engaged():
-        log("INFO", "STOP engaged (forge/STOP) — skipping run.")
+    if not hc.guard_or_skip(JOB_ID, lambda m: log("INFO", m)):
         return 0
 
     log("INFO", "test-medic start — running self-test for a fresh verdict")
@@ -186,6 +190,7 @@ def main() -> int:
     if green:
         log("INFO", "self-test GREEN — nothing to fix.")
         write_report("GREEN (no action)", [("Verdict", "Self-test passed; no repair attempted.")])
+        hc.record_outcome(JOB_ID, status="empty", produced=0, detail="self-test green")
         return 0
 
     log("WARN", "self-test RED — collecting diagnosis")
@@ -205,11 +210,15 @@ def main() -> int:
     if status == "rate_limited":
         log("WARN", "rate-limited — will retry next scheduled slot.")
         write_report("SKIPPED (rate-limited)", [("Detail", tail[:1000])])
+        hc.record_outcome(JOB_ID, status="rate_limited", produced=0, detail=tail[-200:])
         return 0
     if status in ("auth_failed", "timeout", "error", "model_unavailable"):
         log("ERROR", f"medic invocation failed [{status}]")
         write_report(f"FAILED ({status})", [("Detail", tail), ("Diagnosis", diagnosis)])
-        notify(f"Test-Medic could not run ({status}) — self-test still RED. See forge/test-medic-latest.md")
+        notify_broken(f"could not run ({status}) — self-test still RED. "
+                      f"See forge/test-medic-latest.md")
+        hc.record_outcome(JOB_ID, status=status if status in hc.OUTCOME_STATUSES else "error",
+                          produced=0, detail=f"medic invocation failed: {status}")
         return 1
 
     # Deterministic verdict — never trust the model's own claim.
@@ -222,10 +231,14 @@ def main() -> int:
         sections.insert(0, ("HEAD violation", f"{head_before} -> {head_after}"))
     write_report(outcome, sections)
     log("INFO" if green_after else "ERROR", f"test-medic done — {outcome}")
-    notify(("Test-Medic fixed the red self-test (verified green). "
-            if green_after else
-            "Test-Medic attempted a fix but self-test is STILL RED — needs a human. ")
-           + "Report: forge/test-medic-latest.md")
+    if green_after:
+        notify_fixed("Test-Medic fixed the red self-test (verified green). "
+                     "Report: forge/test-medic-latest.md")
+    else:
+        notify_broken("attempted a fix but self-test is STILL RED — needs a human. "
+                      "Report: forge/test-medic-latest.md")
+    hc.record_outcome(JOB_ID, status="ok" if green_after else "error",
+                      produced=1 if green_after else 0, detail=outcome[:200])
     return 0 if green_after else 1
 
 

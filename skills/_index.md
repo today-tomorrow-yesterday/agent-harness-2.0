@@ -22,6 +22,7 @@ every profile identical with `sync-agent-tools`.
 | `onboard` | First-time setup of this harness on a new machine, including the memory interview. | Python |
 | `goal-review` | Review goal progress and answer the weekly questions the goal loop raised, then update `memory/goals.md`. | a filled-in `memory/goals.md` |
 | `safety-review` | Review and clear the queue of outward or irreversible actions that were paused during unattended runs. | the `safety-queue` hook |
+| `skill-canary` | Smoke-test a skill and snapshot the installed copy before promoting a change, with one-step rollback. | `bin/skill_canary.py` |
 
 ## Design and communication
 

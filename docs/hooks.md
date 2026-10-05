@@ -29,8 +29,11 @@ python bin/register_hook.py pre-tool-guard --verify      # check, change nothing
 The registrar writes to `~/.claude/settings.json` (override with `CLAUDE_CONFIG_DIR` or
 `CLAUDE_SETTINGS_PATH`). It works the same on Windows, macOS and Linux: it uses the Python you run
 it with and a forward-slash path to the script, so the entry works from Git Bash, WSL, PowerShell,
-cmd, zsh and bash. It is idempotent, validates the new file before replacing the old one, keeps
-every unrelated setting, and never adds a byte-order mark. Hook config is read at session start, so
+cmd, zsh and bash. It validates the new file before replacing the old one, keeps every unrelated
+setting, and never adds a byte-order mark. Re-running it is safe and also a repair: an entry whose
+matcher differs from the catalog's, whose timeout differs from `--timeout`, or which is listed
+twice is put right. A re-run without `--hook-arg` keeps the arguments given earlier, and without
+`--timeout` keeps the existing timeout. Hook config is read at session start, so
 **restart Claude Code** after registering or removing.
 
 Temporary off switches (set in the environment Claude Code is started from, or in the `env`
@@ -57,19 +60,26 @@ Blocks shell commands that are destructive or irreversible:
 - git history rewrites and force operations: `push --force` / `-f` / `+refspec`, `rebase`,
   `filter-branch` / `filter-repo`, `commit --amend`, `reset --hard`, deleting a remote branch
 - recursive force-delete of a filesystem root, or of an absolute path **outside the current
-  working directory** (bash `rm -rf` and PowerShell `Remove-Item -Recurse -Force`, including the
-  `rm` / `ri` / `del` / `erase` aliases and abbreviated flags)
+  working directory** (bash `rm -rf`, PowerShell `Remove-Item -Recurse -Force` including the
+  `rm` / `ri` / `del` / `erase` aliases and abbreviated flags, cmd `rd /s`). Quoted targets
+  count: `rm -rf "/srv/old project"` is checked like any other path.
 - `mkfs`, `dd of=/dev/...`
 - piping a download into a shell (`curl ... | sh`, `iwr ... | iex`)
-- `DROP TABLE` / `DROP DATABASE` / `DROP SCHEMA` / `TRUNCATE TABLE`
+- `DROP TABLE` / `DROP DATABASE` / `DROP SCHEMA` / `TRUNCATE TABLE`, typed directly or passed
+  to a SQL client (`psql -c "..."`, `sqlite3 db "..."`)
 - recursive `chmod` / `chown` on a root
 - `git commit` when the **staged** diff adds something shaped like a secret (private key, AWS
   key id, `sk-` API key, GitHub token). The value is never printed.
 - in unattended runs (`HARNESS_UNATTENDED=1`): every `git commit` and `git push`
 
+Commands nested in a string -- `bash -c "..."`, `pwsh -Command "..."`, `cmd /c ...`,
+`eval "..."` -- are checked as commands.
+
 Allowed on purpose: plain `git commit` / `git add` in an interactive session (commit policy is a
-per-project choice), `--force-with-lease`, deletes inside the working directory. Quoted text is
-ignored, so `grep "DROP TABLE" schema.sql` or a commit message mentioning `rm -rf` passes.
+per-project choice), `--force-with-lease`, deletes inside the working directory. A quoted
+*mention* is not a command: `grep "DROP TABLE" schema.sql`, `echo "rm -rf /"` or a commit message
+mentioning `rm -rf` passes, because only the first word of each command segment is treated as a
+command.
 
 When it blocks something you really want: run the command yourself, or tell the agent explicitly
 in chat that this exact command is approved. The guard protects against accidents, not
@@ -97,12 +107,20 @@ deny or clear. Approving does **not** run the command; you run it yourself. Plai
 GETs, localhost traffic and ordinary file work are never paused. `HARNESS_SAFETY_DIR` moves the
 queue elsewhere.
 
+Several unattended sessions can pause commands at the same moment, so every change to the queue
+holds an inter-process lock (`forge/safety/.lock`) for the whole read-modify-write. Change the
+queue only through the hook's review CLI, which takes the same lock:
+`python bin/hooks/safety-queue.py list | approve <id> | deny <id> --reason "..." | clear`.
+
 ## placement-guard
 
 Refuses a tool call that would create a **new top-level directory** inside a protected root. The
 `Write` tool creates parent folders silently, so the guard reads the exact path from
-`Write` / `Edit` / `MultiEdit` / `NotebookEdit`, and also watches `mkdir` / `md` / `New-Item` in
-the shell.
+`Write` / `Edit` / `MultiEdit` / `NotebookEdit`, and also parses `mkdir` / `md` / `New-Item`
+(`-Path` and `-Name` included) in the shell, quoted paths and nested `bash -c "..."` commands too.
+
+Roots may nest (a project root inside a protected workspace). Every protected root that contains
+the path is checked, and the write is refused if any of them refuses.
 
 Protected by default: this repository, with the allowlist `REPO_ALLOWED` in
 `bin/placement_policy.py` (`bin`, `docs`, `memory`, `skills`, `forge`, `logs`, ...). Always fine:
@@ -142,7 +160,8 @@ python bin/register_hook.py design-gate \
 The environment overrides the registered arguments: `DESIGN_GATE_BUILD_SKILLS`,
 `DESIGN_GATE_REVIEW_SKILLS`, `DESIGN_GATE_EXTENSIONS` (comma-separated). With no build skills
 configured the gate does not block, and says so once per session in the model's context.
-Re-running the registrar with new `--hook-arg` values updates the entry in place.
+Re-running the registrar with new `--hook-arg` values updates the entry in place; re-running it
+without them (for example `--all`) keeps the skills you set.
 
 ## skill-shape-guard
 

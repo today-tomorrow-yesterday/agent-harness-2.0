@@ -43,24 +43,44 @@ def build_digest(runs: list[dict], evts: list[dict], today: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def selftest_line(report_path: Path | None = None) -> str:
+def selftest_line(report_path: Path | None = None, age_h: float | None = None) -> str:
     """One-line self-test verdict for the digest (see bin/self_test.py).
     Missing report -> a nudge; stale (>26h) -> flagged, because a report that
     stopped updating means the self-test JOB died — the exact silent failure
-    the verdict exists to catch. Pure given a path — unit-testable."""
+    the verdict exists to catch. Pure given a path and an age — unit-testable.
+
+    `age_h` is how long ago the self-test last RECORDED a run (its outcome file).
+    It is never taken from the report file's modified time: a clone, a move or a
+    checkout rewrites that, so a months-old report would read as fresh. With no
+    recorded run the line says the age is unknown instead of guessing."""
     p = report_path or (REPO / "self-test-report.md")
     if not p.exists():
         return "**Self-test:** not run yet (schedule `self-test` — see bin/scheduler/jobs.py)"
     try:
         text = p.read_text(encoding="utf-8", errors="replace")
-        age_h = (time.time() - p.stat().st_mtime) / 3600
     except OSError:
         return "**Self-test:** report unreadable"
     verdict = next((ln.strip("* ").replace("VERDICT:", "").strip()
                     for ln in text.splitlines() if ln.startswith("**VERDICT:")), "?")
-    stale = f" · STALE ({age_h:.0f}h old — is the self-test job firing?)" if age_h > 26 else ""
+    if age_h is None:
+        stale = " · age unknown (no recorded run — is the self-test job firing?)"
+    elif age_h > 26:
+        stale = f" · STALE ({age_h:.0f}h old — is the self-test job firing?)"
+    else:
+        stale = ""
     mark = "✅" if verdict == "PASS" else "🔴"
     return f"**Self-test:** {mark} {verdict}{stale}"
+
+
+def _selftest_age_h() -> float | None:
+    """Hours since the self-test last recorded an outcome, or None if it never has."""
+    try:
+        sys.path.insert(0, str(REPO / "bin"))
+        import harness_common
+        outcome = harness_common.read_outcome("self-test")
+    except Exception:  # noqa: BLE001 — the digest must still send
+        return None
+    return outcome.get("age_h") if outcome else None
 
 
 def main(argv=None) -> int:
@@ -68,7 +88,7 @@ def main(argv=None) -> int:
     runs, evts = events.fetch_since(since)
     today = time.strftime("%Y-%m-%d")
     md = build_digest(runs, evts, today)
-    md += "\n" + selftest_line() + "\n"
+    md += "\n" + selftest_line(age_h=_selftest_age_h()) + "\n"
     OUT.write_text(md, encoding="utf-8")
     try:
         sys.path.insert(0, str(REPO / "bin"))

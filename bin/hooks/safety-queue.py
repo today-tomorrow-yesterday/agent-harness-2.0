@@ -30,14 +30,21 @@ Contract:
     legitimate headless run. AFTER a match the deny is kept even if writing the queue or the
     notification fails -- side effects are best-effort, the deny is not.
   * Off switch: HARNESS_HOOKS_DISABLED=1. Slack ping off: HARNESS_SAFETY_NOTIFY=off.
-  * Threat model: accidents in unattended runs, not adversaries. Quoted text is blanked before
-    matching verbs, so a command that merely MENTIONS an outward action passes.
+  * Threat model: accidents in unattended runs, not adversaries. Quoted data is blanked before
+    matching verbs, so a command that merely MENTIONS an outward action passes -- but a command
+    nested in `bash -c "..."` / `pwsh -Command "..."` is checked as a command.
 
 State (gitignore `forge/safety/`):
   forge/safety/queue.json    JSON array of PENDING requests
                              {id, ts, status, label, reason, command, cwd, session_id}
   forge/safety/history.json  append-only event log (queued / approved / denied / cleared)
+  forge/safety/.lock         inter-process lock; every read-modify-write of the two files
+                             above holds it, so concurrent sessions cannot drop each other's
+                             entries
   HARNESS_SAFETY_DIR overrides the directory.
+
+Review CLI (same lock; the /safety-review skill uses it):
+  python bin/hooks/safety-queue.py list | approve <id> | deny <id> --reason "..." | clear
 """
 from __future__ import annotations
 
@@ -47,12 +54,14 @@ import os
 import re
 import subprocess
 import sys
+import time
 import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _hook_common import (  # noqa: E402
-    BIN, ROOT, deny, hooks_disabled, read_payload, strip_quoted, tool_input, unattended,
+    BIN, ROOT, FileLock, deny, hooks_disabled, nested_texts, read_payload, strip_quoted,
+    tool_input, unattended,
 )
 
 
@@ -120,15 +129,23 @@ def _external_host(raw: str) -> str | None:
     return None
 
 
-def detect_tier2(raw: str, stripped: str) -> tuple[str, str] | None:
-    """(label, reason) if the command is a pause-for-human action, else None."""
-    for pat, reason in SIMPLE_TIER2:
-        if pat.search(stripped):
-            return (re.sub(r"\W+", "_", reason).strip("_")[:40], reason)
-    # The client must be a real command token (found in the stripped text), but URLs are read
-    # from the raw text: stripping quotes would remove a quoted URL itself.
-    # The method may itself be quoted (`-X "POST"`), so it is read with quote characters removed.
-    if _NET_CLIENT.search(stripped) and _NET_METHOD.search(re.sub(r"[\"']", "", raw)):
+def detect_tier2(raw: str) -> tuple[str, str] | None:
+    """(label, reason) if the command is a pause-for-human action, else None.
+
+    Verbs are matched on views where quoted DATA is blanked (so `echo "npm publish"` passes) but
+    where commands nested in `bash -c "..."` / `pwsh -Command "..."` are exposed as commands
+    (so `bash -c "npm publish"` does not hide behind its quotes).
+    """
+    views = [strip_quoted(t) for t in nested_texts(raw)]
+    for view in views:
+        for pat, reason in SIMPLE_TIER2:
+            if pat.search(view):
+                return (re.sub(r"\W+", "_", reason).strip("_")[:40], reason)
+    # The client must be a real command token (found in a blanked view), but URLs are read from
+    # the raw text: blanking quotes would remove a quoted URL itself. The method may itself be
+    # quoted (`-X "POST"`), so it is read with quote characters removed.
+    if any(_NET_CLIENT.search(v) for v in views) and \
+            _NET_METHOD.search(re.sub(r"[\"']", "", raw)):
         host = _external_host(raw)
         if host:
             return ("external_http_write",
@@ -136,7 +153,12 @@ def detect_tier2(raw: str, stripped: str) -> tuple[str, str] | None:
     return None
 
 
-# ---- persistence (atomic rewrite of a JSON array) ------------------------------------------
+# ---- persistence: every read-modify-write is ONE locked transaction -------------------------
+#
+# Several unattended sessions can hit this hook at the same moment. Without a lock each one
+# reads the queue, appends, and replaces the file, so the last writer silently drops the others'
+# entries (and history.json can then name requests queue.json no longer holds). The lock covers
+# BOTH files for the whole load -> mutate -> replace, and the review CLI below takes the same lock.
 
 def load_array(path: Path) -> list:
     try:
@@ -153,13 +175,34 @@ def atomic_write(path: Path, obj) -> None:
         json.dump(obj, f, indent=2)
         f.flush()
         os.fsync(f.fileno())
-    os.replace(tmp, path)
+    for attempt in range(50):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:          # Windows: a reader has the file open for a moment
+            if attempt == 49:
+                raise
+            time.sleep(0.02)
 
 
-def append_record(path: Path, record: dict) -> None:
-    arr = load_array(path)
-    arr.append(record)
-    atomic_write(path, arr)
+def transact(mutate, directory: Path | None = None):
+    """Run `mutate(queue, history)` under the queue lock and persist both lists.
+
+    `mutate` edits the two lists in place and may return a value, which is passed back.
+    """
+    d = directory or safety_dir()
+    d.mkdir(parents=True, exist_ok=True)
+    with FileLock(d / ".lock"):
+        queue = load_array(d / "queue.json")
+        history = load_array(d / "history.json")
+        result = mutate(queue, history)
+        atomic_write(d / "queue.json", queue)
+        atomic_write(d / "history.json", history)
+    return result
+
+
+def _now() -> str:
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 # ---- notification (best-effort; must never fail or block the hook) ------------------------
@@ -206,25 +249,28 @@ def main() -> int:
     if not isinstance(command, str) or not command:
         return 0
 
-    match = detect_tier2(command, strip_quoted(command))
+    match = detect_tier2(command)
     if not match:
         return 0
 
     # --- MATCHED. From here the deny is guaranteed; side effects are best-effort. ---
     label, reason = match
     req_id = "q_" + uuid.uuid4().hex[:10]
-    ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts = _now()
     session_id = str(data.get("session_id", ""))
-    try:
-        d = safety_dir()
-        append_record(d / "queue.json", {
+
+    def add(queue: list, history: list) -> None:
+        queue.append({
             "id": req_id, "ts": ts, "status": "pending", "label": label, "reason": reason,
             "command": command, "cwd": os.getcwd(), "session_id": session_id,
         })
-        append_record(d / "history.json", {
+        history.append({
             "ts": ts, "id": req_id, "event": "queued", "label": label, "reason": reason,
             "command": command, "session_id": session_id,
         })
+
+    try:
+        transact(add)
     except Exception:
         pass
     try:
@@ -239,7 +285,66 @@ def main() -> int:
     )
 
 
+# ---- review CLI (used by the /safety-review skill; takes the same lock) ---------------------
+
+def cli(argv: list[str]) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(prog="safety-queue.py",
+                                 description="Work the safety review queue.")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("list", help="print pending requests as JSON")
+    a = sub.add_parser("approve", help="record approval and remove from the queue")
+    a.add_argument("id")
+    d = sub.add_parser("deny", help="record denial and remove from the queue")
+    d.add_argument("id")
+    d.add_argument("--reason", default="")
+    sub.add_parser("clear", help="drop every pending request (not approval)")
+    args = ap.parse_args(argv)
+
+    for s in (sys.stdout, sys.stderr):
+        if hasattr(s, "reconfigure"):
+            s.reconfigure(encoding="utf-8", errors="replace")
+
+    if args.cmd == "list":
+        pending = transact(lambda q, h: list(q))
+        print(json.dumps(pending, indent=2))
+        return 0
+
+    if args.cmd in ("approve", "deny"):
+        def decide(queue: list, history: list):
+            hit = next((r for r in queue if r.get("id") == args.id), None)
+            if hit is None:
+                return None
+            queue.remove(hit)
+            event = {"ts": _now(), "id": hit["id"],
+                     "event": "approved" if args.cmd == "approve" else "denied",
+                     "label": hit.get("label"), "command": hit.get("command"),
+                     "session_id": hit.get("session_id")}
+            if args.cmd == "deny":
+                event["reason"] = args.reason
+            history.append(event)
+            return hit
+        hit = transact(decide)
+        if hit is None:
+            print(f"not found: {args.id}", file=sys.stderr)
+            return 1
+        print(json.dumps(hit, indent=2))
+        return 0
+
+    def clear(queue: list, history: list) -> int:
+        n = len(queue)
+        for r in queue:
+            history.append({"ts": _now(), "id": r.get("id"), "event": "cleared",
+                            "label": r.get("label"), "command": r.get("command")})
+        queue.clear()
+        return n
+    print(f"cleared {transact(clear)}")
+    return 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        sys.exit(cli(sys.argv[1:]))
     try:
         sys.exit(main())
     except SystemExit:

@@ -97,6 +97,59 @@ def test_powershell_recursive_delete_outside_workspace_is_blocked(form, project,
     assert run_guard(form.format(p=other), project).returncode == 2
 
 
+# --- review P1: a QUOTED target is still a target --------------------------------------------
+# Blanking every quoted substring before extracting delete targets let a quoted path with a space
+# through even when it sat outside the workspace. Quoted ARGUMENTS are now real arguments; quoted
+# MENTIONS (echo text, commit messages) are still arguments of echo/git, never commands.
+
+@pytest.mark.parametrize("form", [
+    'rm -rf "{p}"',
+    "rm -rf '{p}'",
+    'rm -r -f "{p}"',
+    'rm --recursive --force -- "{p}"',
+    'sudo rm -rf "{p}"',
+    'Remove-Item -Recurse -Force "{p}"',
+    'Remove-Item -LiteralPath "{p}" -Recurse -Force',
+    'ri -Rec -Fo "{p}"',
+    'cmd /c rd /s /q "{p}"',
+    'bash -c "rm -rf \'{p}\'"',
+])
+def test_quoted_outside_target_with_space_is_blocked(form, project, tmp_path):
+    other = str(tmp_path / "old project")
+    r = run_guard(form.format(p=other), project)
+    assert r.returncode == 2, f"should have BLOCKED: {form}\n{r.stderr}"
+
+
+@pytest.mark.parametrize("command", [
+    'rm -rf "/"',
+    "rm -rf '~'",
+    'bash -c "rm -rf /"',
+    'sh -c "git push --force origin main"',
+    'pwsh -Command "git reset --hard HEAD~1"',
+    'git push origin "+main"',
+    'psql -c "DROP TABLE users"',
+    "sqlite3 app.db 'DROP TABLE users'",
+    'chmod -R 777 "/"',
+])
+def test_quoting_does_not_hide_a_command_or_target(command, project):
+    assert run_guard(command, project).returncode == 2, command
+
+
+@pytest.mark.parametrize("form", [
+    'echo "rm -rf {p}"',
+    'git commit -m "rm -rf {p}"',
+    'git log --grep "rm -rf {p}"',
+    'echo "bash -c \'rm -rf /\'"',
+    'grep -rn "mkfs" .',
+    'psql -c "SELECT 1"',
+    'rm -rf "{inside}"',
+])
+def test_quoted_mentions_still_pass(form, project, tmp_path):
+    cmd = form.format(p=str(tmp_path / "old project"), inside=str(project / "build dir"))
+    r = run_guard(cmd, project)
+    assert r.returncode == 0, f"should have ALLOWED: {cmd}\n{r.stderr}"
+
+
 def test_recursive_delete_inside_workspace_is_allowed(project):
     inside = (project / "build").as_posix()
     assert run_guard(f"rm -rf {inside}", project).returncode == 0

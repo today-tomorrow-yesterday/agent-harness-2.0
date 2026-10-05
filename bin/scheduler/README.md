@@ -26,23 +26,48 @@ re-running replaces the harness's own entries (tagged `agent-harness`).
 
 ## Adding a job
 
-Edit `REGISTRY` in `jobs.py`. Two generic jobs ship ready to add:
+Edit `REGISTRY` in `jobs.py`, then re-run `--apply`:
 
 ```python
-REGISTRY = [
-    Job("weekly-planner", ["bin/weekly-planner.py"], "weekly", "09:00", dow="SUN"),
-    Job("security-watch", ["bin/security_watch.py"], "daily",  "08:00"),
-]
+Job("my-job", ["bin/my_job.py"], "daily", "08:00", safe_rerun=True)
+Job("my-weekly", ["bin/my_weekly.py"], "weekly", "09:00", dow="SUN")
 ```
 
-- **weekly-planner** — synthesizes a "what's next" briefing from your `memory/`.
-- **security-watch** — flags unexpected changes to your Claude setup.
+Cadence is `"daily"` or `"weekly"` (+ `dow` MON..SUN). Set `safe_rerun=True` only for
+cheap, idempotent jobs (no `claude -p`, no external writes) — `bin/self_loop.py` may
+re-run those automatically when they fail.
 
-Cadence is `"daily"` or `"weekly"` (+ `dow` MON..SUN). Re-run `--apply`.
+Have the job record what it actually did, so the health loop can tell "exited 0" from
+"did its work":
+
+```python
+from harness_common import record_outcome
+record_outcome("my-job", status="ok", produced=12)        # Python
+```
+```bash
+python bin/record_outcome.py my-job --status ok --produced 12   # anything else
+```
+
+The job name must match the `Job` id. On Linux, cron keeps no run history, so this
+outcome is the ONLY recency evidence the health loop has for the job.
+
+## Reading back what is installed
+
+- **`introspect.py`** — reads what the OS scheduler really has for this harness
+  (crontab lines tagged `# agent-harness:<id>`, `agent-harness.<id>` launchd plists,
+  `agent-harness-<id>` Windows tasks). An unreadable scheduler is reported as unknown,
+  never as "nothing installed".
+- **`python bin/verify_scheduled_tasks.py`** — registry vs installed: declared-not-
+  installed, installed-not-declared, schedule mismatch, disabled. Exit 0 match, 1 drift,
+  2 unknown / nothing installed yet.
+
+`bin/self_loop.py`, `bin/conformance_check.py` and `bin/harness_metrics.py` use the same
+module. See `docs/health.md` for the whole health chain.
 
 ## Status / caveats
 
-- `REGISTRY` ships **empty** so a fresh clone never schedules anything until you
-  opt in (the two jobs above are generic + safe to add).
+- `REGISTRY` ships with generic, cross-platform jobs wired, but **nothing is installed**
+  until you run `--apply`. Jobs that spend your subscription, write unattended, or delete
+  files are listed commented-out in `jobs.py` — each is opt-in, with the reason given.
 - The Linux/macOS `apply`/`remove` backends are implemented but need validation
   on a real machine (they were authored on Windows). `--dry-run` is safe anywhere.
