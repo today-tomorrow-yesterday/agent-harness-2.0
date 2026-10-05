@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: Author or repair a skill so it is actually invokable, not an essay that silently never loads — the directory + SKILL.md + BOM-free frontmatter contract, and the guard and test that will reject a malformed one. Triggers on: into a skill, make this a skill, create a skill, as a skill
+description: "Author or repair a skill so it is actually invokable, not an essay that silently never loads — the directory + SKILL.md + BOM-free frontmatter contract, and the guard and test that will reject a malformed one. Triggers on: into a skill, make this a skill, create a skill, as a skill"
 ---
 
 # Authoring a skill that can actually be invoked

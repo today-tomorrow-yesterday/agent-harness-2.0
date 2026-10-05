@@ -1,6 +1,6 @@
 ---
 name: domain-full-setup
-description: End-to-end domain setup: check availability, register, configure DNS, and set up email. Use when launching a new project needing everything from scratch. Requires domain-suite-mcp.
+description: "End-to-end domain setup: check availability, register, configure DNS, and set up email. Use when launching a new project needing everything from scratch. Requires domain-suite-mcp."
 ---
 
 Run a complete domain setup for $ARGUMENTS using the domain-suite-mcp server.
