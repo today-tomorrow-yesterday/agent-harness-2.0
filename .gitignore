@@ -59,3 +59,8 @@ next-session.md
 next-session.archive.md
 agent-activity.md
 *.tmp
+
+# Per-user copies and tool output
+config/agent-tools.yaml
+forge/dispatch-ledger.jsonl
+captures/

@@ -1,0 +1,12 @@
+{
+  "name": "page-clone",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capture a web page as a full-page screenshot, a self-contained .mhtml archive and its rendered DOM.",
+  "type": "module",
+  "bin": { "page-clone": "page-clone.mjs" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
